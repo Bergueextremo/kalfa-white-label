@@ -1,4 +1,4 @@
-import { Scale, LayoutDashboard, Upload, FileText, Wallet, HeadphonesIcon, Settings, User } from "lucide-react";
+import { Scale, LayoutDashboard, Upload, FileText, Wallet, HeadphonesIcon, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 
+
 const menuItems = [
-  { title: "Visão Geral", url: "/", icon: LayoutDashboard },
+  { title: "Visão Geral", url: "/dashboard", icon: LayoutDashboard },
   { title: "Nova Auditoria", url: "/nova-auditoria", icon: Upload },
   { title: "Meus Relatórios", url: "/relatorios", icon: FileText },
   { title: "Carteira de Créditos", url: "/creditos", icon: Wallet },
@@ -31,8 +32,7 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
 
   const isActive = (path: string) => {
-    if (path === "/") return currentPath === path;
-    return currentPath.startsWith(path);
+    return currentPath === path || currentPath.startsWith(path);
   };
 
   return (
@@ -84,7 +84,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer - Perfil e Configurações */}
+      {/* Footer - Configurações */}
       <SidebarFooter>
         <Separator className="bg-sidebar-border mb-2" />
         <SidebarMenu>
@@ -98,17 +98,6 @@ export function AppSidebar() {
                 <Settings className={isCollapsed ? "mx-auto" : "mr-3 h-5 w-5"} />
                 {!isCollapsed && <span>Configurações</span>}
               </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton className="hover:bg-sidebar-accent transition-colors duration-200">
-              <User className={isCollapsed ? "mx-auto" : "mr-3 h-5 w-5"} />
-              {!isCollapsed && (
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">Usuário</span>
-                  <span className="text-xs text-sidebar-foreground/70">usuario@email.com</span>
-                </div>
-              )}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
