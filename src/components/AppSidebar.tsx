@@ -1,6 +1,8 @@
-import { Scale, LayoutDashboard, Upload, FileText, Wallet, HeadphonesIcon, Settings } from "lucide-react";
+import { Scale, LayoutDashboard, Upload, FileText, Wallet, HeadphonesIcon, Settings, LogOut, User as UserIcon } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { CreditUsage } from "@/components/CreditUsage";
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +17,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 const menuItems = [
@@ -27,6 +35,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const currentPath = location.pathname;
   const isCollapsed = state === "collapsed";
@@ -84,23 +93,41 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer - Configurações */}
-      <SidebarFooter>
-        <Separator className="bg-sidebar-border mb-2" />
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink
-                to="/configuracoes"
-                className="hover:bg-sidebar-accent transition-colors duration-200"
-                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-              >
-                <Settings className={isCollapsed ? "mx-auto" : "mr-3 h-5 w-5"} />
-                {!isCollapsed && <span>Configurações</span>}
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      {/* Footer - Configurações e Créditos */}
+      <SidebarFooter className="p-4 space-y-4">
+        <Separator className="bg-sidebar-border" />
+
+        {!isCollapsed && <CreditUsage />}
+
+        <div className="flex items-center justify-between gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className={`flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent cursor-pointer transition-colors ${isCollapsed ? 'justify-center w-full' : 'w-full'}`}>
+                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                  {user?.name?.charAt(0) || "U"}
+                </div>
+                {!isCollapsed && (
+                  <div className="flex-1 text-left overflow-hidden">
+                    <p className="text-sm font-medium truncate text-sidebar-foreground">{user?.name || "Usuário"}</p>
+                    <p className="text-xs text-muted-foreground truncate">Ver perfil</p>
+                  </div>
+                )}
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuItem asChild>
+                <NavLink to="/configuracoes" className="cursor-pointer w-full flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Configurações</span>
+                </NavLink>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sair</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

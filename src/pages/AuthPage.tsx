@@ -1,43 +1,29 @@
 import { useState } from "react";
-import { Scale, Shield, ArrowLeft } from "lucide-react";
+import { Scale, Shield, ArrowLeft, Building2, User, LockKeyhole, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { z } from "zod";
+import { cn } from "@/lib/utils";
 
+// Schemas de Validação
 const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .email({ message: "E-mail inválido" })
-    .max(255, { message: "E-mail muito longo" }),
-  password: z
-    .string()
-    .min(6, { message: "Senha deve ter no mínimo 6 caracteres" })
-    .max(100, { message: "Senha muito longa" }),
+  email: z.string().trim().email({ message: "E-mail inválido" }),
+  password: z.string().min(6, { message: "Mínimo 6 caracteres" }),
 });
 
 const signupSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, { message: "Nome deve ter no mínimo 2 caracteres" })
-    .max(100, { message: "Nome muito longo" }),
-  email: z
-    .string()
-    .trim()
-    .email({ message: "E-mail inválido" })
-    .max(255, { message: "E-mail muito longo" }),
-  password: z
-    .string()
-    .min(6, { message: "Senha deve ter no mínimo 6 caracteres" })
-    .max(100, { message: "Senha muito longa" }),
+  name: z.string().trim().min(2, { message: "Nome muito curto" }),
+  email: z.string().trim().email({ message: "E-mail inválido" }),
+  password: z.string().min(6, { message: "Mínimo 6 caracteres" }),
+  document: z.string().optional(),
 });
+
+type UserType = "PF" | "PJ";
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -45,7 +31,9 @@ const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Redirecionar se já estiver autenticado
+  // Estado para controlar o tipo de usuário (Segmentação B2B)
+  const [userType, setUserType] = useState<UserType>("PF");
+
   if (isAuthenticated) {
     navigate("/dashboard");
     return null;
@@ -54,30 +42,26 @@ const AuthPage = () => {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
-    
     const formData = new FormData(e.currentTarget);
-    const data = {
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
-    };
 
     try {
-      const validated = loginSchema.parse(data);
+      const data = {
+        email: formData.get("email") as string,
+        password: formData.get("password") as string,
+      };
+
+      loginSchema.parse(data);
       setIsLoading(true);
-      
-      await login(validated.email, validated.password);
-      toast.success("Login realizado com sucesso");
+
+      await login(data.email, data.password);
+      toast.success("Acesso autorizado com sucesso.");
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
-        error.errors.forEach((err) => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0] as string] = err.message;
-          }
-        });
+        error.errors.forEach((err) => { if (err.path[0]) fieldErrors[err.path[0] as string] = err.message; });
         setErrors(fieldErrors);
       } else {
-        toast.error("Erro ao fazer login");
+        toast.error("Credenciais inválidas ou erro no servidor.");
       }
     } finally {
       setIsLoading(false);
@@ -87,31 +71,28 @@ const AuthPage = () => {
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
-    
     const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get("name") as string,
-      email: formData.get("signup-email") as string,
-      password: formData.get("signup-password") as string,
-    };
 
     try {
-      const validated = signupSchema.parse(data);
+      const data = {
+        name: formData.get("name") as string,
+        email: formData.get("signup-email") as string,
+        password: formData.get("signup-password") as string,
+      };
+
+      signupSchema.parse(data);
       setIsLoading(true);
-      
-      await signup(validated.name, validated.email, validated.password);
-      toast.success("Conta criada com sucesso");
+
+      await signup(data.name, data.email, data.password);
+
+      toast.success(userType === 'PJ' ? "Ambiente corporativo criado com sucesso." : "Conta criada com sucesso.");
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
-        error.errors.forEach((err) => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0] as string] = err.message;
-          }
-        });
+        error.errors.forEach((err) => { if (err.path[0]) fieldErrors[err.path[0] as string] = err.message; });
         setErrors(fieldErrors);
       } else {
-        toast.error("Erro ao criar conta");
+        toast.error("Erro ao criar conta.");
       }
     } finally {
       setIsLoading(false);
@@ -119,141 +100,217 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary/95 to-primary/90 p-4">
-      <div className="w-full max-w-md">
-        {/* Back button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-4 text-white hover:bg-white/10"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
-        </Button>
+    <div className="min-h-screen w-full flex bg-white font-sans">
 
-        {/* Logo e título */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Scale className="h-12 w-12 text-white" />
-            <h1 className="text-4xl font-bold text-white">JusContratos</h1>
+      {/* COLUNA ESQUERDA - INSTITUCIONAL (Imagem) */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 text-white overflow-hidden">
+        {/* Imagem de Fundo Abstrata/Corporativa */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
+          style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2301&auto=format&fit=crop")' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-slate-900/40" />
+
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full h-full">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/10 p-2 rounded-lg backdrop-blur-sm border border-white/20">
+              <Scale className="h-6 w-6 text-white" />
+            </div>
+            {/* Fonte alterada para sans-serif bold */}
+            <span className="text-xl font-bold tracking-wide">JusContratos</span>
           </div>
-          <p className="text-white/90 text-lg font-medium">
-            Acesse sua Blindagem Jurídica
-          </p>
+
+          <div className="space-y-6 max-w-lg">
+            {/* Fonte alterada para sans-serif bold */}
+            <h1 className="text-4xl md:text-5xl font-bold leading-tight">
+              Segurança Jurídica com Precisão Forense.
+            </h1>
+            <p className="text-slate-300 text-lg leading-relaxed font-medium">
+              Junte-se a escritórios de advocacia e departamentos jurídicos que utilizam nossa IA para blindar contratos e recuperar ativos financeiros.
+            </p>
+
+            <div className="flex gap-4 pt-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-300 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span>Auditoria em Segundos</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-300 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span>Compliance Bacen/STJ</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-xs text-slate-500 font-medium">
+            © 2024 JusContratos Enterprise. Todos os direitos reservados.
+          </div>
+        </div>
+      </div>
+
+      {/* COLUNA DIREITA - FORMULÁRIO */}
+      <div className="flex-1 flex flex-col relative bg-white">
+        {/* Header Mobile */}
+        <div className="lg:hidden p-6 flex items-center gap-2">
+          <Scale className="h-6 w-6 text-slate-900" />
+          <span className="font-bold text-lg">JusContratos</span>
         </div>
 
-        <Card className="shadow-xl">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Bem-vindo</CardTitle>
-            <CardDescription className="text-center">
-              Entre ou crie sua conta para começar
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        {/* Botão Voltar */}
+        <div className="absolute top-6 right-6 lg:top-8 lg:right-8">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao site
+          </Button>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+          <div className="w-full max-w-[420px] space-y-8">
+
+            {/* Cabeçalho do Form */}
+            <div className="space-y-2 text-center lg:text-left">
+              {/* Fonte alterada para sans-serif bold */}
+              <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
+                Acesso ao Painel
+              </h2>
+              <p className="text-slate-500">
+                Gerencie suas auditorias e documentos blindados.
+              </p>
+            </div>
+
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login" onClick={() => setErrors({})}>
-                  Login
-                </TabsTrigger>
-                <TabsTrigger value="signup" onClick={() => setErrors({})}>
-                  Cadastro
-                </TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-8 bg-slate-100 p-1">
+                <TabsTrigger value="login" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-medium">Login</TabsTrigger>
+                <TabsTrigger value="signup" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-medium">Nova Conta</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login">
+              <TabsContent value="login" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
+                    <Label htmlFor="email">E-mail Corporativo ou Pessoal</Label>
                     <Input
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="seu@email.com"
+                      placeholder="nome@exemplo.com"
+                      className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
                       required
-                      className={errors.email ? "border-destructive" : ""}
                     />
-                    {errors.email && (
-                      <p className="text-sm text-destructive">{errors.email}</p>
-                    )}
+                    {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="password">Senha</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password">Senha</Label>
+                      <a href="#" className="text-xs text-blue-700 hover:underline font-medium">Esqueceu a senha?</a>
+                    </div>
                     <Input
                       id="password"
                       name="password"
                       type="password"
                       placeholder="••••••••"
+                      className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
                       required
-                      className={errors.password ? "border-destructive" : ""}
                     />
-                    {errors.password && (
-                      <p className="text-sm text-destructive">{errors.password}</p>
-                    )}
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Entrando..." : "Entrar"}
+
+                  <Button type="submit" className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium" disabled={isLoading}>
+                    {isLoading ? "Autenticando..." : "Acessar Plataforma"}
                   </Button>
                 </form>
               </TabsContent>
 
-              <TabsContent value="signup">
+              <TabsContent value="signup" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2">
+                {/* SELETOR DE TIPO DE CONTA (B2B vs B2C) */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div
+                    onClick={() => setUserType("PF")}
+                    className={cn(
+                      "cursor-pointer rounded-lg border p-3 flex flex-col items-center justify-center gap-2 transition-all hover:bg-slate-50",
+                      userType === "PF" ? "border-blue-600 bg-blue-50/50 text-blue-700 ring-1 ring-blue-600" : "border-slate-200 text-slate-500"
+                    )}
+                  >
+                    <User className="h-5 w-5" />
+                    <span className="text-xs font-semibold">Para Você</span>
+                  </div>
+                  <div
+                    onClick={() => setUserType("PJ")}
+                    className={cn(
+                      "cursor-pointer rounded-lg border p-3 flex flex-col items-center justify-center gap-2 transition-all hover:bg-slate-50",
+                      userType === "PJ" ? "border-blue-600 bg-blue-50/50 text-blue-700 ring-1 ring-blue-600" : "border-slate-200 text-slate-500"
+                    )}
+                  >
+                    <Building2 className="h-5 w-5" />
+                    <span className="text-xs font-semibold">Escritórios/Empresas</span>
+                  </div>
+                </div>
+
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nome Completo</Label>
+                    <Label htmlFor="name">
+                      {userType === "PJ" ? "Nome do Escritório / Empresa" : "Nome Completo"}
+                    </Label>
                     <Input
                       id="name"
                       name="name"
                       type="text"
-                      placeholder="Seu nome completo"
+                      placeholder={userType === "PJ" ? "Ex: Silva & Souza Advogados" : "Seu nome"}
+                      className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
                       required
-                      className={errors.name ? "border-destructive" : ""}
                     />
-                    {errors.name && (
-                      <p className="text-sm text-destructive">{errors.name}</p>
-                    )}
+                    {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">E-mail</Label>
+                    <Label htmlFor="signup-email">E-mail Profissional</Label>
                     <Input
                       id="signup-email"
                       name="signup-email"
                       type="email"
-                      placeholder="seu@email.com"
+                      placeholder="contato@empresa.com"
+                      className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
                       required
-                      className={errors.email ? "border-destructive" : ""}
                     />
-                    {errors.email && (
-                      <p className="text-sm text-destructive">{errors.email}</p>
-                    )}
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Senha</Label>
+                    <Label htmlFor="signup-password">Criar Senha</Label>
                     <Input
                       id="signup-password"
                       name="signup-password"
                       type="password"
-                      placeholder="••••••••"
+                      placeholder="Mínimo 6 caracteres"
+                      className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
                       required
-                      className={errors.password ? "border-destructive" : ""}
                     />
-                    {errors.password && (
-                      <p className="text-sm text-destructive">{errors.password}</p>
-                    )}
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Criando conta..." : "Criar Conta"}
+
+                  <Button type="submit" className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium" disabled={isLoading}>
+                    {isLoading ? "Criando ambiente..." : (userType === "PJ" ? "Criar Conta Empresarial" : "Criar Conta Pessoal")}
                   </Button>
                 </form>
               </TabsContent>
             </Tabs>
 
-            <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground justify-center">
-              <Shield className="h-4 w-4" />
-              <span>Seus dados estão protegidos</span>
+            {/* Footer de Segurança */}
+            <div className="pt-6 border-t border-slate-100">
+              <div className="flex items-center justify-center gap-6 text-slate-400">
+                <div className="flex items-center gap-1.5" title="Conexão Segura">
+                  <LockKeyhole className="h-3.5 w-3.5" />
+                  <span className="text-[10px] font-medium uppercase tracking-wider">SSL Secured</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Em conformidade com a LGPD">
+                  <Shield className="h-3.5 w-3.5" />
+                  <span className="text-[10px] font-medium uppercase tracking-wider">LGPD Compliant</span>
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -11,52 +11,52 @@ All colors MUST be HSL.
     /* Navy Blue - Cor primária profissional */
     --primary: 220 60% 15%;
     --primary-foreground: 0 0% 100%;
-    
+
     /* Backgrounds */
     --background: 0 0% 100%;
     --foreground: 220 15% 20%;
-    
+
     /* Cards e superfícies elevadas */
     --card: 0 0% 100%;
     --card-foreground: 220 15% 20%;
-    
+
     /* Slate Gray - Textos secundários */
     --muted: 215 16% 96%;
     --muted-foreground: 215 16% 47%;
-    
+
     /* Accent - Destaque sutil */
     --accent: 220 60% 96%;
     --accent-foreground: 220 60% 15%;
-    
+
     /* Secondary - Ações secundárias */
     --secondary: 215 16% 92%;
     --secondary-foreground: 220 15% 20%;
-    
+
     /* Success Green - Seguro */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    
+
     /* Danger Red - Risco Alto */
     --danger: 0 84% 60%;
     --danger-foreground: 0 0% 100%;
-    
+
     /* Warning - Atenção */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    
+
     /* Destructive */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    
+
     /* Borders e inputs */
     --border: 215 16% 88%;
     --input: 215 16% 88%;
     --ring: 220 60% 15%;
-    
+
     /* Popover */
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 20%;
-    
+
     /* Sidebar - Navy Blue profissional */
     --sidebar-background: 220 60% 12%;
     --sidebar-foreground: 220 15% 85%;
@@ -66,13 +66,13 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 40% 20%;
     --sidebar-ring: 220 60% 40%;
-    
+
     /* Border radius */
     --radius: 0.5rem;
-    
+
     /* Transições suaves */
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    
+
     /* Sombras elegantes */
     --shadow-sm: 0 1px 2px 0 hsl(220 60% 15% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(220 60% 15% / 0.1);
@@ -83,41 +83,41 @@ All colors MUST be HSL.
   .dark {
     --primary: 220 60% 50%;
     --primary-foreground: 0 0% 100%;
-    
+
     --background: 220 20% 8%;
     --foreground: 220 15% 95%;
-    
+
     --card: 220 20% 10%;
     --card-foreground: 220 15% 95%;
-    
+
     --muted: 220 20% 15%;
     --muted-foreground: 215 16% 60%;
-    
+
     --accent: 220 60% 20%;
     --accent-foreground: 0 0% 100%;
-    
+
     --secondary: 220 20% 15%;
     --secondary-foreground: 220 15% 95%;
-    
+
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    
+
     --danger: 0 84% 60%;
     --danger-foreground: 0 0% 100%;
-    
+
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
-    
+
     --border: 220 20% 20%;
     --input: 220 20% 20%;
     --ring: 220 60% 50%;
-    
+
     --popover: 220 20% 10%;
     --popover-foreground: 220 15% 95%;
-    
+
     --sidebar-background: 220 25% 6%;
     --sidebar-foreground: 220 15% 85%;
     --sidebar-primary: 220 60% 18%;

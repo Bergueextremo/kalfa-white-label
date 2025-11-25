@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Scale, Shield, TrendingDown, FileText, Zap, Check, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Footer } from "@/components/Footer";
+import { ServiceGrid } from "@/components/ServiceGrid";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -41,22 +43,22 @@ const Landing = () => {
 
   const plans = [
     {
-      name: "Starter",
-      price: "R$ 149,90",
+      name: "Individual",
+      price: "R$ 49,00",
       credits: "10 análises",
       features: ["Laudos em PDF", "Suporte por email", "Acesso 24/7"],
     },
     {
-      name: "Professional",
-      price: "R$ 399,90",
-      credits: "30 análises",
-      features: ["Laudos personalizados", "Suporte prioritário", "API de integração", "Consultoria jurídica"],
+      name: "Pro",
+      price: "R$ 199,00",
+      credits: "50 análises",
+      features: ["Laudos personalizados", "Suporte prioritário", "Acesso multi-dispositivo", "Consultoria jurídica"],
       highlighted: true,
     },
     {
       name: "Enterprise",
-      price: "R$ 1.199,90",
-      credits: "100 análises",
+      price: "R$ 999,00",
+      credits: "Análises Ilimitadas",
       features: ["Gerente dedicado", "Integrações customizadas", "SLA garantido", "Treinamento incluído"],
     },
   ];
@@ -110,16 +112,15 @@ const Landing = () => {
             com base em jurisprudência do STF e normas do Banco Central
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8 py-6" onClick={() => navigate("/auth")}>
-              Analisar Primeiro Contrato
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
             <Button size="lg" variant="outline" className="text-lg px-8 py-6">
               Ver Demonstração
             </Button>
           </div>
         </div>
       </section>
+
+      {/* Service Grid Section */}
+      <ServiceGrid />
 
       {/* Stats Section */}
       <section className="bg-primary text-primary-foreground py-16">
@@ -178,9 +179,8 @@ const Landing = () => {
               {plans.map((plan, index) => (
                 <Card
                   key={index}
-                  className={`shadow-lg hover:shadow-xl transition-all ${
-                    plan.highlighted ? "border-2 border-primary scale-105" : ""
-                  }`}
+                  className={`shadow-lg hover:shadow-xl transition-all ${plan.highlighted ? "border-2 border-primary scale-105" : ""
+                    }`}
                 >
                   {plan.highlighted && (
                     <div className="bg-primary text-primary-foreground text-center py-2 text-sm font-medium rounded-t-lg">
@@ -231,48 +231,7 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card/50 py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Scale className="h-6 w-6 text-primary" />
-                <span className="text-lg font-bold">JusContratos</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Auditoria jurídica e financeira forense de contratos
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Produto</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#features" className="hover:text-foreground transition-colors">Recursos</a></li>
-                <li><a href="#pricing" className="hover:text-foreground transition-colors">Preços</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">API</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Empresa</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Sobre</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Carreiras</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Privacidade</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Termos</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Segurança</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-            © 2025 JusContratos. Todos os direitos reservados.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

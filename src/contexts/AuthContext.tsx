@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
 interface User {
   id: string;
@@ -23,48 +24,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Verificar se há usuário salvo no localStorage
   useEffect(() => {
-    const savedUser = localStorage.getItem("juscontratos_user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'Usuário',
+          email: session.user.email || '',
+        });
+      }
+      setIsLoading(false);
+    });
+
+    // Listen for changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'Usuário',
+          email: session.user.email || '',
+        });
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Simulação de login (sem backend)
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    const mockUser: User = {
-      id: "1",
-      name: email.split("@")[0],
-      email: email,
-    };
-
-    setUser(mockUser);
-    localStorage.setItem("juscontratos_user", JSON.stringify(mockUser));
+    if (error) throw error;
     navigate("/dashboard");
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    // Simulação de cadastro (sem backend)
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+        },
+      },
+    });
 
-    const mockUser: User = {
-      id: "1",
-      name: name,
-      email: email,
-    };
-
-    setUser(mockUser);
-    localStorage.setItem("juscontratos_user", JSON.stringify(mockUser));
+    if (error) throw error;
     navigate("/dashboard");
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem("juscontratos_user");
     navigate("/");
   };
 

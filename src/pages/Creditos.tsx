@@ -3,40 +3,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Wallet, Zap, Shield, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useCredits } from "@/contexts/CreditContext";
+import { CheckoutModal } from "@/components/CheckoutModal";
+import { useState } from "react";
 
 const Creditos = () => {
-  const saldoAtual = 12;
+  const { credits } = useCredits();
+  const [showCheckout, setShowCheckout] = useState(false);
 
   const planos = [
     {
-      nome: "Starter",
+      nome: "Individual",
       creditos: 10,
-      preco: "R$ 149,90",
-      descricao: "Ideal para quem está começando",
+      preco: "R$ 49,00",
+      descricao: "Pessoa física",
       features: ["10 análises completas", "Suporte por email", "Laudos em PDF"],
     },
     {
-      nome: "Professional",
-      creditos: 30,
-      preco: "R$ 399,90",
-      descricao: "Para profissionais e escritórios",
+      nome: "Pro",
+      creditos: 50,
+      preco: "R$ 199,00",
+      descricao: "Corretor/Despachante",
       features: [
-        "30 análises completas",
-        "Suporte prioritário 24h",
+        "50 análises completas",
+        "Suporte prioritário",
         "Laudos personalizados",
-        "API de integração",
+        "Acesso multi-dispositivo",
       ],
       destaque: true,
     },
     {
       nome: "Enterprise",
-      creditos: 100,
-      preco: "R$ 1.199,90",
-      descricao: "Solução corporativa completa",
+      creditos: "Ilimitado",
+      preco: "R$ 999,00",
+      descricao: "Escritório advocacia",
       features: [
-        "100 análises completas",
+        "Análises Ilimitadas",
         "Gerente de conta dedicado",
-        "Consultoria jurídica incluída",
+        "API de integração",
         "Integrações customizadas",
         "SLA garantido",
       ],
@@ -56,23 +60,25 @@ const Creditos = () => {
         {/* Saldo Atual */}
         <Card className="shadow-lg border-2 border-primary">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="p-4 bg-primary/10 rounded-full">
                   <Wallet className="h-8 w-8 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Saldo Disponível</p>
-                  <p className="text-4xl font-bold text-foreground">{saldoAtual} créditos</p>
+                  <p className="text-4xl font-bold text-foreground">{credits} créditos</p>
                 </div>
               </div>
-              <Button size="lg">
+              <Button size="lg" onClick={() => setShowCheckout(true)}>
                 <Zap className="h-5 w-5 mr-2" />
                 Comprar Mais Créditos
               </Button>
             </div>
           </CardContent>
         </Card>
+
+        <CheckoutModal open={showCheckout} onOpenChange={setShowCheckout} />
 
         {/* Planos */}
         <div>
@@ -81,9 +87,8 @@ const Creditos = () => {
             {planos.map((plano) => (
               <Card
                 key={plano.nome}
-                className={`shadow-md hover:shadow-xl transition-all relative ${
-                  plano.destaque ? "border-2 border-primary scale-105" : ""
-                }`}
+                className={`shadow-md hover:shadow-xl transition-all relative ${plano.destaque ? "border-2 border-primary scale-105" : ""
+                  }`}
               >
                 {plano.destaque && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -113,7 +118,7 @@ const Creditos = () => {
                     ))}
                   </ul>
 
-                  <Button className="w-full" variant={plano.destaque ? "default" : "outline"}>
+                  <Button className="w-full" variant={plano.destaque ? "default" : "outline"} onClick={() => setShowCheckout(true)}>
                     Adquirir Plano
                   </Button>
                 </CardContent>
