@@ -27,9 +27,15 @@ Deno.serve(async (req) => {
         // ============================================================
         // STEP 1: CREATE CUSTOMER
         // ============================================================
+        const rawName = (customer.name ?? '').trim();
+        const normalizedName = rawName.replace(/\s+/g, ' ');
+        const [firstNameFromCustomer, ...lastNamePartsFromCustomer] = normalizedName.split(' ');
+        const appmaxFirstname = firstNameFromCustomer || 'Cliente';
+        const appmaxLastname = lastNamePartsFromCustomer.join(' ') || (firstNameFromCustomer ? '' : 'JusContratos');
+
         console.log('Step 1: Creating customer in Appmax. Payload:', {
-            firstname: customer.name.split(' ')[0],
-            lastname: customer.name.split(' ').slice(1).join(' ') || 'Cliente',
+            firstname: appmaxFirstname,
+            lastname: appmaxLastname,
             email: customer.email,
             telephone: customer.phone.replace(/\D/g, ''),
             cpf: customer.cpf.replace(/\D/g, ''),
@@ -43,8 +49,8 @@ Deno.serve(async (req) => {
 
         const customerPayload = {
             "access-token": appmaxToken,
-            firstname: customer.name.split(' ')[0],
-            lastname: customer.name.split(' ').slice(1).join(' ') || 'Cliente',
+            firstname: appmaxFirstname,
+            lastname: appmaxLastname,
             email: customer.email,
             telephone: customer.phone.replace(/\D/g, ''),
             cpf: customer.cpf.replace(/\D/g, ''),
