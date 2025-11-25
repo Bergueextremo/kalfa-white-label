@@ -1,5 +1,4 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { GoogleGenerativeAI } from 'npm:@google/generative-ai'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -132,13 +131,9 @@ Deno.serve(async (req) => {
 
         // 5. Prepare Gemini
         const apiKey = Deno.env.get('GEMINI_API_KEY');
-        const genAI = new GoogleGenerativeAI(apiKey)
-
-        // Use gemini-1.5-pro (Standard, High Intelligence) or gemini-1.5-flash (Faster/Cheaper)
-        const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-pro",
-            generationConfig: { responseMimeType: "application/json" } // Força resposta JSON pura
-        })
+        if (!apiKey) {
+            throw new Error('GEMINI_API_KEY not configured');
+        }
 
         const arrayBuffer = await fileData.arrayBuffer()
         const base64 = btoa(
@@ -203,19 +198,42 @@ Deno.serve(async (req) => {
       }
     `
 
-        console.log('Sending to Gemini...')
+        console.log('Sending to Gemini Pro via REST API...')
 
-        const result = await model.generateContent([
-            prompt,
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
             {
-                inlineData: {
-                    data: base64,
-                    mimeType: fileData.type || 'application/pdf'
-                }
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            {
+                                inline_data: {
+                                    mime_type: fileData.type || 'application/pdf',
+                                    data: base64
+                                }
+                            }
+                        ]
+                    }],
+                    generationConfig: {
+                        response_mime_type: "application/json"
+                    }
+                })
             }
-        ])
+        );
 
-        const responseText = result.response.text()
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Gemini API Error:', errorText);
+            throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
+        }
+
+        const result = await response.json();
+        const responseText = result.candidates[0].content.parts[0].text;
 
         // Com generationConfig JSON, não precisamos de Regex agressivo, mas mantemos por segurança
         let aiResult;
@@ -262,7 +280,7 @@ Deno.serve(async (req) => {
     } catch (error) {
         console.error('Error processing audit:', error)
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
     }
