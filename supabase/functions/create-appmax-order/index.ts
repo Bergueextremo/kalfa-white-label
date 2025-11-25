@@ -123,29 +123,67 @@ Deno.serve(async (req) => {
         console.log('Extracted order ID:', orderId);
 
         // ============================================================
-        // STEP 3: PROCESS PIX PAYMENT
+        // STEP 3: PROCESS PAYMENT
         // ============================================================
-        console.log('Processing PIX payment. Checking for PIX data...');
-        
         let responsePayload: any = {
             success: true,
             order_id: orderId
         };
 
-        // Check if PIX data is already in the order response
-        const orderDataObj = orderData.data || orderData;
-        
-        if (orderDataObj.pix_qrcode || orderDataObj.pix_emv) {
-            console.log('PIX data found in order response!');
+        // PIX flow: gerar QR Code via endpoint de pagamento
+        if (payment_method === 'pix') {
+            console.log('Processing PIX via /payment/pix endpoint...');
+
+            const pixPayload = {
+                "access-token": appmaxToken,
+                cart: {
+                    order_id: orderId
+                },
+                customer: {
+                    customer_id: customerId
+                },
+                payment: {
+                    pix: {
+                        document_number: customer.cpf.replace(/\D/g, '')
+                    }
+                }
+            };
+
+            const payRes = await fetch('https://admin.appmax.com.br/api/v3/payment/pix', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pixPayload)
+            });
+
+            const payData = await payRes.json();
+            console.log('PIX payment raw response:', JSON.stringify(payData));
+
+            if (!payData?.success) {
+                console.error('Error processing PIX payment:', payData);
+                throw new Error('Erro ao gerar PIX na Appmax: ' + (payData.text || 'Unknown error'));
+            }
+
+            const pixInfo = payData.data?.pix || payData.pix;
+            if (!pixInfo) {
+                console.error('PIX payment response without pix data:', payData);
+                throw new Error('Pagamento PIX criado, mas a Appmax não retornou os dados do QR Code.');
+            }
+
             responsePayload.pix_data = {
-                qr_code_url: orderDataObj.pix_qrcode,
-                copy_paste: orderDataObj.pix_emv,
-                expiration: orderDataObj.pix_expiration_date
+                qr_code_url: pixInfo.qrcode_url || pixInfo.qrcode || pixInfo.qr_code_url,
+                copy_paste: pixInfo.emv || pixInfo.qrcode_text || pixInfo.qr_code_text,
+                expiration: pixInfo.expiration_date || pixInfo.expires_at
             };
         } else {
-            console.log('No PIX data found in response. Full response:', JSON.stringify(orderDataObj, null, 2));
-            console.log('Using checkout URL as fallback:', orderDataObj.pix_payment_link || `https://pay.appmax.com.br/checkout/${orderId}`);
-            responsePayload.checkout_url = orderDataObj.pix_payment_link || `https://pay.appmax.com.br/checkout/${orderId}`;
+            console.log('Non-PIX payment. Using checkout URL if available...');
+            const orderDataObj = orderData.data || orderData;
+            const checkoutUrl =
+                orderDataObj.pix_payment_link ||
+                orderDataObj.payment_link ||
+                orderDataObj.checkout_url ||
+                `https://pay.appmax.com.br/checkout/${orderId}`;
+
+            responsePayload.checkout_url = checkoutUrl;
         }
 
         // Update Supabase
