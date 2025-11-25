@@ -1,5 +1,4 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { GoogleGenerativeAI } from 'npm:@google/generative-ai'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -136,7 +135,7 @@ Deno.serve(async (req) => {
         }
         // Return 200 with error details to bypass generic client errors
         return new Response(
-            JSON.stringify({ success: false, error: error.message || 'Unknown error' }),
+            JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }),
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
     }
