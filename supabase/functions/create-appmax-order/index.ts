@@ -6,7 +6,6 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-    // Tratamento de CORS
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
@@ -14,18 +13,33 @@ Deno.serve(async (req) => {
     try {
         const { customer, audit_id, payment_method } = await req.json()
 
-        // Validação
-        if (!customer?.cpf) throw new Error('CPF é obrigatório');
+        console.log(`Creating Appmax order for audit: ${audit_id} Payment method: ${payment_method}`);
+
+        if (!customer?.cpf) {
+            throw new Error('CPF é obrigatório');
+        }
 
         const appmaxToken = Deno.env.get('JUSCONTRATO-APPMAX');
-        if (!appmaxToken) throw new Error('Token Appmax não configurado');
-
-        console.log(`>>> INICIANDO. Audit: ${audit_id}`);
+        if (!appmaxToken) {
+            throw new Error('Token Appmax não configurado');
+        }
 
         // ============================================================
-        // PASSO 1: CRIAR CLIENTE (CUSTOMER)
+        // STEP 1: CREATE CUSTOMER
         // ============================================================
-        console.log('--- PASSO 1: Criando Cliente ---');
+        console.log('Step 1: Creating customer in Appmax. Payload:', {
+            firstname: customer.name.split(' ')[0],
+            lastname: customer.name.split(' ').slice(1).join(' ') || 'Cliente',
+            email: customer.email,
+            telephone: customer.phone.replace(/\D/g, ''),
+            cpf: customer.cpf.replace(/\D/g, ''),
+            zipcode: "01310100",
+            address: "Avenida Paulista",
+            number: "1000",
+            neighborhood: "Bela Vista",
+            city: "São Paulo",
+            state: "SP"
+        });
 
         const customerPayload = {
             "access-token": appmaxToken,
@@ -33,13 +47,13 @@ Deno.serve(async (req) => {
             lastname: customer.name.split(' ').slice(1).join(' ') || 'Cliente',
             email: customer.email,
             telephone: customer.phone.replace(/\D/g, ''),
-            postcode: "01310100", // CEP genérico para produto digital
-            address_street: "Av Paulista",
-            address_street_number: "1000",
-            address_street_district: "Bela Vista",
-            address_city: "São Paulo",
-            address_state: "SP",
-            ip: "127.0.0.1"
+            cpf: customer.cpf.replace(/\D/g, ''),
+            zipcode: "01310100",
+            address: "Avenida Paulista",
+            number: "1000",
+            neighborhood: "Bela Vista",
+            city: "São Paulo",
+            state: "SP"
         };
 
         const custRes = await fetch('https://admin.appmax.com.br/api/v3/customer', {
@@ -49,34 +63,43 @@ Deno.serve(async (req) => {
         });
 
         const custData = await custRes.json();
+        console.log('Customer creation response status:', custRes.status);
+        console.log('Customer creation raw response:', JSON.stringify(custData));
 
         if (!custData.success && custData.status !== 200) {
-            console.error('Erro Customer:', custData);
-            throw new Error('Erro ao criar cliente na Appmax');
+            console.error('Error creating customer:', custData);
+            throw new Error('Erro ao criar cliente na Appmax: ' + (custData.text || 'Unknown error'));
         }
 
         const customerId = custData.data?.id || custData.id;
-        console.log('Cliente ID:', customerId);
+        console.log('Customer created successfully. ID:', customerId);
 
         // ============================================================
-        // PASSO 2: CRIAR PEDIDO (ORDER)
+        // STEP 2: CREATE ORDER
         // ============================================================
-        console.log('--- PASSO 2: Criando Pedido ---');
+        console.log('Step 2: Creating order in Appmax. Payload:', {
+            customer_id: customerId,
+            product: [{
+                name: "Auditoria Jurídica Premium",
+                price: "48.00",
+                qty: "1",
+                digital_product: 1
+            }],
+            shipping: "1.00",
+            payment_type: payment_method
+        });
 
         const orderPayload = {
             "access-token": appmaxToken,
             customer_id: customerId,
-            products: [
-                {
-                    sku: `AUDIT-${audit_id}`,
-                    name: "Auditoria Jurídica Premium",
-                    qty: 1,
-                    price: 48.00,
-                    digital_product: 1 // IMPORTANTE: Marca como infoproduto
-                }
-            ],
-            shipping: 1.00, // Frete simbólico
-            total: 49.00
+            product: [{
+                name: "Auditoria Jurídica Premium",
+                price: "48.00",
+                qty: "1",
+                digital_product: 1
+            }],
+            shipping: "1.00",
+            payment_type: payment_method
         };
 
         const orderRes = await fetch('https://admin.appmax.com.br/api/v3/order', {
@@ -86,74 +109,46 @@ Deno.serve(async (req) => {
         });
 
         const orderData = await orderRes.json();
+        console.log('Appmax response status:', orderRes.status);
+        console.log('Appmax order created successfully. Full response:', JSON.stringify(orderData, null, 2));
+        console.log('Appmax raw response:', JSON.stringify(orderData));
+        console.log('Appmax response headers:', Object.fromEntries(orderRes.headers.entries()));
 
         if (!orderData.success && orderData.status !== 200) {
-            console.error('Erro Order:', orderData);
-            throw new Error('Erro ao criar pedido na Appmax');
+            console.error('Error creating order:', orderData);
+            throw new Error('Erro ao criar pedido na Appmax: ' + (orderData.text || 'Unknown error'));
         }
 
         const orderId = orderData.data?.id || orderData.id;
-        console.log('Pedido Criado ID:', orderId);
+        console.log('Extracted order ID:', orderId);
 
         // ============================================================
-        // PASSO 3: EFETUAR PAGAMENTO (ESSENCIAL PARA O PIX)
+        // STEP 3: PROCESS PIX PAYMENT
         // ============================================================
-        // É AQUI QUE O PIX É GERADO. SE NÃO FIZER ISSO, NADA ACONTECE.
-
-        console.log('--- PASSO 3: Processando Pagamento ---');
-
-        let responsePayload = {
+        console.log('Processing PIX payment. Checking for PIX data...');
+        
+        let responsePayload: any = {
             success: true,
-            order_id: orderId,
-            pix_data: null as any
+            order_id: orderId
         };
 
-        if (payment_method === 'pix') {
-            const pixPayload = {
-                "access-token": appmaxToken,
-                cart: {
-                    order_id: orderId
-                },
-                customer: {
-                    customer_id: customerId
-                },
-                payment: {
-                    pix: {
-                        document_number: customer.cpf.replace(/\D/g, '') // CPF Obrigatório
-                    }
-                }
+        // Check if PIX data is already in the order response
+        const orderDataObj = orderData.data || orderData;
+        
+        if (orderDataObj.pix_qrcode || orderDataObj.pix_emv) {
+            console.log('PIX data found in order response!');
+            responsePayload.pix_data = {
+                qr_code_url: orderDataObj.pix_qrcode,
+                copy_paste: orderDataObj.pix_emv,
+                expiration: orderDataObj.pix_expiration_date
             };
-
-            const payRes = await fetch('https://admin.appmax.com.br/api/v3/payment/pix', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(pixPayload)
-            });
-
-            const payData = await payRes.json();
-            console.log('Resposta Pagamento:', JSON.stringify(payData));
-
-            if (!payData.success) {
-                throw new Error('Erro ao processar pagamento: ' + (payData.text || 'Erro desconhecido'));
-            }
-
-            // AQUI pegamos o QR Code correto
-            const pixInfo = payData.data?.pix || payData.pix;
-
-            if (pixInfo) {
-                responsePayload.pix_data = {
-                    qr_code_url: pixInfo.qrcode_url, // URL da imagem do QR Code
-                    copy_paste: pixInfo.emv || pixInfo.qrcode_text, // Código Copia e Cola
-                    expiration: pixInfo.expiration_date
-                };
-            } else {
-                throw new Error('Pagamento criado, mas Appmax não retornou dados do PIX.');
-            }
+        } else {
+            console.log('No PIX data found in response. Full response:', JSON.stringify(orderDataObj, null, 2));
+            console.log('Using checkout URL as fallback:', orderDataObj.pix_payment_link || `https://pay.appmax.com.br/checkout/${orderId}`);
+            responsePayload.checkout_url = orderDataObj.pix_payment_link || `https://pay.appmax.com.br/checkout/${orderId}`;
         }
 
-        // ============================================================
-        // ATUALIZAR SUPABASE
-        // ============================================================
+        // Update Supabase
         const supabase = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -165,11 +160,11 @@ Deno.serve(async (req) => {
                 appmax_order_id: orderId,
                 payment_status: 'pending',
                 payment_method: payment_method,
-                payment_metadata: responsePayload.pix_data
+                payment_metadata: responsePayload.pix_data || { checkout_url: responsePayload.checkout_url }
             })
             .eq('id', audit_id);
 
-        console.log('SUCESSO TOTAL. Retornando PIX para o front.');
+        console.log('Final response to frontend:', JSON.stringify(responsePayload, null, 2));
 
         return new Response(
             JSON.stringify(responsePayload),
@@ -177,7 +172,7 @@ Deno.serve(async (req) => {
         );
 
     } catch (error) {
-        console.error('ERRO FATAL:', error);
+        console.error('FATAL ERROR:', error);
         return new Response(
             JSON.stringify({
                 success: false,
