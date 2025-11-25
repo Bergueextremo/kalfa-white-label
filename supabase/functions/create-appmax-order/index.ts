@@ -75,11 +75,11 @@ Deno.serve(async (req) => {
         console.log('Customer created successfully. ID:', customerId);
 
         // ============================================================
-        // STEP 2: CREATE ORDER
+        // STEP 2: CREATE ORDER WITH BUNDLE
         // ============================================================
         console.log('Step 2: Creating order in Appmax. Payload:', {
             customer_id: customerId,
-            product: [{
+            bundle: [{
                 name: "Auditoria Jurídica Premium",
                 price: "48.00",
                 qty: "1",
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
         const orderPayload = {
             "access-token": appmaxToken,
             customer_id: customerId,
-            product: [{
+            bundle: [{
                 name: "Auditoria Jurídica Premium",
                 price: "48.00",
                 qty: "1",
