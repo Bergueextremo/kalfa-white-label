@@ -85,26 +85,28 @@ Deno.serve(async (req) => {
         // ============================================================
         console.log('Step 2: Creating order in Appmax. Payload:', {
             customer_id: customerId,
-            bundle: [{
+            products: [{
+                sku: "AUDIT-PREMIUM",
                 name: "Auditoria Jurídica Premium",
-                price: "48.00",
-                qty: "1",
+                price: 49.90,
+                qty: 1,
                 digital_product: 1
             }],
-            shipping: "1.00",
+            shipping: 0.00,
             payment_type: payment_method
         });
 
         const orderPayload = {
             "access-token": appmaxToken,
             customer_id: customerId,
-            bundle: [{
+            products: [{
+                sku: "AUDIT-PREMIUM",
                 name: "Auditoria Jurídica Premium",
-                price: "48.00",
-                qty: "1",
+                price: 49.90,
+                qty: 1,
                 digital_product: 1
             }],
-            shipping: "1.00",
+            shipping: 0.00,
             payment_type: payment_method
         };
 
@@ -170,16 +172,55 @@ Deno.serve(async (req) => {
             }
 
             const pixInfo = payData.data?.pix || payData.pix;
-            if (!pixInfo) {
-                console.error('PIX payment response without pix data:', payData);
-                throw new Error('Pagamento PIX criado, mas a Appmax não retornou os dados do QR Code.');
+
+            if (pixInfo) {
+                responsePayload.pix_data = {
+                    qr_code_url: pixInfo.qrcode_url || pixInfo.qrcode || pixInfo.qr_code_url,
+                    copy_paste: pixInfo.emv || pixInfo.qrcode_text || pixInfo.qr_code_text,
+                    expiration: pixInfo.expiration_date || pixInfo.expires_at
+                };
+            } else {
+                console.warn('PIX payment response without direct pix data. Attempting fallback...');
+
+                // Tentar buscar detalhes do pagamento se houver pay_reference
+                const payReference = payData.data?.pay_reference || payData.pay_reference;
+
+                if (payReference) {
+                    console.log(`Fetching payment details for reference: ${payReference}`);
+                    try {
+                        const checkPayRes = await fetch(`https://admin.appmax.com.br/api/v3/payment/${payReference}?access-token=${appmaxToken}`);
+                        if (checkPayRes.ok) {
+                            const checkPayData = await checkPayRes.json();
+                            console.log('Payment details response:', JSON.stringify(checkPayData));
+
+                            const checkPixInfo = checkPayData.data?.pix || checkPayData.pix;
+                            if (checkPixInfo) {
+                                responsePayload.pix_data = {
+                                    qr_code_url: checkPixInfo.qrcode_url || checkPixInfo.qrcode || checkPixInfo.qr_code_url,
+                                    copy_paste: checkPixInfo.emv || checkPixInfo.qrcode_text || checkPixInfo.qr_code_text,
+                                    expiration: checkPixInfo.expiration_date || checkPixInfo.expires_at
+                                };
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error fetching payment details:', err);
+                    }
+                }
+
+                // Se ainda não temos pix_data, fallback para checkout URL
+                if (!responsePayload.pix_data) {
+                    console.log('Could not retrieve QR Code directly. Falling back to Checkout URL.');
+                    const orderDataObj = orderData.data || orderData;
+                    const checkoutUrl =
+                        orderDataObj.pix_payment_link ||
+                        orderDataObj.payment_link ||
+                        orderDataObj.checkout_url ||
+                        `https://pay.appmax.com.br/checkout/${orderId}`;
+
+                    responsePayload.checkout_url = checkoutUrl;
+                }
             }
 
-            responsePayload.pix_data = {
-                qr_code_url: pixInfo.qrcode_url || pixInfo.qrcode || pixInfo.qr_code_url,
-                copy_paste: pixInfo.emv || pixInfo.qrcode_text || pixInfo.qr_code_text,
-                expiration: pixInfo.expiration_date || pixInfo.expires_at
-            };
         } else {
             console.log('Non-PIX payment. Using checkout URL if available...');
             const orderDataObj = orderData.data || orderData;
