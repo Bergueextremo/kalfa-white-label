@@ -17,35 +17,47 @@ export type Database = {
       auditorias_contratos: {
         Row: {
           ai_result_json: Json | null
+          appmax_order_id: string | null
           contract_type: string | null
           created_at: string
           file_path: string
           id: string
+          payment_metadata: Json | null
+          payment_status: string | null
           potential_savings: number | null
           score_vantagem: number | null
           status: Database["public"]["Enums"]["auditoria_status"]
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           ai_result_json?: Json | null
+          appmax_order_id?: string | null
           contract_type?: string | null
           created_at?: string
           file_path: string
           id?: string
+          payment_metadata?: Json | null
+          payment_status?: string | null
           potential_savings?: number | null
           score_vantagem?: number | null
           status?: Database["public"]["Enums"]["auditoria_status"]
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           ai_result_json?: Json | null
+          appmax_order_id?: string | null
           contract_type?: string | null
           created_at?: string
           file_path?: string
           id?: string
+          payment_metadata?: Json | null
+          payment_status?: string | null
           potential_savings?: number | null
           score_vantagem?: number | null
           status?: Database["public"]["Enums"]["auditoria_status"]
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []

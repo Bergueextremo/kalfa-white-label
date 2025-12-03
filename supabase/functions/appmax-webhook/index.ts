@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
             .from('auditorias_contratos')
             .update({
                 payment_status: internalStatus,
-                status: internalStatus === 'approved' ? 'processing' : 'pending_payment',
+                status: internalStatus === 'approved' ? 'PROCESSING' : 'UPLOADING',
                 updated_at: new Date().toISOString()
             })
             .eq('appmax_order_id', appmaxOrderId)
