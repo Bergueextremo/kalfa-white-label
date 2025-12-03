@@ -109,20 +109,24 @@ Deno.serve(async (req) => {
 
         // 4. Fetch Audit Details (including type for model selection)
         let targetPath = file_path;
-        let isPremium = false; // Default to free
+        let isPremium = true; // All paid audits are premium
 
         const { data: audit, error: fetchError } = await supabaseAdmin
             .from('auditorias_contratos')
-            .select('file_path, is_premium')
+            .select('file_path, payment_status')
             .eq('id', audit_id)
             .single();
 
-        if (fetchError) throw new Error('Audit not found');
+        if (fetchError) {
+            console.error('Fetch audit error:', fetchError);
+            throw new Error('Audit not found: ' + fetchError.message);
+        }
 
         if (!targetPath) {
             targetPath = audit.file_path;
         }
-        isPremium = audit.is_premium || false;
+        // Premium if payment is approved
+        isPremium = audit.payment_status === 'approved';
 
 
         console.log(`Audit type: ${isPremium ? 'PREMIUM' : 'FREE'}`);
