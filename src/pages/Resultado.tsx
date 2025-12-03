@@ -17,6 +17,7 @@ interface AuditRecord {
   status: string;
   score_vantagem: number;
   ai_result_json: any;
+  file_path: string;
 }
 
 const Resultado = () => {
@@ -115,7 +116,22 @@ const Resultado = () => {
   }
 
   // If audit is being processed, show processing UI
-  if (!audit.ai_result_json || audit.status === 'processing') {
+  if (!audit.ai_result_json || audit.status === 'processing' || audit.status === 'PROCESSING') {
+    const handleRetryProcessing = async () => {
+      try {
+        toast.info("Reiniciando processamento...");
+        const { data, error } = await supabase.functions.invoke('process-audit', {
+          body: { audit_id: audit.id, file_path: audit.file_path }
+        });
+        if (error) throw error;
+        toast.success("Processamento reiniciado!");
+        setTimeout(() => fetchAudit(id!), 3000);
+      } catch (err) {
+        console.error("Erro ao reprocessar:", err);
+        toast.error("Erro ao reiniciar processamento");
+      }
+    };
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="flex flex-col items-center text-center px-4 max-w-2xl">
@@ -129,6 +145,9 @@ const Resultado = () => {
             Isso pode levar alguns minutos. Esta página será atualizada automaticamente.
           </p>
           <div className="flex gap-4">
+            <Button variant="outline" onClick={handleRetryProcessing}>
+              Reprocessar
+            </Button>
             <Button variant="outline" onClick={() => window.location.reload()}>
               Atualizar Página
             </Button>
