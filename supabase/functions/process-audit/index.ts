@@ -115,11 +115,16 @@ Deno.serve(async (req) => {
             .from('auditorias_contratos')
             .select('file_path, payment_status')
             .eq('id', audit_id)
-            .single();
+            .maybeSingle();
 
         if (fetchError) {
             console.error('Fetch audit error:', fetchError);
-            throw new Error('Audit not found: ' + fetchError.message);
+            throw new Error('Database error fetching audit: ' + fetchError.message);
+        }
+
+        if (!audit) {
+            console.error(`Audit not found for id: ${audit_id}`);
+            throw new Error(`Audit record not found for id: ${audit_id}. It may have been deleted or not created yet.`);
         }
 
         if (!targetPath) {
