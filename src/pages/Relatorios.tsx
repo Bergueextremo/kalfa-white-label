@@ -3,11 +3,12 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Eye, Loader2, AlertCircle, Trash2 } from "lucide-react";
+import { FileText, Download, Eye, Loader2, AlertCircle, Trash2, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { QuickAuditModal } from "@/components/QuickAuditModal";
 
 interface AuditRecord {
   id: string;
@@ -23,6 +24,8 @@ const Relatorios = () => {
   const { user } = useAuth();
   const [audits, setAudits] = useState<AuditRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateFilter, setDateFilter] = useState<'7' | '30' | '90' | 'all'>('all');
+  const [showQuickAudit, setShowQuickAudit] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -80,12 +83,27 @@ const Relatorios = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Meus Relatórios</h1>
-          <p className="text-muted-foreground mt-1">
-            Acesse o histórico completo de suas auditorias
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Meus Relatórios</h1>
+            <p className="text-muted-foreground mt-1">
+              Acesse o histórico completo de suas auditorias
+            </p>
+          </div>
+
+          <Button
+            onClick={() => setShowQuickAudit(true)}
+            className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all"
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Nova Auditoria Rápida
+          </Button>
         </div>
+
+        <QuickAuditModal
+          open={showQuickAudit}
+          onOpenChange={setShowQuickAudit}
+        />
 
         {loading ? (
           <div className="flex justify-center py-12">
@@ -99,7 +117,7 @@ const Relatorios = () => {
               <p className="text-muted-foreground mb-4">
                 Você ainda não realizou nenhuma auditoria de contrato.
               </p>
-              <Button onClick={() => navigate('/nova-auditoria')}>
+              <Button onClick={() => setShowQuickAudit(true)}>
                 Nova Auditoria
               </Button>
             </CardContent>

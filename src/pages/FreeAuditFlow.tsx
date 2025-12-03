@@ -44,6 +44,7 @@ export default function FreeAuditFlow() {
     // Processing State
     const [progressStep, setProgressStep] = useState(0);
     const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+    const [uploadedFilePath, setUploadedFilePath] = useState<string | null>(null);
 
     useEffect(() => {
         if (location.state?.contractType) {
@@ -114,6 +115,9 @@ export default function FreeAuditFlow() {
 
             if (uploadError) throw uploadError;
 
+            const fullPath = `temp-scans/${fileName}`;
+            setUploadedFilePath(fullPath);
+
             // 2. Call Edge Function
             const { data, error } = await supabase.functions.invoke('scan-contract-light', {
                 body: {
@@ -151,7 +155,8 @@ export default function FreeAuditFlow() {
             state: {
                 scanResult,
                 leadData: { name, email, phone: whatsapp },
-                auditId: null // Will be created during checkout
+                auditId: null, // Will be created during checkout
+                filePath: uploadedFilePath
             }
         });
     };

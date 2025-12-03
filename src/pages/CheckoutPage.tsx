@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,23 @@ export default function CheckoutPage() {
     const location = useLocation();
     const { toast } = useToast();
 
-    // Recupera dados passados pela navegação anterior
-    const { scanResult, leadData, auditId } = location.state || {};
+    // Recupera dados passados pela navegação anterior ou sessionStorage
+    const locationState = location.state || {};
+
+    // Tenta recuperar do sessionStorage se não vier do state (ex: refresh)
+    const savedCheckoutData = JSON.parse(sessionStorage.getItem('checkout_data') || '{}');
+
+    const scanResult = locationState.scanResult || savedCheckoutData.scanResult;
+    const leadData = locationState.leadData || savedCheckoutData.leadData;
+    const auditId = locationState.auditId || savedCheckoutData.auditId;
+    const filePath = locationState.filePath || savedCheckoutData.filePath;
+
+    // Salva no sessionStorage sempre que tiver dados novos
+    useEffect(() => {
+        if (location.state) {
+            sessionStorage.setItem('checkout_data', JSON.stringify(location.state));
+        }
+    }, [location.state]);
 
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'pix'>('credit_card');
@@ -53,6 +68,11 @@ export default function CheckoutPage() {
     // --- DADOS DO PIX (Retorno da API) ---
     const [pixQrCode, setPixQrCode] = useState('');
     const [pixCopyPaste, setPixCopyPaste] = useState('');
+    const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
+    const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+    const [pollingActive, setPollingActive] = useState(false);
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
+    const pollingIntervalRef = useRef<number | null>(null);
 
     // --- MÁSCARAS E FORMATAÇÃO ---
 
@@ -111,6 +131,148 @@ export default function CheckoutPage() {
 
     const isFormValid = isPersonalValid && isAddressValid && (paymentMethod === 'pix' || isCardDataValid);
 
+    // --- POLLING DE STATUS DO PAGAMENTO ---
+    const checkPaymentStatus = async () => {
+        if (!currentAuditId && !currentOrderId) return;
+
+        console.log('Verificando status do pagamento...', { auditId: currentAuditId, orderId: currentOrderId });
+
+        try {
+            const { data, error } = await supabase.functions.invoke('check-payment-status', {
+                body: {
+                    audit_id: currentAuditId,
+                    order_id: currentOrderId
+                }
+            });
+
+            if (error) {
+                console.error('Erro ao verificar status:', error);
+                return;
+            }
+
+            console.log('Status recebido:', data?.payment_status);
+
+            if (data?.payment_status === 'approved') {
+                console.log('✅ Pagamento aprovado! Redirecionando...');
+
+                // Stop polling
+                setPollingActive(false);
+                if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                    pollingIntervalRef.current = null;
+                }
+
+                toast({
+                    title: "Pagamento confirmado!",
+                    description: "Redirecionando para o resultado...",
+                });
+
+                setTimeout(() => {
+                    const finalId = data.audit_id || currentAuditId;
+
+                    // Validate that we have a real UUID, not a temp ID
+                    if (!finalId || finalId.toString().startsWith('temp-')) {
+                        console.error('ID de auditoria inválido:', finalId);
+                        toast({
+                            title: "Erro",
+                            description: "Não foi possível gerar a auditoria. Tente novamente.",
+                            variant: "destructive"
+                        });
+                        return;
+                    }
+
+                    console.log('Navegando para /resultado/' + finalId);
+                    navigate(`/resultado/${finalId}`);
+                }, 1500);
+            } else if (data?.payment_status === 'rejected' || data?.payment_status === 'cancelled') {
+                console.log('❌ Pagamento recusado/cancelado');
+
+                // Stop polling
+                setPollingActive(false);
+                if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                    pollingIntervalRef.current = null;
+                }
+
+                toast({
+                    title: "Pagamento não aprovado",
+                    description: "O pagamento foi recusado ou cancelado.",
+                    variant: "destructive"
+                });
+
+                setPixQrCode('');
+                setPixCopyPaste('');
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error('Erro ao verificar status:', error);
+        }
+    };
+
+    // useEffect para iniciar/parar polling
+    useEffect(() => {
+        if (pollingActive && currentAuditId) {
+            console.log('▶️ Iniciando polling de pagamento...');
+
+            // Check immediately
+            checkPaymentStatus();
+
+            // Then check every 3 seconds
+            pollingIntervalRef.current = window.setInterval(() => {
+                checkPaymentStatus();
+            }, 3000);
+
+            // Timeout after 5 minutes
+            const timeout = setTimeout(() => {
+                console.log('⏱️ Timeout de 5 minutos atingido');
+                setPollingActive(false);
+                if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                    pollingIntervalRef.current = null;
+                }
+                toast({
+                    title: "Tempo esgotado",
+                    description: "O QR Code PIX expirou. Gere um novo pagamento.",
+                    variant: "destructive"
+                });
+            }, 5 * 60 * 1000); // 5 minutes
+
+            // Cleanup
+            return () => {
+                if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                }
+                clearTimeout(timeout);
+            };
+        }
+    }, [pollingActive, currentAuditId]);
+
+    // Timer countdown effect
+    useEffect(() => {
+        if (timeLeft === null || timeLeft <= 0) return;
+
+        const timerId = setInterval(() => {
+            setTimeLeft((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(timerId);
+    }, [timeLeft]);
+
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    };
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+            }
+        };
+    }, []);
+
     // --- ENVIO DO PEDIDO ---
     const handleSubmit = async () => {
         if (!isFormValid) {
@@ -131,6 +293,15 @@ export default function CheckoutPage() {
             const cleanCep = cep.replace(/\D/g, '');
             const cleanCardNumber = cardNumber.replace(/\D/g, '');
 
+            if (!filePath) {
+                toast({
+                    title: "Erro no arquivo",
+                    description: "O arquivo do contrato não foi encontrado. Por favor, refaça o upload.",
+                    variant: "destructive"
+                });
+                return;
+            }
+
             // 2. Preparar Payload Base
             const payload: any = {
                 customer: {
@@ -150,6 +321,7 @@ export default function CheckoutPage() {
                 },
                 payment_method: paymentMethod,
                 audit_id: auditId || 'temp-' + Date.now(),
+                file_path: filePath, // Caminho do arquivo para auditoria premium
                 installments: 1 // Padrão 1x (adicione um select na UI se quiser mudar)
             };
 
@@ -190,19 +362,44 @@ export default function CheckoutPage() {
             }
 
             // --- TRATAMENTO DO RETORNO ---
-            console.log('========================================');
-            console.log('PROCESSANDO RESPOSTA DO PAGAMENTO');
-            console.log('========================================');
+            console.log('Success:', data.success);
+            console.log('Payment Success:', data.payment_success);
+            console.log('PIX Data:', data.pix_data);
+            console.log('Audit ID retornado:', data.audit_id);
 
-            // PIX
-            if (paymentMethod === 'pix' && data.pix_data) {
-                console.log('✓ PIX detectado na resposta');
+            //Update audit ID from backend if provided
+            if (data.audit_id) {
+                console.log('Atualizando currentAuditId de', currentAuditId, 'para', data.audit_id);
+                setCurrentAuditId(data.audit_id);
+            }
+
+            // PIX gerado
+            if (data.pix_data) {
+                console.log('✓ PIX gerado com sucesso!');
                 console.log('QR Code URL:', data.pix_data.qr_code_url || data.pix_data.qr_code);
                 console.log('Copy/Paste:', data.pix_data.qr_code_text || data.pix_data.copy_paste);
 
                 setPixQrCode(data.pix_data.qr_code_url || data.pix_data.qr_code);
                 setPixCopyPaste(data.pix_data.qr_code_text || data.pix_data.copy_paste);
+
+                // Start polling
+                if (data.order_id) {
+                    setCurrentOrderId(data.order_id);
+                }
+
+                if (data.audit_id) {
+                    console.log('Iniciando polling para Audit ID:', data.audit_id);
+                    setCurrentAuditId(data.audit_id);
+                    setPollingActive(true);
+                } else if (auditId) {
+                    setCurrentAuditId(auditId);
+                    setPollingActive(true);
+                } else {
+                    console.warn('Audit ID não disponível para polling');
+                }
+
                 setLoading(false);
+                setTimeLeft(15 * 60); // 15 minutos em segundos
                 toast({
                     title: "PIX gerado!",
                     description: "Escaneie o QR Code para finalizar.",
@@ -216,13 +413,37 @@ export default function CheckoutPage() {
                     description: "Sua auditoria foi liberada.",
                 });
                 setTimeout(() => {
-                    navigate('/resultado', { state: { auditId } });
+                    const finalId = data.audit_id || auditId;
+
+                    // Validate that we have a real UUID, not a temp ID
+                    if (!finalId || finalId.toString().startsWith('temp-')) {
+                        console.error('ID de auditoria inválido:', finalId);
+                        toast({
+                            title: "Erro",
+                            description: "Não foi possível gerar a auditoria. Tente novamente.",
+                            variant: "destructive"
+                        });
+                        return;
+                    }
+
+                    console.log('Navegando para /resultado/' + finalId);
+                    navigate(`/resultado/${finalId}`);
                 }, 2000);
             }
             // Cartão precisa de 3DS ou redirecionamento
             else if (data.checkout_url) {
                 console.log('→ Redirecionando para checkout URL:', data.checkout_url);
                 window.location.href = data.checkout_url;
+            }
+            // Cartão Recusado
+            else if (paymentMethod === 'credit_card' && !data.payment_success) {
+                console.log('❌ Pagamento recusado imediatamente');
+                toast({
+                    title: "Pagamento não aprovado",
+                    description: data.error_message || "O pagamento foi recusado pelo banco.",
+                    variant: "destructive"
+                });
+                setLoading(false);
             } else {
                 console.error('✗ Estado de pagamento não reconhecido. Data recebida:', data);
                 throw new Error('Estado de pagamento não reconhecido');
@@ -291,7 +512,7 @@ export default function CheckoutPage() {
                                 <div className="border-t pt-4 space-y-2">
                                     <div className="flex justify-between font-bold text-lg">
                                         <span>Total</span>
-                                        <span className="text-primary">R$ 49,00</span>
+                                        <span className="text-primary">R$ 2,00</span>
                                     </div>
                                 </div>
                                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2 text-emerald-700 font-semibold text-xs">
@@ -417,26 +638,51 @@ export default function CheckoutPage() {
                                     </TabsContent>
 
                                     <TabsContent value="pix">
-                                        {!pixQrCode ? (
-                                            <div className="text-center py-6">
-                                                <QrCode className="h-12 w-12 mx-auto text-primary mb-2" />
-                                                <p className="font-medium">Pagamento Instantâneo</p>
-                                                <p className="text-sm text-muted-foreground">Clique em finalizar para gerar o código.</p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                                                <div className="flex justify-center bg-white p-4 border rounded-lg">
-                                                    <img src={pixQrCode} alt="QR Code PIX" className="w-48 h-48" />
+                                        <div className="flex flex-col items-center space-y-4 p-4 border rounded-lg bg-slate-50">
+                                            {pixQrCode ? (
+                                                <>
+                                                    <div className="bg-white p-2 rounded-lg shadow-sm">
+                                                        <img
+                                                            src={pixQrCode.startsWith('http') ? pixQrCode : `data:image/jpeg;base64,${pixQrCode.replace(/\s/g, '')}`}
+                                                            onError={(e) => {
+                                                                // Fallback para gerador de QR Code externo se a imagem da Appmax falhar
+                                                                e.currentTarget.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixCopyPaste)}`;
+                                                            }}
+                                                            alt="QR Code PIX"
+                                                            className="w-48 h-48"
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center gap-2 w-full max-w-sm">
+                                                        <Input value={pixCopyPaste} readOnly className="font-mono text-xs" />
+                                                        <Button size="icon" variant="outline" onClick={() => {
+                                                            navigator.clipboard.writeText(pixCopyPaste);
+                                                            toast({ title: "Copiado!" });
+                                                        }}>
+                                                            <Copy className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+
+                                                    {timeLeft !== null && (
+                                                        <div className="text-center space-y-1">
+                                                            <p className="text-sm text-muted-foreground">Tempo restante para pagar:</p>
+                                                            <p className={`text-xl font-bold font-mono ${timeLeft < 60 ? 'text-red-500' : 'text-slate-700'}`}>
+                                                                {formatTime(timeLeft)}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium animate-pulse">
+                                                        <div className="w-2 h-2 bg-emerald-600 rounded-full" />
+                                                        Aguardando pagamento...
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="text-center text-muted-foreground py-8">
+                                                    <QrCode className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                                                    <p>O QR Code será gerado após clicar em Pagar</p>
                                                 </div>
-                                                <div className="flex gap-2">
-                                                    <Input value={pixCopyPaste} readOnly className="font-mono text-xs bg-slate-50" />
-                                                    <Button onClick={copyPixCode} variant="outline" size="icon">
-                                                        <Copy className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                                <p className="text-center text-sm text-emerald-600 font-medium">Aguardando pagamento...</p>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
                                     </TabsContent>
                                 </Tabs>
 
@@ -451,7 +697,7 @@ export default function CheckoutPage() {
                                             <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...
                                         </>
                                     ) : (
-                                        `Pagar R$ 49,00`
+                                        `Pagar R$ 2,00`
                                     )}
                                 </Button>
 

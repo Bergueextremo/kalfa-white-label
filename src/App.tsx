@@ -65,14 +65,8 @@ const App = () => {
                       </ProtectedRoute>
                     }
                   />
-                  <Route
-                    path="/resultado/:id"
-                    element={
-                      <ProtectedRoute>
-                        <Resultado />
-                      </ProtectedRoute>
-                    }
-                  />
+                  {/* Public resultado page for premium audit sales */}
+                  <Route path="/resultado/:id" element={<Resultado />} />
                   <Route
                     path="/relatorios"
                     element={

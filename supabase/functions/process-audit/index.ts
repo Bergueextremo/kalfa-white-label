@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { GoogleGenerativeAI } from "npm:@google/generative-ai";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -107,18 +108,28 @@ Deno.serve(async (req) => {
             console.log(`Created new audit record: ${audit_id}`);
         }
 
-        // 4. Download File
+        // 4. Fetch Audit Details (including type for model selection)
         let targetPath = file_path;
+        let isPremium = false; // Default to free
+
+        const { data: audit, error: fetchError } = await supabaseAdmin
+            .from('auditorias_contratos')
+            .select('file_path, is_premium')
+            .eq('id', audit_id)
+            .single();
+
+        if (fetchError) throw new Error('Audit not found');
+
         if (!targetPath) {
-            const { data: audit, error: fetchError } = await supabaseAdmin
-                .from('auditorias_contratos')
-                .select('file_path')
-                .eq('id', audit_id)
-                .single();
-            if (fetchError) throw new Error('Audit not found');
             targetPath = audit.file_path;
         }
+        isPremium = audit.is_premium || false;
 
+
+        console.log(`Audit type: ${isPremium ? 'PREMIUM' : 'FREE'}`);
+        const modelName = isPremium ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+
+        // 5. Download File
         const { data: fileData, error: fileError } = await supabaseAdmin
             .storage
             .from('contracts')
@@ -129,11 +140,12 @@ Deno.serve(async (req) => {
             throw new Error('Failed to download file')
         }
 
-        // 5. Prepare Gemini
+        // 6. Prepare Gemini
         const apiKey = Deno.env.get('GEMINI_API_KEY');
         if (!apiKey) {
             throw new Error('GEMINI_API_KEY not configured');
         }
+        console.log(`Using API Key starting with: ${apiKey.substring(0, 5)}...`);
 
         const arrayBuffer = await fileData.arrayBuffer()
         const base64 = btoa(
@@ -144,7 +156,7 @@ Deno.serve(async (req) => {
         // 6. Construct PROMPT OTIMIZADO (Auditor Jurídico Sênior)
         const prompt = `
       🎯 Instrução de Função e Persona: Auditoria Jurídica de Alta Precisão (B2B/Enterprise)
-
+      
       "Atue como um Auditor Jurídico Sênior e Especialista em Análise Forense de Contratos. Sua missão é realizar uma auditoria técnica, imparcial e rigorosa.
 
       O tom de voz deve ser: PROFISSIONAL, SÓBRIO, ANALÍTICO e DIRETO.
@@ -198,10 +210,10 @@ Deno.serve(async (req) => {
       }
     `
 
-        console.log('Sending to Gemini Pro via REST API...')
+        console.log(`Sending to ${modelName} via REST API (v1)...`)
 
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: {
@@ -218,17 +230,15 @@ Deno.serve(async (req) => {
                                 }
                             }
                         ]
-                    }],
-                    generationConfig: {
-                        response_mime_type: "application/json"
-                    }
+                    }]
                 })
             }
         );
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Gemini API Error:', errorText);
+            console.error('Gemini API Error Status:', response.status);
+            console.error('Gemini API Error Body:', errorText);
             throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
         }
 
@@ -279,8 +289,15 @@ Deno.serve(async (req) => {
 
     } catch (error) {
         console.error('Error processing audit:', error)
+        const apiKey = Deno.env.get('GEMINI_API_KEY');
+        const keyPrefix = apiKey ? apiKey.substring(0, 5) : 'NONE';
+
         return new Response(
-            JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+            JSON.stringify({
+                error: error instanceof Error ? error.message : 'Unknown error',
+                debug_key_prefix: keyPrefix,
+                model_tried: "gemini-2.5-flash (v1 REST - default)"
+            }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
     }

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Share2, Loader2, AlertCircle, ArrowLeft } from "lucide-react";
@@ -32,20 +31,56 @@ const Resultado = () => {
     }
   }, [id]);
 
+  // Polling effect to check status if processing
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (audit && (!audit.ai_result_json || audit.status === 'PROCESSING' || audit.status === 'processing')) {
+      console.log("Status de processamento detectado. Iniciando polling...");
+      intervalId = setInterval(() => {
+        console.log("Polling audit status...");
+        fetchAudit(id!);
+      }, 5000); // Check every 5 seconds
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [audit, id]);
+
   const fetchAudit = async (auditId: string) => {
     try {
+      // First try direct access (works if user is logged in and owns the audit)
       const { data, error } = await supabase
         .from('auditorias_contratos')
         .select('*')
         .eq('id', auditId)
         .single();
 
-      if (error) throw error;
-      setAudit(data);
+      if (!error && data) {
+        setAudit(data);
+        return;
+      }
+
+      // If direct access fails (e.g. RLS blocks public user), try Edge Function
+      console.log("Acesso direto falhou, tentando via Edge Function...");
+      const { data: publicData, error: functionError } = await supabase.functions.invoke('get-public-audit', {
+        body: { audit_id: auditId }
+      });
+
+      if (functionError) throw functionError;
+      if (publicData) {
+        setAudit(publicData);
+        return;
+      }
+
+      throw error || new Error("Auditoria não encontrada");
+
     } catch (error) {
       console.error("Erro ao buscar auditoria:", error);
       toast.error("Erro ao carregar o laudo.");
-      navigate('/relatorios');
+      // Only redirect if we really can't load it
+      // navigate('/relatorios'); // Removed auto-redirect to avoid auth loop
     } finally {
       setLoading(false);
     }
@@ -53,29 +88,56 @@ const Resultado = () => {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
           <p className="text-muted-foreground">Carregando laudo...</p>
         </div>
-      </Layout>
+      </div>
     );
   }
 
-  if (!audit || !audit.ai_result_json) {
+  if (!audit) {
     return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center text-center px-4 max-w-md">
           <AlertCircle className="h-16 w-16 text-destructive mb-4" />
           <h2 className="text-2xl font-bold mb-2">Laudo não encontrado</h2>
           <p className="text-muted-foreground mb-6">
             Não foi possível localizar os dados desta auditoria.
           </p>
-          <Button onClick={() => navigate('/relatorios')}>
-            Voltar para Meus Relatórios
+          <Button onClick={() => navigate('/')}>
+            Voltar para Início
           </Button>
         </div>
-      </Layout>
+      </div>
+    );
+  }
+
+  // If audit is being processed, show processing UI
+  if (!audit.ai_result_json || audit.status === 'processing') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="flex flex-col items-center text-center px-4 max-w-2xl">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+            <Loader2 className="h-16 w-16 text-primary animate-spin relative z-10" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Processando Auditoria Premium</h2>
+          <p className="text-muted-foreground mb-6 max-w-md">
+            Nossa IA está analisando cada cláusula do seu contrato com o Gemini Pro.
+            Isso pode levar alguns minutos. Esta página será atualizada automaticamente.
+          </p>
+          <div className="flex gap-4">
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Atualizar Página
+            </Button>
+            <Button onClick={() => navigate('/')}>
+              Voltar para Início
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -87,7 +149,7 @@ const Resultado = () => {
   const displayScore = score <= 10 ? score * 10 : score;
 
   return (
-    <Layout>
+    <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto space-y-8 py-8 px-4">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -95,12 +157,12 @@ const Resultado = () => {
             <Button
               variant="ghost"
               className="pl-0 mb-2 hover:bg-transparent hover:text-primary"
-              onClick={() => navigate('/relatorios')}
+              onClick={() => navigate('/')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar para Relatórios
+              Voltar para Início
             </Button>
-            <h1 className="text-3xl font-bold text-foreground">Laudo Forense</h1>
+            <h1 className="text-3xl font-bold text-foreground">Laudo Forense Premium</h1>
             <p className="text-muted-foreground mt-1">
               {contractType} • Analisado em {new Date(audit.created_at).toLocaleDateString('pt-BR', {
                 day: '2-digit',
@@ -168,7 +230,7 @@ const Resultado = () => {
 
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 
