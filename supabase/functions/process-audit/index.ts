@@ -84,11 +84,18 @@ Deno.serve(async (req) => {
             session = retryAuth.session;
         }
 
+        // Create a fresh admin client for database operations (bypasses RLS after auth)
+        const dbAdmin = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        )
+
         // 3. Create Audit Record if not provided
         if (!audit_id) {
             if (!file_path) throw new Error('file_path is required when creating a new audit');
 
-            const { data: newAudit, error: createError } = await supabaseAdmin
+            const { data: newAudit, error: createError } = await dbAdmin
                 .from('auditorias_contratos')
                 .insert({
                     user_id: userId,
@@ -111,7 +118,7 @@ Deno.serve(async (req) => {
         let targetPath = file_path;
         let isPremium = true; // All paid audits are premium
 
-        const { data: audit, error: fetchError } = await supabaseAdmin
+        const { data: audit, error: fetchError } = await dbAdmin
             .from('auditorias_contratos')
             .select('file_path, payment_status')
             .eq('id', audit_id)
@@ -138,7 +145,7 @@ Deno.serve(async (req) => {
         const modelName = isPremium ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
 
         // 5. Download File
-        const { data: fileData, error: fileError } = await supabaseAdmin
+        const { data: fileData, error: fileError } = await dbAdmin
             .storage
             .from('contracts')
             .download(targetPath)
@@ -266,7 +273,7 @@ Deno.serve(async (req) => {
         console.log(`Processing audit_id: ${audit_id}`);
 
         // 7. Update Database
-        const { data: updatedData, error: updateError } = await supabaseAdmin
+        const { data: updatedData, error: updateError } = await dbAdmin
             .from('auditorias_contratos')
             .update({
                 status: 'COMPLETED',
@@ -284,7 +291,7 @@ Deno.serve(async (req) => {
 
         if (!updatedData || updatedData.length === 0) {
             console.error(`Update failed: No record found for id ${audit_id}`);
-            const { data: checkData } = await supabaseAdmin.from('auditorias_contratos').select('id').eq('id', audit_id).single();
+            const { data: checkData } = await dbAdmin.from('auditorias_contratos').select('id').eq('id', audit_id).maybeSingle();
             console.log(`Check record existence: ${JSON.stringify(checkData)}`);
         } else {
             console.log(`Successfully updated record ${audit_id}`);
