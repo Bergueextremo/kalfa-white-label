@@ -17,6 +17,13 @@ Deno.serve(async (req) => {
             throw new Error('Audit ID is required')
         }
 
+        // Validate UUID format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        if (!uuidRegex.test(audit_id)) {
+            console.error(`Invalid audit_id format received: ${audit_id}`)
+            throw new Error(`Invalid audit ID format: ${audit_id}`)
+        }
+
         // Create Supabase client with Service Role Key to bypass RLS
         const supabaseAdmin = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
