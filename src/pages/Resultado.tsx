@@ -75,6 +75,39 @@ const Resultado = () => {
     }
   }, [id]);
 
+  // Auto-trigger process-audit if audit is in PROCESSING state but hasn't been processed yet
+  const [processingTriggered, setProcessingTriggered] = useState(false);
+  
+  useEffect(() => {
+    const triggerProcessing = async () => {
+      if (
+        audit && 
+        !processingTriggered &&
+        !audit.ai_result_json && 
+        (audit.status === 'PROCESSING' || audit.status === 'processing')
+      ) {
+        setProcessingTriggered(true);
+        console.log("Auditoria em PROCESSING sem resultado. Disparando process-audit...");
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('process-audit', {
+            body: { audit_id: audit.id, file_path: audit.file_path }
+          });
+          
+          if (error) {
+            console.error("Erro ao iniciar process-audit:", error);
+          } else {
+            console.log("process-audit disparado com sucesso:", data);
+          }
+        } catch (err) {
+          console.error("Erro ao chamar process-audit:", err);
+        }
+      }
+    };
+    
+    triggerProcessing();
+  }, [audit, processingTriggered]);
+
   // Polling effect to check status if processing
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
