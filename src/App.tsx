@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CreditProvider } from "@/contexts/CreditContext";
 import { AuditProvider } from "@/contexts/AuditContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import Landing from "./pages/Landing";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
@@ -20,6 +21,10 @@ import NotFound from "./pages/NotFound";
 import Configuracoes from "./pages/Configuracoes";
 import FreeAuditFlow from "./pages/FreeAuditFlow";
 import CheckoutPage from "./pages/CheckoutPage";
+import Admin from "./pages/Admin";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminUserDetail from "./pages/admin/AdminUserDetail";
+import AdminSales from "./pages/admin/AdminSales";
 
 
 const queryClient = new QueryClient();
@@ -98,6 +103,40 @@ const App = () => {
                       <ProtectedRoute>
                         <Configuracoes />
                       </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Admin routes */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <AdminRoute>
+                        <Admin />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/users"
+                    element={
+                      <AdminRoute>
+                        <AdminUsers />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/users/:id"
+                    element={
+                      <AdminRoute>
+                        <AdminUserDetail />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/sales"
+                    element={
+                      <AdminRoute>
+                        <AdminSales />
+                      </AdminRoute>
                     }
                   />
 

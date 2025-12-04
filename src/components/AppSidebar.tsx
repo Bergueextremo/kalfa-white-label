@@ -1,4 +1,4 @@
-import { Scale, LayoutDashboard, Upload, FileText, Wallet, HeadphonesIcon, Settings, LogOut, User as UserIcon } from "lucide-react";
+import { Scale, LayoutDashboard, Upload, FileText, Wallet, HeadphonesIcon, Settings, LogOut, User as UserIcon, Shield } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +32,8 @@ const menuItems = [
   { title: "Carteira de Créditos", url: "/creditos", icon: Wallet },
   { title: "Suporte Jurídico", url: "/suporte", icon: HeadphonesIcon },
 ];
+
+const ADMIN_EMAIL = "jussistemas@gmail.com";
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -91,6 +93,33 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Admin Menu - Only visible to admin */}
+        {user?.email === ADMIN_EMAIL && (
+          <SidebarGroup>
+            {!isCollapsed && (
+              <SidebarGroupLabel className="text-sidebar-foreground/70 text-xs uppercase tracking-wider">
+                Admin
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/admin"
+                      className="hover:bg-sidebar-accent transition-colors duration-200"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium border-l-4 border-sidebar-primary-foreground"
+                    >
+                      <Shield className={isCollapsed ? "mx-auto" : "mr-3 h-5 w-5"} />
+                      {!isCollapsed && <span>Dashboard Admin</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {/* Footer - Configurações e Créditos */}

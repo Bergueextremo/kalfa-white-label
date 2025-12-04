@@ -6,112 +6,86 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-    // Handle CORS preflight
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
 
     try {
-        const { audit_id, order_id } = await req.json();
+        const { order_id } = await req.json()
 
-        if (!audit_id && !order_id) {
-            throw new Error('audit_id ou order_id é obrigatório');
+        if (!order_id) {
+            throw new Error('order_id é obrigatório')
         }
 
-        // Se for ID temporário e não tiver order_id, retorna pendente sem erro
-        if (audit_id && String(audit_id).startsWith('temp-') && !order_id) {
-            console.log('ID temporário detectado, retornando pending');
-            return new Response(JSON.stringify({
-                success: true,
-                payment_status: 'pending',
-                audit_id: audit_id
-            }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200
-            });
-        }
-
-        console.log('Verificando status do pagamento:', { audit_id, order_id });
-
-        // Initialize Supabase client
-        const supabase = createClient(
+        // Initialize Supabase Admin
+        const supabaseAdmin = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        );
+        )
 
-        // Query the database
-        const isTempAuditId = audit_id && String(audit_id).startsWith('temp-');
+        // Get user from auth header
+        const supabaseAuth = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+        )
 
-        // Se for ID temporário e não tiver order_id, retorna pendente sem erro
-        if (isTempAuditId && !order_id) {
-            console.log('ID temporário detectado sem Order ID, retornando pending');
-            return new Response(JSON.stringify({
-                success: true,
-                payment_status: 'pending',
-                audit_id: audit_id
-            }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200
-            });
-        }
+        const { data: { user } } = await supabaseAuth.auth.getUser()
+        if (!user) throw new Error('Usuário não autenticado')
 
-        // Query the database
-        let query = supabase
-            .from('auditorias_contratos')
-            .select('id, payment_status, payment_metadata, appmax_order_id, user_id');
+        console.log('[Check Payment] Verificando status do pedido:', order_id);
 
-        if (audit_id && !isTempAuditId) {
-            // Só busca por ID se for um UUID válido
-            query = query.eq('id', audit_id);
-        } else if (order_id) {
-            // Se não tiver audit_id válido, busca pelo order_id
-            query = query.eq('appmax_order_id', order_id);
-        } else {
-            throw new Error('Nenhum ID válido fornecido para busca');
-        }
-
-        const { data, error } = await query.single();
+        // Check in credit_purchases table
+        const { data: purchase, error } = await supabaseAdmin
+            .from('credit_purchases')
+            .select('*')
+            .eq('appmax_order_id', order_id)
+            .eq('user_id', user.id)
+            .single()
 
         if (error) {
-            // Se não encontrou o registro (PGRST116), retorna pendente em vez de erro 400
-            if (error.code === 'PGRST116') {
-                console.log('Registro não encontrado, retornando pending');
-                return new Response(JSON.stringify({
-                    success: true,
-                    payment_status: 'pending'
-                }), {
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    status: 200
-                });
-            }
-
-            console.error('Erro ao buscar status:', error);
-            throw error;
+            console.error('[Check Payment] Erro ao buscar compra:', error);
+            throw new Error('Compra não encontrada')
         }
 
-        console.log('Status encontrado:', data?.payment_status);
+        console.log('[Check Payment] Status atual:', purchase.payment_status);
 
-        return new Response(JSON.stringify({
-            success: true,
-            payment_status: data?.payment_status || 'pending',
-            audit_id: data?.id,
-            order_id: data?.appmax_order_id,
-            metadata: data?.payment_metadata
-        }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200
-        });
+        // If already approved, add credits if not done yet
+        if (purchase.payment_status === 'approved') {
+            // Check if credits were already added
+            const { data: profile } = await supabaseAdmin
+                .from('profiles')
+                .select('credits')
+                .eq('id', user.id)
+                .single()
 
-    } catch (error: any) {
-        console.error('ERRO:', error.message);
+            // This is a simple check - in production you'd want a more robust system
+            // to track if credits were already added for this purchase
+            console.log('[Check Payment] Créditos atuais do usuário:', profile?.credits);
+        }
 
-        return new Response(JSON.stringify({
-            success: false,
-            error: error.message,
-            payment_status: 'pending'
-        }), {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        return new Response(
+            JSON.stringify({
+                success: true,
+                status: purchase.payment_status,
+                order_id: purchase.appmax_order_id,
+                credits: purchase.credits,
+                amount: purchase.amount
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+
+    } catch (error) {
+        console.error('[Check Payment] Erro:', error);
+        return new Response(
+            JSON.stringify({
+                success: false,
+                error: error instanceof Error ? error.message : 'Erro desconhecido'
+            }),
+            {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 400
+            }
+        )
     }
 })

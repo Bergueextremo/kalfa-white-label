@@ -43,21 +43,21 @@ const Landing = () => {
 
   const plans = [
     {
-      name: "Individual",
-      price: "R$ 49,00",
+      name: "Start",
+      price: "R$ 97,00",
       credits: "10 análises",
       features: ["Laudos em PDF", "Suporte por email", "Acesso 24/7"],
     },
     {
-      name: "Pro",
-      price: "R$ 199,00",
+      name: "Essencial",
+      price: "R$ 324,00",
       credits: "50 análises",
       features: ["Laudos personalizados", "Suporte prioritário", "Acesso multi-dispositivo", "Consultoria jurídica"],
       highlighted: true,
     },
     {
       name: "Enterprise",
-      price: "R$ 999,00",
+      price: "R$ 997,00",
       credits: "Análises Ilimitadas",
       features: ["Gerente dedicado", "Integrações customizadas", "SLA garantido", "Treinamento incluído"],
     },

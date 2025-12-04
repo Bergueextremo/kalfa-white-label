@@ -61,6 +61,8 @@ Deno.serve(async (req) => {
         );
 
         console.log('Atualizando banco com Order ID:', appmaxOrderId);
+
+        // Try to update auditorias_contratos first
         const { data: updateData, error: updateError } = await supabase
             .from('auditorias_contratos')
             .update({
@@ -71,15 +73,54 @@ Deno.serve(async (req) => {
             .eq('appmax_order_id', appmaxOrderId)
             .select();
 
-        if (updateError) {
-            console.error('Erro ao atualizar banco:', updateError);
-            throw updateError;
+        // Also try to update credit_purchases table
+        const { data: creditPurchaseData, error: creditPurchaseError } = await supabase
+            .from('credit_purchases')
+            .update({
+                payment_status: internalStatus,
+                updated_at: new Date().toISOString()
+            })
+            .eq('appmax_order_id', appmaxOrderId)
+            .select();
+
+        if (updateError && creditPurchaseError) {
+            console.error('Erro ao atualizar banco (auditorias):', updateError);
+            console.error('Erro ao atualizar banco (credit_purchases):', creditPurchaseError);
+            throw new Error('Pedido não encontrado em nenhuma tabela');
         }
 
-        console.log('Registros atualizados:', updateData?.length || 0);
-        console.log('Dados atualizados:', JSON.stringify(updateData, null, 2));
+        console.log('Registros atualizados (auditorias):', updateData?.length || 0);
+        console.log('Registros atualizados (credit_purchases):', creditPurchaseData?.length || 0);
 
-        // If payment is approved, update credits AND trigger audit processing
+        // Handle credit purchase approval
+        if (internalStatus === 'approved' && creditPurchaseData && creditPurchaseData.length > 0) {
+            const purchase = creditPurchaseData[0];
+            console.log('Processando compra de créditos aprovada:', purchase);
+
+            if (purchase.user_id && purchase.credits) {
+                console.log('Adicionando créditos ao usuário:', purchase.user_id);
+
+                // Get current credits
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('credits')
+                    .eq('id', purchase.user_id)
+                    .single();
+
+                if (profile) {
+                    const newCredits = (profile.credits || 0) + purchase.credits;
+
+                    await supabase
+                        .from('profiles')
+                        .update({ credits: newCredits })
+                        .eq('id', purchase.user_id);
+
+                    console.log(`Créditos atualizados: ${profile.credits} → ${newCredits} (+${purchase.credits})`);
+                }
+            }
+        }
+
+        // If payment is approved for audit, update credits AND trigger audit processing
         if (internalStatus === 'approved' && updateData && updateData.length > 0) {
             const audit = updateData[0];
 

@@ -13,16 +13,16 @@ const Creditos = () => {
 
   const planos = [
     {
-      nome: "Individual",
+      nome: "Start",
       creditos: 10,
-      preco: "R$ 49,00",
+      preco: "R$ 97,00",
       descricao: "Pessoa física",
       features: ["10 análises completas", "Suporte por email", "Laudos em PDF"],
     },
     {
-      nome: "Pro",
+      nome: "Essencial",
       creditos: 50,
-      preco: "R$ 199,00",
+      preco: "R$ 324,00",
       descricao: "Corretor/Despachante",
       features: [
         "50 análises completas",
@@ -35,7 +35,7 @@ const Creditos = () => {
     {
       nome: "Enterprise",
       creditos: "Ilimitado",
-      preco: "R$ 999,00",
+      preco: "R$ 997,00",
       descricao: "Escritório advocacia",
       features: [
         "Análises Ilimitadas",
