@@ -153,7 +153,7 @@ const Landing = () => {
               Tecnologia Forense de Ponta
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Utilizamos inteligência artificial e bases de dados jurídicas para garantir análises precisas
+              Utilizamos nosso Autenticador Jurídico e bases de dados jurídicas para garantir análises precisas
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">

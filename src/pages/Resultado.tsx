@@ -222,7 +222,7 @@ const Resultado = () => {
               Processando seu Contrato...
             </h2>
             <p className="text-slate-600 mb-8 leading-relaxed">
-              Nossa IA está analisando cada cláusula em busca de irregularidades. 
+              Nosso Autenticador Jurídico está analisando cada cláusula em busca de irregularidades. 
               Isso pode levar alguns segundos.
             </p>
 
@@ -246,7 +246,7 @@ const Resultado = () => {
               Auditoria Forense em Tempo Real
             </h3>
             <p className="text-slate-400 mb-8">
-              Acompanhe o processamento do seu documento pela nossa IA.
+              Acompanhe o processamento do seu documento pelo nosso Autenticador Jurídico.
             </p>
 
             {/* Progress Steps */}

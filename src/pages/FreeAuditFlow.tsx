@@ -276,7 +276,7 @@ export default function FreeAuditFlow() {
                             </div>
                             <h2 className="text-2xl font-bold">Processando seu Contrato...</h2>
                             <p className="text-muted-foreground max-w-xs">
-                                Nossa IA está analisando cada cláusula em busca de irregularidades. Isso pode levar alguns segundos.
+                                Nosso Autenticador Jurídico está analisando cada cláusula em busca de irregularidades. Isso pode levar alguns segundos.
                             </p>
                         </div>
                     )}
@@ -371,7 +371,7 @@ export default function FreeAuditFlow() {
                         <div className="space-y-8">
                             <div className="space-y-2">
                                 <h2 className="text-3xl font-bold tracking-tight">Auditoria Forense em Tempo Real</h2>
-                                <p className="text-slate-400">Acompanhe o processamento do seu documento pela nossa IA.</p>
+                                <p className="text-slate-400">Acompanhe o processamento do seu documento pelo nosso Autenticador Jurídico.</p>
                             </div>
 
                             <div className="space-y-6">

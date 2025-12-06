@@ -204,9 +204,9 @@ export const AuditProvider = ({ children }: { children: ReactNode }) => {
                 }
             });
 
-            if (fnError) throw new Error("Erro na análise IA: " + fnError.message);
+            if (fnError) throw new Error("Erro na análise: " + fnError.message);
             if (aiResponse?.error) throw new Error("Falha no processamento: " + aiResponse.error);
-            if (!aiResponse?.success) throw new Error("Falha no processamento: Resposta inválida da IA");
+            if (!aiResponse?.success) throw new Error("Falha no processamento: Resposta inválida do Autenticador Jurídico");
 
             const aiData = aiResponse.data;
 
