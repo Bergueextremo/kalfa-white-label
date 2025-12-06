@@ -62,6 +62,48 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_purchases: {
+        Row: {
+          amount: number
+          appmax_order_id: string | null
+          created_at: string | null
+          credits: number
+          id: string
+          payment_metadata: Json | null
+          payment_method: string
+          payment_status: string
+          plan_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          appmax_order_id?: string | null
+          created_at?: string | null
+          credits: number
+          id?: string
+          payment_metadata?: Json | null
+          payment_method: string
+          payment_status?: string
+          plan_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          appmax_order_id?: string | null
+          created_at?: string | null
+          credits?: number
+          id?: string
+          payment_metadata?: Json | null
+          payment_method?: string
+          payment_status?: string
+          plan_name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

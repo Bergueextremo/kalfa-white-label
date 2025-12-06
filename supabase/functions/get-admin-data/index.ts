@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
                 name: u.user_metadata?.name || u.email?.split('@')[0] || 'Sem Nome',
                 created_at: u.created_at,
                 last_sign_in_at: u.last_sign_in_at,
-                status: u.banned_until ? 'Banned' : 'Active',
+                status: (u as any).banned_until ? 'Banned' : 'Active',
                 type: u.user_metadata?.type || 'PF' // Assuming type is stored in metadata, default to PF
             }))
 
@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
             // Get User Profile
             const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
             if (userError) throw userError
+            if (!user) throw new Error('User not found')
 
             // Get User Activity (Audits)
             const { data: activity, error: activityError } = await supabaseAdmin
@@ -112,7 +113,7 @@ Deno.serve(async (req) => {
                 phone: user.phone || 'N/A',
                 document: user.user_metadata?.document || 'N/A',
                 type: user.user_metadata?.type || 'PF',
-                status: user.banned_until ? 'Banned' : 'Active',
+                status: (user as any).banned_until ? 'Banned' : 'Active',
                 joinedAt: user.created_at,
                 credits: 0, // Placeholder
                 purchases: activity.filter(a => a.payment_status === 'approved').map(a => ({
