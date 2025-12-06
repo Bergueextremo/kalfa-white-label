@@ -149,7 +149,7 @@ const AuthPage = () => {
               Segurança Jurídica com Precisão Forense.
             </h1>
             <p className="text-slate-300 text-lg leading-relaxed font-medium">
-              Junte-se a escritórios de advocacia e departamentos jurídicos que utilizam nossa IA para blindar contratos e recuperar ativos financeiros.
+              Junte-se a escritórios de advocacia e departamentos jurídicos que utilizam nosso Autenticador Jurídico para blindar contratos e recuperar ativos financeiros.
             </p>
 
             <div className="flex gap-4 pt-4">

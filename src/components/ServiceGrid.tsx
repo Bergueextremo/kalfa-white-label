@@ -40,7 +40,7 @@ export const ServiceGrid = () => {
                         Qual tipo de contrato você quer blindar?
                     </h2>
                     <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                        Nossa IA é treinada em nichos específicos do direito para garantir precisão máxima na detecção de irregularidades.
+                        Nosso Autenticador Jurídico é treinado em nichos específicos do direito para garantir precisão máxima na detecção de irregularidades.
                     </p>
                 </div>
 
