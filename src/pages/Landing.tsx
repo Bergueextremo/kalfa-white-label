@@ -133,7 +133,7 @@ const Landing = () => {
               
               {/* Padlock Image */}
               <div className="relative z-10">
-                <img alt="Proteção jurídica garantida" className="w-[300px] md:w-[400px] lg:w-[450px] drop-shadow-2xl" src="/lovable-uploads/af8c88ce-339b-4f07-bf03-fb81d37c2b79.png" />
+                <img alt="Proteção jurídica garantida" src="/lovable-uploads/af8c88ce-339b-4f07-bf03-fb81d37c2b79.png" className="w-[300px] md:w-[400px] lg:w-[450px] drop-shadow-2xl border-8" />
               </div>
 
               {/* Floating Benefits Card */}
