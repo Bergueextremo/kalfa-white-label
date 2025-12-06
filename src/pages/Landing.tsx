@@ -43,22 +43,31 @@ const Landing = () => {
 
   const plans = [
     {
+      id: "start",
       name: "Start",
       price: "R$ 97,00",
+      priceNumeric: 97.00,
       credits: "10 análises",
+      creditsNumeric: 10,
       features: ["Laudos em PDF", "Suporte por email", "Acesso 24/7"],
     },
     {
+      id: "essencial",
       name: "Essencial",
       price: "R$ 324,00",
+      priceNumeric: 324.00,
       credits: "50 análises",
+      creditsNumeric: 50,
       features: ["Laudos personalizados", "Suporte prioritário", "Acesso multi-dispositivo", "Consultoria jurídica"],
       highlighted: true,
     },
     {
+      id: "enterprise",
       name: "Enterprise",
       price: "R$ 997,00",
+      priceNumeric: 997.00,
       credits: "Análises Ilimitadas",
+      creditsNumeric: 200,
       features: ["Gerente dedicado", "Integrações customizadas", "SLA garantido", "Treinamento incluído"],
     },
   ];
@@ -201,7 +210,30 @@ const Landing = () => {
                         </li>
                       ))}
                     </ul>
-                    <Button className="w-full" variant={plan.highlighted ? "default" : "outline"}>
+                    <Button
+                      className="w-full"
+                      variant={plan.highlighted ? "default" : "outline"}
+                      onClick={() => {
+                        if (isAuthenticated) {
+                          // Usuário autenticado: vai para dashboard (pode comprar créditos lá)
+                          navigate("/dashboard");
+                        } else {
+                          // Novo usuário: vai direto para checkout com dados do plano
+                          navigate("/checkout", {
+                            state: {
+                              plan: {
+                                id: plan.id,
+                                name: plan.name,
+                                price: plan.priceNumeric,
+                                priceFormatted: plan.price,
+                                credits: plan.creditsNumeric
+                              },
+                              isNewUser: true
+                            }
+                          });
+                        }
+                      }}
+                    >
                       Começar Agora
                     </Button>
                   </CardContent>

@@ -120,6 +120,53 @@ Deno.serve(async (req) => {
             }
         }
 
+        // NOVO: Handle new user payment (create pending_activation)
+        if (internalStatus === 'approved' && updateData && updateData.length > 0) {
+            const audit = updateData[0];
+
+            // Verificar se é um novo usuário (sem user_id) e tem metadata de pagamento
+            if (!audit.user_id && audit.payment_metadata) {
+                const metadata = audit.payment_metadata;
+                const customerEmail = metadata.customer?.email;
+                const planId = metadata.plan_id;
+                const credits = metadata.credits;
+                const amount = metadata.amount;
+
+                if (customerEmail && planId && credits) {
+                    console.log('========================================');
+                    console.log('NOVO USUÁRIO DETECTADO - CRIANDO PENDING_ACTIVATION');
+                    console.log('Email:', customerEmail);
+                    console.log('Plan ID:', planId);
+                    console.log('Credits:', credits);
+                    console.log('Amount:', amount);
+                    console.log('========================================');
+
+                    try {
+                        const { data: pendingActivation, error: activationError } = await supabase
+                            .from('pending_activations')
+                            .insert({
+                                email: customerEmail,
+                                plan_id: planId,
+                                credits: credits,
+                                amount: amount,
+                                appmax_order_id: appmaxOrderId,
+                                payment_status: 'approved'
+                            })
+                            .select()
+                            .single();
+
+                        if (activationError) {
+                            console.error('Erro ao criar pending_activation:', activationError);
+                        } else {
+                            console.log('✅ Pending activation criada:', pendingActivation);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar pending_activation:', error);
+                    }
+                }
+            }
+        }
+
         // If payment is approved for audit, update credits AND trigger audit processing
         if (internalStatus === 'approved' && updateData && updateData.length > 0) {
             const audit = updateData[0];

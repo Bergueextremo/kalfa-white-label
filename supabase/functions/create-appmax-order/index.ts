@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const { customer, audit_id, payment_method, card_data, installments, file_path } = await req.json()
+        const { customer, audit_id, payment_method, card_data, installments, file_path, amount, credits, plan_name, plan_id } = await req.json()
 
         // Initialize Supabase Admin Client (Service Role) for DB and Invoke
         const supabaseAdmin = createClient(
@@ -96,18 +96,33 @@ Deno.serve(async (req) => {
         // ============================================================
         // PASSO 2: PEDIDO
         // ============================================================
+        // Usa valores do payload (com fallback para auditoria)
+        const finalAmount = amount || 2.00;
+        const finalCredits = credits || 0;
+        const finalPlanName = plan_name || 'Auditoria Jurídica Premium';
+
+        console.log('========================================');
+        console.log('VALORES RECEBIDOS DO PAYLOAD:');
+        console.log('========================================');
+        console.log('amount recebido:', amount);
+        console.log('credits recebido:', credits);
+        console.log('plan_name recebido:', plan_name);
+        console.log('Valor final (finalAmount):', finalAmount);
+        console.log('Créditos final (finalCredits):', finalCredits);
+        console.log('Nome final (finalPlanName):', finalPlanName);
+
         const orderPayload = {
             "access-token": appmaxToken,
             customer_id: customerId,
             products: [{
-                sku: "AUDITORIA-JUS-01",
-                name: "Auditoria Jurídica Premium",
-                price: 2.00,
+                sku: finalCredits > 0 ? `CREDITOS-${finalCredits}` : "AUDITORIA-JUS-01",
+                name: finalPlanName,
+                price: finalAmount,
                 qty: 1,
                 digital_product: 1
             }],
             shipping: 0.00,
-            total: 2.00
+            total: finalAmount
         };
 
         console.log('========================================');
@@ -291,80 +306,123 @@ Deno.serve(async (req) => {
         // --- ATUALIZA OU CRIA NO BANCO ---
         let finalAuditId = audit_id;
         try {
-            // Always create a new audit record for payments
-            // (temp IDs from frontend are just for tracking, not database records)
-            console.log('Criando nova auditoria no banco...');
-            const { data: newAudit, error: createError } = await supabaseAdmin
-                .from('auditorias_contratos')
-                .insert({
-                    user_id: user?.id || '30441039-7beb-44ad-8bea-3506b979cbbc', // Default valid user ID for public audits
-                    status: 'PROCESSING', // Valid enum value (same as process-audit uses)
-                    payment_status: responsePayload.payment_status || (responsePayload.payment_success ? 'approved' : 'pending'),
-                    appmax_order_id: orderId,
-                    payment_metadata: responsePayload,
-                    file_path: file_path,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                })
-                .select()
-                .single();
+            // NOVO: Se for compra de plano (tem plan_id e credits), criar em credit_purchases
+            if (plan_id && credits) {
+                console.log('Criando registro de compra de créditos...');
 
-            if (createError) {
-                console.error('Erro ao criar auditoria:', createError);
-                // Don't throw - return error in response
-                responsePayload.success = false;
-                responsePayload.error = 'Erro ao criar registro de auditoria: ' + createError.message;
-                responsePayload.audit_id = null;
+                // WORKAROUND: Usar user_id padrão se não houver usuário autenticado
+                // Isso evita erro de NOT NULL constraint
+                const purchaseUserId = user?.id || '30441039-7beb-44ad-8bea-3506b979cbbc';
 
-                return new Response(JSON.stringify(responsePayload), {
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    status: 200 // Return 200 with error in body
-                });
-            }
+                const { data: purchase, error: purchaseError } = await supabaseAdmin
+                    .from('credit_purchases')
+                    .insert({
+                        user_id: purchaseUserId,
+                        credits: credits,
+                        amount: amount,
+                        plan_name: plan_name,
+                        payment_method: payment_method, // ADICIONADO: campo obrigatório
+                        appmax_order_id: orderId,
+                        payment_status: responsePayload.payment_status || (responsePayload.payment_success ? 'approved' : 'pending'),
+                        payment_metadata: {
+                            ...responsePayload,
+                            customer: customer,
+                            plan_id: plan_id,
+                            is_new_user_purchase: !user?.id // Flag para identificar compras de novos usuários
+                        },
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
 
-            if (newAudit) {
-                finalAuditId = newAudit.id;
-                console.log('✅ Nova auditoria criada com ID:', finalAuditId);
+                if (purchaseError) {
+                    console.error('Erro ao criar credit_purchase:', purchaseError);
+                    responsePayload.success = false;
+                    responsePayload.error = 'Erro ao criar registro de compra: ' + purchaseError.message;
+
+                    return new Response(JSON.stringify(responsePayload), {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        status: 200
+                    });
+                }
+
+                console.log('✅ Compra de créditos registrada:', purchase);
+                // Para compra de créditos, não há audit_id
+                responsePayload.purchase_id = purchase.id;
+
             } else {
-                console.error('❌ Nenhum registro retornado após insert');
-                responsePayload.success = false;
-                responsePayload.error = 'Falha ao criar auditoria';
-                responsePayload.audit_id = null;
+                // Fluxo normal: criar auditoria (apenas se tiver file_path)
+                console.log('Criando nova auditoria no banco...');
+                const { data: newAudit, error: createError } = await supabaseAdmin
+                    .from('auditorias_contratos')
+                    .insert({
+                        user_id: user?.id || '30441039-7beb-44ad-8bea-3506b979cbbc',
+                        status: 'PROCESSING',
+                        payment_status: responsePayload.payment_status || (responsePayload.payment_success ? 'approved' : 'pending'),
+                        appmax_order_id: orderId,
+                        payment_metadata: responsePayload,
+                        file_path: file_path,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
 
-                return new Response(JSON.stringify(responsePayload), {
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    status: 200
-                });
+                if (createError) {
+                    console.error('Erro ao criar auditoria:', createError);
+                    responsePayload.success = false;
+                    responsePayload.error = 'Erro ao criar registro de auditoria: ' + createError.message;
+                    responsePayload.audit_id = null;
+
+                    return new Response(JSON.stringify(responsePayload), {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        status: 200
+                    });
+                }
+
+                if (newAudit) {
+                    finalAuditId = newAudit.id;
+                    console.log('✅ Nova auditoria criada com ID:', finalAuditId);
+                    responsePayload.audit_id = finalAuditId;
+
+                    // Trigger AI processing asynchronously
+                    if (file_path) {
+                        console.log('🚀 Disparando processamento de IA...');
+                        supabaseAdmin.functions.invoke('process-audit', {
+                            body: {
+                                audit_id: finalAuditId,
+                                file_path: file_path
+                            }
+                        }).then(({ error }) => {
+                            if (error) console.error('Erro ao disparar process-audit:', error);
+                            else console.log('✅ process-audit disparado com sucesso');
+                        }).catch(err => {
+                            console.error('Erro na chamada do process-audit:', err);
+                        });
+                    }
+                } else {
+                    console.error('❌ Nenhum registro retornado após insert');
+                    responsePayload.success = false;
+                    responsePayload.error = 'Falha ao criar auditoria';
+                    responsePayload.audit_id = null;
+
+                    return new Response(JSON.stringify(responsePayload), {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        status: 200
+                    });
+                }
             }
         } catch (e) {
             console.error('❌ Erro DB exception:', e);
-            // Return error response instead of throwing
             responsePayload.success = false;
-            responsePayload.error = 'Erro ao processar auditoria: ' + ((e as any).message || String(e));
-            responsePayload.audit_id = null;
+            responsePayload.error = 'Erro ao processar: ' + ((e as any).message || String(e));
 
             return new Response(JSON.stringify(responsePayload), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 200
             });
         }
-
-        responsePayload.audit_id = finalAuditId;
-        console.log('✅ Audit ID final sendo retornado:', finalAuditId);
-
-        // Trigger AI processing asynchronously (Fire-and-forget)
-        console.log('🚀 Disparando processamento de IA...');
-        supabaseAdmin.functions.invoke('process-audit', {
-            body: {
-                audit_id: finalAuditId,
-                file_path: file_path
-            }
-        }).then(({ error }) => {
-            if (error) console.error('Erro ao disparar process-audit:', error);
-            else console.log('✅ process-audit disparado com sucesso');
-        }).catch(err => {
-            console.error('Erro na chamada do process-audit:', err);
-        });
 
         return new Response(JSON.stringify(responsePayload), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

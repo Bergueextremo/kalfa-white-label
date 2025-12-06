@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -78,6 +78,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) throw error;
+
+    // NOVO: Verificar se há ativação pendente para este email
+    if (authData.user) {
+      console.log('Verificando pending_activation para:', email);
+
+      try {
+        const { data: pendingActivation, error: activationError } = await supabase
+          .from('pending_activations')
+          .select('*')
+          .eq('email', email)
+          .eq('activated', false)
+          .eq('payment_status', 'approved')
+          .gt('expires_at', new Date().toISOString()) // Não expirado
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (activationError) {
+          console.error('Erro ao buscar pending_activation:', activationError);
+        } else if (pendingActivation) {
+          console.log('✅ Pending activation encontrada! Liberando créditos:', pendingActivation);
+
+          // Atualizar profile com créditos
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ credits: pendingActivation.credits })
+            .eq('id', authData.user.id);
+
+          if (updateError) {
+            console.error('Erro ao atualizar créditos:', updateError);
+          } else {
+            console.log(`Créditos liberados: ${pendingActivation.credits}`);
+
+            // Marcar ativação como processada
+            await supabase
+              .from('pending_activations')
+              .update({
+                activated: true,
+                activated_at: new Date().toISOString(),
+                user_id: authData.user.id
+              })
+              .eq('id', pendingActivation.id);
+
+            // Mostrar toast de sucesso com créditos
+            const { toast } = await import('sonner');
+            toast.success(`Conta criada! ${pendingActivation.credits} créditos liberados.`);
+          }
+        } else {
+          console.log('Nenhuma pending_activation encontrada para este email');
+        }
+      } catch (error) {
+        console.error('Erro ao processar pending_activation:', error);
+        // Não lançamos erro aqui para não bloquear o signup
+      }
+    }
+
     navigate("/dashboard");
   };
 

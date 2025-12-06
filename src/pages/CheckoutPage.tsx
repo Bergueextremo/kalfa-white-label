@@ -29,6 +29,10 @@ export default function CheckoutPage() {
     // Tenta recuperar do sessionStorage se não vier do state (ex: refresh)
     const savedCheckoutData = JSON.parse(sessionStorage.getItem('checkout_data') || '{}');
 
+    // NOVO: Detectar se é novo usuário comprando plano (vindo da Landing)
+    const planFromLanding = locationState.plan || savedCheckoutData.plan;
+    const isNewUserFlow = locationState.isNewUser || savedCheckoutData.isNewUser || false;
+
     const scanResult = locationState.scanResult || savedCheckoutData.scanResult;
     const leadData = locationState.leadData || savedCheckoutData.leadData;
     const auditId = locationState.auditId || savedCheckoutData.auditId;
@@ -164,10 +168,19 @@ export default function CheckoutPage() {
 
                 toast({
                     title: "Pagamento confirmado!",
-                    description: "Redirecionando para o resultado...",
+                    description: isNewUserFlow ? "Agora crie sua conta para acessar." : "Redirecionando para o resultado...",
                 });
 
                 setTimeout(() => {
+                    // NOVO: Se for novo usuário, redireciona para signup
+                    if (isNewUserFlow && planFromLanding) {
+                        const signupUrl = `/auth?email=${encodeURIComponent(email)}&plan=${planFromLanding.id}&payment_confirmed=true`;
+                        console.log('Redirecionando novo usuário para signup:', signupUrl);
+                        navigate(signupUrl);
+                        return;
+                    }
+
+                    // Fluxo normal: redireciona para resultado
                     const finalId = data.audit_id || currentAuditId;
 
                     // Validate that we have a real UUID, not a temp ID
@@ -293,12 +306,14 @@ export default function CheckoutPage() {
             const cleanCep = cep.replace(/\D/g, '');
             const cleanCardNumber = cardNumber.replace(/\D/g, '');
 
-            if (!filePath) {
+            // Validação de file_path apenas para auditorias (não para compra de planos)
+            if (!planFromLanding && !filePath) {
                 toast({
                     title: "Erro no arquivo",
                     description: "O arquivo do contrato não foi encontrado. Por favor, refaça o upload.",
                     variant: "destructive"
                 });
+                setLoading(false);
                 return;
             }
 
@@ -322,7 +337,15 @@ export default function CheckoutPage() {
                 payment_method: paymentMethod,
                 audit_id: auditId || 'temp-' + Date.now(),
                 file_path: filePath, // Caminho do arquivo para auditoria premium
-                installments: 1 // Padrão 1x (adicione um select na UI se quiser mudar)
+                installments: 1, // Padrão 1x (adicione um select na UI se quiser mudar)
+
+                // NOVO: Adicionar dados do plano se for novo usuário
+                ...(planFromLanding && {
+                    plan_id: planFromLanding.id,
+                    amount: planFromLanding.price,
+                    credits: planFromLanding.credits,
+                    plan_name: planFromLanding.name
+                })
             };
 
             // 3. Adicionar dados específicos de Cartão
@@ -410,9 +433,18 @@ export default function CheckoutPage() {
                 console.log('✓ Pagamento com cartão aprovado');
                 toast({
                     title: "Pagamento aprovado!",
-                    description: "Sua auditoria foi liberada.",
+                    description: isNewUserFlow ? "Agora crie sua conta para acessar." : "Sua auditoria foi liberada.",
                 });
                 setTimeout(() => {
+                    // NOVO: Se for novo usuário, redireciona para signup
+                    if (isNewUserFlow && planFromLanding) {
+                        const signupUrl = `/auth?email=${encodeURIComponent(email)}&plan=${planFromLanding.id}&payment_confirmed=true`;
+                        console.log('Redirecionando novo usuário para signup:', signupUrl);
+                        navigate(signupUrl);
+                        return;
+                    }
+
+                    // Fluxo normal: redireciona para resultado
                     const finalId = data.audit_id || auditId;
 
                     // Validate that we have a real UUID, not a temp ID
@@ -468,8 +500,8 @@ export default function CheckoutPage() {
         });
     };
 
-    // Fallback se não houver sessão
-    if (!scanResult && !auditId) {
+    // Fallback se não houver sessão E não for compra de plano
+    if (!scanResult && !auditId && !planFromLanding) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background">
                 <Card className="max-w-md text-center p-6">
@@ -505,14 +537,20 @@ export default function CheckoutPage() {
                                 <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg">
                                     <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                                     <div>
-                                        <p className="font-semibold text-sm">Auditoria Jurídica Premium</p>
-                                        <p className="text-xs text-muted-foreground">Laudo Completo + PDF</p>
+                                        <p className="font-semibold text-sm">
+                                            {planFromLanding ? `Plano ${planFromLanding.name}` : 'Auditoria Jurídica Premium'}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {planFromLanding ? `${planFromLanding.credits} créditos` : 'Laudo Completo + PDF'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="border-t pt-4 space-y-2">
                                     <div className="flex justify-between font-bold text-lg">
                                         <span>Total</span>
-                                        <span className="text-primary">R$ 2,00</span>
+                                        <span className="text-primary">
+                                            {planFromLanding ? planFromLanding.priceFormatted : 'R$ 2,00'}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2 text-emerald-700 font-semibold text-xs">
@@ -697,7 +735,7 @@ export default function CheckoutPage() {
                                             <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...
                                         </>
                                     ) : (
-                                        `Pagar R$ 2,00`
+                                        `Pagar ${planFromLanding ? planFromLanding.priceFormatted : 'R$ 2,00'}`
                                     )}
                                 </Button>
 

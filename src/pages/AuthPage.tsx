@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Scale, Shield, ArrowLeft, Building2, User, LockKeyhole, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -27,12 +27,35 @@ type UserType = "PF" | "PJ";
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, signup, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Estado para controlar o tipo de usuário (Segmentação B2B)
   const [userType, setUserType] = useState<UserType>("PF");
+
+  // NOVO: Estado para dados vindos do pagamento
+  const [emailFromPayment, setEmailFromPayment] = useState<string>("");
+  const [planFromPayment, setPlanFromPayment] = useState<string>("");
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+
+  // NOVO: Detectar parâmetros da URL (vindo do checkout)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const email = params.get('email');
+    const plan = params.get('plan');
+    const confirmed = params.get('payment_confirmed');
+
+    if (email && plan && confirmed === 'true') {
+      console.log('Pagamento confirmado detectado:', { email, plan });
+      setEmailFromPayment(email);
+      setPlanFromPayment(plan);
+      setPaymentConfirmed(true);
+      setActiveTab("signup"); // Força tab de cadastro
+    }
+  }, [location.search]);
 
   if (isAuthenticated) {
     navigate("/dashboard");
@@ -181,7 +204,7 @@ const AuthPage = () => {
               </p>
             </div>
 
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-8 bg-slate-100 p-1">
                 <TabsTrigger value="login" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-medium">Login</TabsTrigger>
                 <TabsTrigger value="signup" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-medium">Nova Conta</TabsTrigger>
@@ -266,14 +289,40 @@ const AuthPage = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">E-mail Profissional</Label>
-                    <Input
-                      id="signup-email"
-                      name="signup-email"
-                      type="email"
-                      placeholder="contato@empresa.com"
-                      className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
-                      required
-                    />
+                    {emailFromPayment ? (
+                      <>
+                        {/* Campo visível (readonly) */}
+                        <Input
+                          id="signup-email-display"
+                          type="email"
+                          value={emailFromPayment}
+                          className="bg-slate-100 border-slate-300 text-slate-700 h-11"
+                          readOnly
+                          disabled
+                        />
+                        {/* Campo hidden que será enviado no form */}
+                        <input
+                          type="hidden"
+                          id="signup-email"
+                          name="signup-email"
+                          value={emailFromPayment}
+                        />
+                        <p className="text-xs text-emerald-600 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          E-mail vinculado ao pagamento confirmado
+                        </p>
+                      </>
+                    ) : (
+                      <Input
+                        id="signup-email"
+                        name="signup-email"
+                        type="email"
+                        placeholder="contato@empresa.com"
+                        className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
+                        required
+                      />
+                    )}
+                    {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
                   </div>
 
                   <div className="space-y-2">

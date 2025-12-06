@@ -109,42 +109,60 @@ export function CheckoutModal({ children, open, onOpenChange }: CheckoutModalPro
                     phone: customerData.phone
                 },
                 payment_method: paymentMethod,
-                amount: selectedPlan.price,
-                credits: selectedPlan.credits,
-                plan_name: selectedPlan.name,
+                audit_id: 'temp-credit-' + Date.now(), // ID temporário para compra de créditos
+                amount: selectedPlan.price, // Valor do plano
+                credits: selectedPlan.credits, // Quantidade de créditos
+                plan_name: selectedPlan.name, // Nome do plano
                 ...(paymentMethod === 'credit_card' && {
                     card_data: {
                         number: cardData.number.replace(/\s/g, ''),
-                        expiry: cardData.expiry,
                         cvv: cardData.cvv,
-                        holder_name: cardData.holderName
+                        month: cardData.expiry.split('/')[0],
+                        year: cardData.expiry.split('/')[1],
+                        name: cardData.holderName
                     }
                 })
             };
 
-            const { data, error } = await supabase.functions.invoke('purchase-credits', {
+            console.log('Enviando pagamento para create-appmax-order:', payload);
+
+            const { data, error } = await supabase.functions.invoke('create-appmax-order', {
                 body: payload
             });
+
+            console.log('Resposta recebida:', data);
 
             if (error) throw error;
 
             if (paymentMethod === 'pix') {
-                setQrCodeData(data.qr_code || data.pix_qr_code);
-                setOrderId(data.order_id);
-                setStep('processing'); // Mostrar tela de QR Code
-                setLoading(false); // Parar loading para mostrar QR Code
+                // Ler dados PIX com fallbacks (igual ao CheckoutPage)
+                if (data.pix_data) {
+                    const qrCode = data.pix_data.qr_code_url || data.pix_data.qr_code;
+                    const copyPaste = data.pix_data.qr_code_text || data.pix_data.copy_paste;
 
-                // Iniciar polling para verificar pagamento
-                startPaymentPolling(data.order_id);
-                return; // Não executar o código abaixo
+                    console.log('PIX gerado:', { qrCode, copyPaste });
+
+                    setQrCodeData(qrCode);
+                    setPixCode(copyPaste);
+                    setOrderId(data.order_id);
+                    setStep('processing');
+                    setLoading(false);
+
+                    // Iniciar polling para verificar pagamento
+                    startPaymentPolling(data.order_id);
+                    return;
+                } else {
+                    console.error('Resposta sem pix_data:', data);
+                    throw new Error('Dados PIX não retornados pela API');
+                }
             } else {
                 // Cartão de crédito - aprovação imediata
-                if (data.status === 'approved') {
+                if (data.payment_success && data.payment_status === 'approved') {
                     addCredits(selectedPlan.credits);
                     setStep('success');
                     toast.success(`${selectedPlan.credits} créditos adicionados!`);
                 } else {
-                    throw new Error(data.message || 'Pagamento recusado');
+                    throw new Error(data.error_message || 'Pagamento recusado');
                 }
             }
         } catch (error: any) {
@@ -190,6 +208,7 @@ export function CheckoutModal({ children, open, onOpenChange }: CheckoutModalPro
         setCustomerData({ name: '', email: user?.email || '', cpf: '', phone: '' });
         setCardData({ number: '', expiry: '', cvv: '', holderName: '' });
         setQrCodeData('');
+        setPixCode('');
         setOrderId('');
     };
 
@@ -273,9 +292,12 @@ export function CheckoutModal({ children, open, onOpenChange }: CheckoutModalPro
                                 id="email"
                                 type="email"
                                 value={customerData.email}
-                                onChange={(e) => setCustomerData({ ...customerData, email: e.target.value })}
+                                readOnly
+                                disabled
+                                className="bg-muted"
                                 required
                             />
+                            <p className="text-xs text-muted-foreground">Email da sua conta</p>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="cpf">CPF</Label>
