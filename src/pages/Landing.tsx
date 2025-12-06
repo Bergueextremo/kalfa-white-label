@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Scale, Shield, TrendingDown, FileText, Zap, Check, ArrowRight } from "lucide-react";
+import { Scale, Shield, TrendingDown, FileText, Zap, Check, ArrowRight, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer";
 import { ServiceGrid } from "@/components/ServiceGrid";
-
+import heroPadlock from "@/assets/hero-padlock.png";
 const Landing = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -106,26 +106,76 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 md:py-32">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <Badge variant="outline" className="text-sm px-4 py-2">
-            <Shield className="h-4 w-4 mr-2 inline" />
-            Certificado pela OAB e validado por juristas
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
-            Detecte Cláusulas Abusivas e Juros Ilegais em{" "}
-            <span className="text-primary">Segundos</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Plataforma de auditoria forense que analisa contratos financeiros identificando irregularidades
-            com base em jurisprudência do STF e normas do Banco Central
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-              Ver Demonstração
-            </Button>
+      <section className="relative overflow-hidden bg-gradient-to-br from-background via-background to-muted/30 py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <div className="space-y-6 text-left">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground leading-tight">
+                BLINDE SEU{" "}
+                <span className="text-primary block">CONTRATO</span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-lg">
+                Não arrisque seu dinheiro com{" "}
+                <span className="font-semibold text-foreground">cláusulas abusivas e juros ilegais!</span>
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <Button 
+                  size="lg" 
+                  className="text-lg px-8 py-6 font-bold shadow-lg hover:shadow-xl transition-all"
+                  onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}
+                >
+                  QUERO BLINDAR MEU CONTRATO
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
+                <Users className="h-4 w-4 text-primary" />
+                <span>+ de <span className="font-semibold text-foreground">12.500</span> contratos já analisados</span>
+              </div>
+            </div>
+
+            {/* Right Content - Padlock Image with Rings */}
+            <div className="relative flex justify-center lg:justify-end">
+              {/* Decorative Rings */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-[400px] h-[400px] md:w-[500px] md:h-[500px] rounded-full border-[12px] border-primary/30 animate-pulse" />
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-[340px] h-[340px] md:w-[420px] md:h-[420px] rounded-full border-[8px] border-primary/50" />
+              </div>
+              
+              {/* Padlock Image */}
+              <div className="relative z-10">
+                <img 
+                  src={heroPadlock} 
+                  alt="Proteção jurídica garantida" 
+                  className="w-[300px] md:w-[400px] lg:w-[450px] drop-shadow-2xl"
+                />
+              </div>
+
+              {/* Floating Benefits Card */}
+              <div className="absolute left-0 lg:-left-8 top-1/2 -translate-y-1/2 z-20 bg-slate-700/95 backdrop-blur-sm rounded-xl p-5 shadow-2xl max-w-[200px] hidden md:block">
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-primary font-bold">+</span>
+                    <span className="text-primary font-semibold">Proteção</span>
+                  </div>
+                  <div className="text-white font-bold">Análise Forense</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-primary font-bold">+</span>
+                    <span className="text-primary font-semibold">Precisão</span>
+                  </div>
+                  <div className="text-white">E suporte</div>
+                  <div className="text-primary font-bold">Especializado</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+        
+        {/* Bottom accent bar */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary to-primary/50" />
       </section>
 
       {/* Service Grid Section */}
