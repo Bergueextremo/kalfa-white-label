@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
 
 
         console.log(`Audit type: ${isPremium ? 'PREMIUM' : 'FREE'}`);
-        const modelName = isPremium ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+        const modelName = isPremium ? 'google/gemini-2.5-pro' : 'google/gemini-2.5-flash';
 
         // 5. Download File
         const { data: fileData, error: fileError } = await dbAdmin
@@ -155,12 +155,12 @@ Deno.serve(async (req) => {
             throw new Error('Failed to download file')
         }
 
-        // 6. Prepare Gemini
-        const apiKey = Deno.env.get('GEMINI_API_KEY');
+        // 6. Prepare Lovable AI Gateway
+        const apiKey = Deno.env.get('LOVABLE_API_KEY');
         if (!apiKey) {
-            throw new Error('GEMINI_API_KEY not configured');
+            throw new Error('LOVABLE_API_KEY not configured');
         }
-        console.log(`Using API Key starting with: ${apiKey.substring(0, 5)}...`);
+        console.log(`Using Lovable AI Gateway with model: ${modelName}`);
 
         const arrayBuffer = await fileData.arrayBuffer()
         const base64 = btoa(
@@ -225,42 +225,60 @@ Deno.serve(async (req) => {
       }
     `
 
-        console.log(`Sending to ${modelName} via REST API (v1)...`)
+        console.log(`Sending to Lovable AI Gateway with model: ${modelName}`)
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            {
-                                inline_data: {
-                                    mime_type: fileData.type || 'application/pdf',
-                                    data: base64
-                                }
+        // Determine mime type
+        const mimeType = fileData.type || 'application/pdf';
+        const base64DataUrl = `data:${mimeType};base64,${base64}`;
+
+        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: modelName,
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: prompt },
+                            { 
+                                type: 'image_url', 
+                                image_url: { 
+                                    url: base64DataUrl
+                                } 
                             }
                         ]
-                    }]
-                })
-            }
-        );
+                    }
+                ]
+            })
+        });
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Gemini API Error Status:', response.status);
-            console.error('Gemini API Error Body:', errorText);
-            throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
+            console.error('Lovable AI Gateway Error Status:', response.status);
+            console.error('Lovable AI Gateway Error Body:', errorText);
+            
+            if (response.status === 429) {
+                throw new Error('Rate limit exceeded. Please try again in a few moments.');
+            }
+            if (response.status === 402) {
+                throw new Error('AI credits exhausted. Please add credits to continue.');
+            }
+            throw new Error(`AI Gateway Error: ${response.status} - ${errorText}`);
         }
 
         const result = await response.json();
-        const responseText = result.candidates[0].content.parts[0].text;
+        const responseText = result.choices?.[0]?.message?.content;
+        
+        if (!responseText) {
+            console.error('No response content from AI:', result);
+            throw new Error('No response content from AI');
+        }
 
-        // Com generationConfig JSON, não precisamos de Regex agressivo, mas mantemos por segurança
+        // Parse JSON response
         let aiResult;
         try {
             aiResult = JSON.parse(responseText);
@@ -304,14 +322,11 @@ Deno.serve(async (req) => {
 
     } catch (error) {
         console.error('Error processing audit:', error)
-        const apiKey = Deno.env.get('GEMINI_API_KEY');
-        const keyPrefix = apiKey ? apiKey.substring(0, 5) : 'NONE';
 
         return new Response(
             JSON.stringify({
                 error: error instanceof Error ? error.message : 'Unknown error',
-                debug_key_prefix: keyPrefix,
-                model_tried: "gemini-2.5-flash (v1 REST - default)"
+                gateway: "Lovable AI Gateway"
             }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
