@@ -81,6 +81,9 @@ const Landing = () => {
               <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Recursos
               </a>
+              <a href="/consultas" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Consultas
+              </a>
               <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Preços
               </a>

@@ -25,7 +25,7 @@ import Admin from "./pages/Admin";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminSales from "./pages/admin/AdminSales";
-
+import Consultas from "./pages/Consultas";
 
 const queryClient = new QueryClient();
 
@@ -51,7 +51,7 @@ const App = () => {
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/scan-gratis" element={<FreeAuditFlow />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
-
+                  <Route path="/consultas" element={<Consultas />} />
 
                   {/* Protected routes */}
                   <Route
