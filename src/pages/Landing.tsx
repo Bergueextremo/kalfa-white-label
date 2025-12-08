@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Scale, Shield, TrendingDown, FileText, Zap, Check, ArrowRight, Users } from "lucide-react";
+import { Scale, Shield, TrendingDown, FileText, Zap, Check, ArrowRight, Users, Home, Landmark, FileSearch, Banknote, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer";
@@ -161,6 +161,110 @@ const Landing = () => {
         
         {/* Bottom accent bar */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary to-primary/50" />
+      </section>
+
+      {/* Contract Types Section */}
+      <section className="bg-muted/30 py-16 md:py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Qual tipo de contrato você quer blindar?
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Nosso Autenticador Jurídico é treinado em nichos específicos do direito para garantir precisão máxima na detecção de irregularidades.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            {/* Aluguel & Imobiliário */}
+            <Card 
+              className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50"
+              onClick={() => navigate('/scan-gratis?type=aluguel')}
+            >
+              <CardContent className="p-6">
+                <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4 group-hover:bg-primary/20 transition-colors">
+                  <Home className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">Aluguel & Imobiliário</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Identifique cláusulas de despejo, reajuste de IGP-M e multas abusivas.
+                </p>
+                <div className="flex items-center text-primary font-medium text-sm group-hover:gap-2 transition-all">
+                  <span>Auditar Aluguel</span>
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Financiamento Bancário */}
+            <Card 
+              className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50"
+              onClick={() => navigate('/scan-gratis?type=veiculo')}
+            >
+              <CardContent className="p-6">
+                <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4 group-hover:bg-primary/20 transition-colors">
+                  <Landmark className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">Financiamento Bancário</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Análise de juros compostos, tabela price e venda casada em contratos bancários.
+                </p>
+                <div className="flex items-center text-primary font-medium text-sm group-hover:gap-2 transition-all">
+                  <span>Revisar Juros</span>
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Prestação de Serviços */}
+            <Card 
+              className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50"
+              onClick={() => navigate('/scan-gratis?type=servicos')}
+            >
+              <CardContent className="p-6">
+                <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4 group-hover:bg-primary/20 transition-colors">
+                  <FileSearch className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">Prestação de Serviços</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Blindagem para PJ. Verifique riscos trabalhistas e cláusulas de rescisão.
+                </p>
+                <div className="flex items-center text-primary font-medium text-sm group-hover:gap-2 transition-all">
+                  <span>Analisar Serviço</span>
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Empréstimos & Consignado */}
+            <Card 
+              className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50"
+              onClick={() => navigate('/scan-gratis?type=emprestimo')}
+            >
+              <CardContent className="p-6">
+                <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4 group-hover:bg-primary/20 transition-colors">
+                  <Banknote className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">Empréstimos & Consignado</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Verificação de taxas ocultas e Custo Efetivo Total (CET) acima do permitido.
+                </p>
+                <div className="flex items-center text-primary font-medium text-sm group-hover:gap-2 transition-all">
+                  <span>Calcular Risco</span>
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center mt-10">
+            <p className="text-muted-foreground mb-3">Não achou seu tipo de contrato?</p>
+            <Button variant="link" className="text-primary font-medium" onClick={() => navigate('/consultas')}>
+              Ver lista completa de auditorias disponíveis
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </section>
 
       {/* Service Grid Section */}
