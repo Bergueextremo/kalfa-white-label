@@ -177,10 +177,7 @@ const Landing = () => {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {/* Aluguel & Imobiliário */}
-            <Card 
-              className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50"
-              onClick={() => navigate('/scan-gratis?type=aluguel')}
-            >
+            <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50" onClick={() => navigate('/scan-gratis?type=aluguel')}>
               <CardContent className="p-6">
                 <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4 group-hover:bg-primary/20 transition-colors">
                   <Home className="h-6 w-6 text-primary" />
@@ -197,10 +194,7 @@ const Landing = () => {
             </Card>
 
             {/* Financiamento Bancário */}
-            <Card 
-              className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50"
-              onClick={() => navigate('/scan-gratis?type=veiculo')}
-            >
+            <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50" onClick={() => navigate('/scan-gratis?type=veiculo')}>
               <CardContent className="p-6">
                 <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4 group-hover:bg-primary/20 transition-colors">
                   <Landmark className="h-6 w-6 text-primary" />
@@ -217,10 +211,7 @@ const Landing = () => {
             </Card>
 
             {/* Prestação de Serviços */}
-            <Card 
-              className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50"
-              onClick={() => navigate('/scan-gratis?type=servicos')}
-            >
+            <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50" onClick={() => navigate('/scan-gratis?type=servicos')}>
               <CardContent className="p-6">
                 <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4 group-hover:bg-primary/20 transition-colors">
                   <FileSearch className="h-6 w-6 text-primary" />
@@ -237,10 +228,7 @@ const Landing = () => {
             </Card>
 
             {/* Empréstimos & Consignado */}
-            <Card 
-              className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50"
-              onClick={() => navigate('/scan-gratis?type=emprestimo')}
-            >
+            <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-primary/50" onClick={() => navigate('/scan-gratis?type=emprestimo')}>
               <CardContent className="p-6">
                 <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4 group-hover:bg-primary/20 transition-colors">
                   <Banknote className="h-6 w-6 text-primary" />
@@ -268,7 +256,7 @@ const Landing = () => {
       </section>
 
       {/* Service Grid Section */}
-      <ServiceGrid />
+      
 
       {/* Stats Section */}
       <section className="bg-primary text-primary-foreground py-16">
