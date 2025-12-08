@@ -89,21 +89,14 @@ const Consultas = () => {
   const navigate = useNavigate();
   const [selectedContract, setSelectedContract] = useState<ContractType | null>(null);
 
+  const handleContractClick = (contract: ContractType) => {
+    // Redirect immediately to upload page with contract type
+    navigate(`/scan-gratis?type=${contract.id}`);
+  };
+
   const handleProceed = () => {
     if (selectedContract) {
-      navigate("/checkout", {
-        state: {
-          plan: {
-            id: "auditoria-avulsa",
-            name: `Auditoria: ${selectedContract.title}`,
-            price: 49.00,
-            priceFormatted: "R$ 49,00",
-            credits: 1
-          },
-          contractType: selectedContract.id,
-          isNewUser: true
-        }
-      });
+      navigate(`/scan-gratis?type=${selectedContract.id}`);
     }
   };
 
@@ -157,7 +150,7 @@ const Consultas = () => {
               return (
                 <button
                   key={contract.id}
-                  onClick={() => setSelectedContract(contract)}
+                  onClick={() => handleContractClick(contract)}
                   className={cn(
                     "w-full text-left p-5 rounded-xl border-2 transition-all duration-200",
                     "bg-white hover:shadow-lg group",
