@@ -7,20 +7,58 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { User, Bell, Shield, Globe } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const Configuracoes = () => {
     const { user } = useAuth();
+    const [name, setName] = useState(user?.name || "");
+    const [loadingProfile, setLoadingProfile] = useState(false);
+    const [loadingReset, setLoadingReset] = useState(false);
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [marketingEmails, setMarketingEmails] = useState(false);
 
-    const handleSaveProfile = () => {
-        toast.success("Perfil atualizado com sucesso!");
+    // Sync name when user loads
+    useEffect(() => {
+        if (user?.name) setName(user.name);
+    }, [user?.name]);
+
+    const handleSaveProfile = async () => {
+        if (!user) return;
+        setLoadingProfile(true);
+        try {
+            // Use Edge Function to bypass RLS/Cache issues securely
+            const { error } = await supabase.functions.invoke('update-profile', {
+                body: { name: name }
+            });
+
+            if (error) throw error;
+
+            toast.success("Perfil atualizado com sucesso!");
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Erro ao atualizar perfil: " + (error.message || "Erro desconhecido"));
+        } finally {
+            setLoadingProfile(false);
+        }
     };
 
-    const handlePasswordReset = () => {
-        toast.info("Link de redefinição de senha enviado para seu e-mail.");
+    const handlePasswordReset = async () => {
+        if (!user?.email) return;
+        setLoadingReset(true);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+                redirectTo: `${window.location.origin}/reset-password`,
+            });
+            if (error) throw error;
+            toast.success("E-mail de redefinição enviado com sucesso!");
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Erro ao enviar e-mail: " + error.message);
+        } finally {
+            setLoadingReset(false);
+        }
     };
 
     return (
@@ -52,14 +90,21 @@ const Configuracoes = () => {
                             <CardContent className="space-y-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="name">Nome Completo</Label>
-                                    <Input id="name" defaultValue={user?.name || ""} placeholder="Seu nome" />
+                                    <Input
+                                        id="name"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="Seu nome"
+                                    />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="email">E-mail</Label>
                                     <Input id="email" defaultValue={user?.email || ""} disabled className="bg-slate-50" />
                                     <p className="text-xs text-muted-foreground">O e-mail não pode ser alterado.</p>
                                 </div>
-                                <Button onClick={handleSaveProfile} className="mt-4">Salvar Alterações</Button>
+                                <Button onClick={handleSaveProfile} disabled={loadingProfile} className="mt-4">
+                                    {loadingProfile ? "Salvando..." : "Salvar Alterações"}
+                                </Button>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -106,8 +151,13 @@ const Configuracoes = () => {
                             <CardContent className="space-y-4">
                                 <div className="flex flex-col gap-2">
                                     <Label>Senha</Label>
-                                    <Button variant="outline" onClick={handlePasswordReset} className="w-full sm:w-auto justify-start">
-                                        Redefinir Senha
+                                    <Button
+                                        variant="outline"
+                                        onClick={handlePasswordReset}
+                                        disabled={loadingReset}
+                                        className="w-full sm:w-auto justify-start"
+                                    >
+                                        {loadingReset ? "Enviando..." : "Redefinir Senha"}
                                     </Button>
                                     <p className="text-xs text-muted-foreground">Você receberá um e-mail com instruções.</p>
                                 </div>

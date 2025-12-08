@@ -9,34 +9,38 @@ import { useState } from "react";
 
 const Creditos = () => {
   const { credits } = useCredits();
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [showCheckout, setShowCheckout] = useState(false);
 
-  const planos = [
+  const plans = [
     {
-      nome: "Start",
-      creditos: 10,
-      preco: "R$ 97,00",
-      descricao: "Pessoa física",
+      name: "Start",
+      credits: 10,
+      price: 97.00,
+      priceFormatted: "R$ 97,00",
+      description: "Pessoa física",
       features: ["10 análises completas", "Suporte por email", "Laudos em PDF"],
     },
     {
-      nome: "Essencial",
-      creditos: 50,
-      preco: "R$ 324,00",
-      descricao: "Corretor/Despachante",
+      name: "Essencial",
+      credits: 50,
+      price: 324.00,
+      priceFormatted: "R$ 324,00",
+      description: "Corretor/Despachante",
       features: [
         "50 análises completas",
         "Suporte prioritário",
         "Laudos personalizados",
         "Acesso multi-dispositivo",
       ],
-      destaque: true,
+      popular: true,
     },
     {
-      nome: "Enterprise",
-      creditos: "Ilimitado",
-      preco: "R$ 997,00",
-      descricao: "Escritório advocacia",
+      name: "Enterprise",
+      credits: 200,
+      price: 997.00,
+      priceFormatted: "R$ 997,00",
+      description: "Escritório advocacia",
       features: [
         "Análises Ilimitadas",
         "Gerente de conta dedicado",
@@ -46,6 +50,19 @@ const Creditos = () => {
       ],
     },
   ];
+
+  const handleBuyCredits = (plan?: any) => {
+    // Se não passar plano (botão do header), usa o Essencial por padrão ou abre o modal vazio (que não é suportado pelo modal atual, então vamos definir o Start ou Essencial como padrão)
+    // O requisito diz "Clique no Plano -> Popup". O botão "Comprar Mais Créditos" no header também deve levar a isso.
+    // Vamos assumir que o botão do header abre o modal de seleção.
+    // MAS, o novo modal requer um plano inicial.
+    // Vamos fazer o botão do header abrir o plano "Essencial" ou "Start" por conveniência, ou recriar a seleção dentro do modal?
+    // O plano de implementação diz "Modify 'Adquirir Plano' buttons... Remove intermediate 'Select Plan' popup".
+    // Para o botão genérico "Comprar Mais Créditos", melhor abrir direto no plano Start ou Mais Popular.
+    const defaultPlan = plans.find(p => p.popular) || plans[0];
+    setSelectedPlan(plan || defaultPlan);
+    setShowCheckout(true);
+  };
 
   return (
     <Layout>
@@ -70,7 +87,7 @@ const Creditos = () => {
                   <p className="text-4xl font-bold text-foreground">{credits} créditos</p>
                 </div>
               </div>
-              <Button size="lg" onClick={() => setShowCheckout(true)}>
+              <Button size="lg" onClick={() => handleBuyCredits()}>
                 <Zap className="h-5 w-5 mr-2" />
                 Comprar Mais Créditos
               </Button>
@@ -78,19 +95,19 @@ const Creditos = () => {
           </CardContent>
         </Card>
 
-        <CheckoutModal open={showCheckout} onOpenChange={setShowCheckout} />
+        <CheckoutModal open={showCheckout} onOpenChange={setShowCheckout} initialPlan={selectedPlan} />
 
         {/* Planos */}
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-6">Planos Disponíveis</h2>
           <div className="grid md:grid-cols-3 gap-6">
-            {planos.map((plano) => (
+            {plans.map((plan) => (
               <Card
-                key={plano.nome}
-                className={`shadow-md hover:shadow-xl transition-all relative ${plano.destaque ? "border-2 border-primary scale-105" : ""
+                key={plan.name}
+                className={`shadow-md hover:shadow-xl transition-all relative ${plan.popular ? "border-2 border-primary scale-105" : ""
                   }`}
               >
-                {plano.destaque && (
+                {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <Badge className="bg-primary text-primary-foreground px-4 py-1">
                       Mais Popular
@@ -98,19 +115,19 @@ const Creditos = () => {
                   </div>
                 )}
                 <CardHeader>
-                  <CardTitle className="text-2xl">{plano.nome}</CardTitle>
-                  <CardDescription>{plano.descricao}</CardDescription>
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <CardDescription>{plan.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="text-center py-4">
-                    <p className="text-4xl font-bold text-primary">{plano.preco}</p>
+                    <p className="text-4xl font-bold text-primary">{plan.priceFormatted}</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      {plano.creditos} créditos de análise
+                      {plan.credits} créditos de análise
                     </p>
                   </div>
 
                   <ul className="space-y-3">
-                    {plano.features.map((feature, index) => (
+                    {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
                         <span className="text-sm text-muted-foreground">{feature}</span>
@@ -118,7 +135,7 @@ const Creditos = () => {
                     ))}
                   </ul>
 
-                  <Button className="w-full" variant={plano.destaque ? "default" : "outline"} onClick={() => setShowCheckout(true)}>
+                  <Button className="w-full" variant={plan.popular ? "default" : "outline"} onClick={() => handleBuyCredits(plan)}>
                     Adquirir Plano
                   </Button>
                 </CardContent>

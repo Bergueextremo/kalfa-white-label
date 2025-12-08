@@ -137,9 +137,11 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Visão Geral</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Olá, {user?.name?.split(' ')[0] || 'Visitante'}! 👋
+            </h1>
             <p className="text-muted-foreground mt-1">
-              Acompanhe suas auditorias e identificações de irregularidades
+              Bem-vindo de volta. Acompanhe a visão geral das suas auditorias.
             </p>
           </div>
 

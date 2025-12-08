@@ -30,8 +30,41 @@ Deno.serve(async (req) => {
 
         console.log(`[Nova Versão] Iniciando. Audit: ${audit_id} | Método: ${payment_method} | User: ${user?.id}`);
 
-        // --- VALIDAÇÕES ---
-        if (!customer?.cpf) throw new Error('CPF é obrigatório');
+        // --- VALIDAÇÕES & ENRIQUECIMENTO DE DADOS ---
+
+        // Verifica dados faltantes
+        let finalCustomer = { ...customer };
+
+        if (!finalCustomer.cpf || !finalCustomer.phone || !finalCustomer.name) {
+            console.log('Dados do cliente incompletos no payload. Tentando buscar do perfil...');
+
+            if (user?.id) {
+                const { data: profile, error: profileError } = await supabaseAdmin
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile) {
+                    console.log('Perfil encontrado. Completando dados...');
+                    finalCustomer.name = finalCustomer.name || profile.name || user.user_metadata?.name || '';
+                    finalCustomer.email = finalCustomer.email || profile.email || user.email || '';
+                    finalCustomer.cpf = finalCustomer.cpf || profile.cpf || '';
+                    finalCustomer.phone = finalCustomer.phone || profile.phone || '';
+
+                    // Fallback para endereço se existir no profile (opcional)
+                    if (!finalCustomer.address && profile.address) {
+                        finalCustomer.address = profile.address;
+                    }
+                } else {
+                    console.log('Perfil não encontrado ou erro:', profileError);
+                }
+            }
+        }
+
+        // Validação Final
+        if (!finalCustomer.cpf) throw new Error('CPF é obrigatório e não foi encontrado no perfil.');
+        if (!finalCustomer.email) throw new Error('Email é obrigatório.');
 
         // Recupera tokens
         const appmaxToken = Deno.env.get('JUSCONTRATO-APPMAX') || '4B90F0B1-93FC472E-BF63BE63-97577F90';
@@ -40,12 +73,12 @@ Deno.serve(async (req) => {
         // ============================================================
         // PASSO 1: CLIENTE
         // ============================================================
-        const rawName = (customer.name ?? '').trim();
+        const rawName = (finalCustomer.name ?? 'Cliente').trim();
         const firstName = rawName.split(' ')[0];
         const lastName = rawName.split(' ').slice(1).join(' ') || firstName;
 
         // Endereço (Usa o do front ou fallback seguro)
-        const addressData = customer.address || {
+        const addressData = finalCustomer.address || {
             zip_code: "01001000",
             street: "Rua Digital",
             number: "100",
@@ -58,9 +91,9 @@ Deno.serve(async (req) => {
             "access-token": appmaxToken,
             firstname: firstName,
             lastname: lastName,
-            email: customer.email,
-            telephone: customer.phone.replace(/\D/g, ''),
-            cpf: customer.cpf.replace(/\D/g, ''),
+            email: finalCustomer.email,
+            telephone: (finalCustomer.phone || '').replace(/\D/g, ''),
+            cpf: (finalCustomer.cpf || '').replace(/\D/g, ''),
             address_1: addressData.street,
             number: addressData.number,
             district: addressData.district,
@@ -306,8 +339,8 @@ Deno.serve(async (req) => {
         // --- ATUALIZA OU CRIA NO BANCO ---
         let finalAuditId = audit_id;
         try {
-            // NOVO: Se for compra de plano (tem plan_id e credits), criar em credit_purchases
-            if (plan_id && credits) {
+            // NOVO: Se for compra de plano (tem credits ou plan_id), criar em credit_purchases
+            if (credits || plan_id) {
                 console.log('Criando registro de compra de créditos...');
 
                 // WORKAROUND: Usar user_id padrão se não houver usuário autenticado
