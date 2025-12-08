@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer";
 import { ServiceGrid } from "@/components/ServiceGrid";
 import heroPadlockV2 from "@/assets/hero-padlock-v2.png";
+import logoJusContratos from "@/assets/logo-juscontratos.png";
 const Landing = () => {
   const navigate = useNavigate();
   const {
@@ -74,8 +75,7 @@ const Landing = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Scale className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground">JusContratos</span>
+            <img src={logoJusContratos} alt="JusContratos" className="h-8 md:h-10" />
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -106,58 +106,46 @@ const Landing = () => {
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
-          <div className="space-y-6 text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold text-[#0A1E4B] leading-tight">
+          <div className="flex flex-col gap-6 text-center lg:text-left items-center lg:items-start order-2 lg:order-1">
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold text-[#0A1E4B] leading-tight order-1">
               BLINDE SEU<br />
               CONTRATO
             </h1>
-            <p className="text-lg md:text-xl text-gray-500 max-w-lg">
+            <p className="text-lg md:text-xl text-gray-500 max-w-lg order-2 mx-auto lg:mx-0">
               Não arrisque seu dinheiro com <span className="font-bold text-[#0A1E4B]">cláusulas abusivas e juros ilegais!</span>
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button size="lg" className="bg-[#00C853] hover:bg-[#00A844] text-white text-base md:text-lg px-8 py-6 font-bold uppercase tracking-wide shadow-lg hover:shadow-xl transition-all" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}>
+
+            {/* Mobile Image - Visible only on mobile */}
+            <div className="relative flex justify-center py-6 order-3 lg:hidden">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-[#0A1E4B] -z-10" />
+              <img
+                alt="Blindagem de contrato"
+                src={heroPadlockV2}
+                className="w-[280px] drop-shadow-2xl"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-gray-500 pt-2 order-4 lg:order-5">
+              <Users className="h-4 w-4 text-[#0A1E4B]" />
+              <span>+ de <span className="font-bold text-[#0A1E4B]">12.500</span> contratos já analisados</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-4 order-5 lg:order-4 w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto bg-[#00C853] hover:bg-[#00A844] text-white text-base md:text-lg px-8 py-6 font-bold uppercase tracking-wide shadow-lg hover:shadow-xl transition-all" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}>
                 QUERO BLINDAR MEU CONTRATO
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500 pt-2">
-              <Users className="h-4 w-4 text-[#0A1E4B]" />
-              <span>+ de <span className="font-bold text-[#0A1E4B]">12.500</span> contratos já analisados</span>
-            </div>
           </div>
 
-          {/* Right Content - Padlock Image */}
-          <div className="relative flex justify-center lg:justify-end">
+          {/* Right Content - Padlock Image - Hidden on mobile */}
+          <div className="relative justify-center lg:justify-end order-1 lg:order-2 hidden lg:flex">
             <div className="relative z-10">
               <img
                 alt="Blindagem de contrato"
                 src={heroPadlockV2}
                 className="w-[300px] md:w-[400px] lg:w-[500px] drop-shadow-2xl"
               />
-            </div>
-
-            {/* Floating Benefits Card */}
-            <div className="absolute left-0 lg:-left-12 top-1/2 -translate-y-1/2 z-20 bg-[#2C3E50]/95 backdrop-blur-sm rounded-xl p-6 shadow-2xl min-w-[240px] hidden md:block border border-gray-700">
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[#00C853] font-bold text-lg">+</span>
-                    <span className="text-[#00C853] font-bold text-lg">Proteção</span>
-                  </div>
-                  <div className="text-white font-bold text-xl ml-6">Auditoria Jurídica</div>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[#00C853] font-bold text-lg">+</span>
-                    <span className="text-[#00C853] font-bold text-lg">Precisão</span>
-                  </div>
-                  <div className="ml-6">
-                    <span className="text-white text-lg block">E suporte</span>
-                    <span className="text-[#00C853] font-bold text-lg">Especializado</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

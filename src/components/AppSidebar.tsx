@@ -1,5 +1,6 @@
 import { Scale, LayoutDashboard, Upload, FileText, Wallet, HeadphonesIcon, Settings, LogOut, User as UserIcon, Shield } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import logoJusContratos from "@/assets/logo-juscontratos.png";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { CreditUsage } from "@/components/CreditUsage";
@@ -52,15 +53,10 @@ export function AppSidebar() {
         {/* Logo */}
         <div className="flex items-center gap-2 px-4 py-6">
           {!isCollapsed && (
-            <>
-              <Scale className="h-7 w-7 text-sidebar-primary-foreground" />
-              <span className="text-xl font-bold text-sidebar-primary-foreground">
-                JusContratos
-              </span>
-            </>
+            <img src={logoJusContratos} alt="JusContratos" className="h-8 md:h-10 brightness-0 invert" />
           )}
           {isCollapsed && (
-            <Scale className="h-7 w-7 mx-auto text-sidebar-primary-foreground" />
+            <img src={logoJusContratos} alt="JusContratos" className="h-8 w-auto mx-auto brightness-0 invert" />
           )}
         </div>
 

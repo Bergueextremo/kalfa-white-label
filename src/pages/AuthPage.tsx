@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
+import logoJusContratos from "@/assets/logo-juscontratos.png";
 
 // Schemas de Validação
 const loginSchema = z.object({
@@ -137,10 +138,8 @@ const AuthPage = () => {
         <div className="relative z-10 flex flex-col justify-between p-12 w-full h-full">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 p-2 rounded-lg backdrop-blur-sm border border-white/20">
-              <Scale className="h-6 w-6 text-white" />
+              <img src={logoJusContratos} alt="JusContratos" className="h-6 w-auto brightness-0 invert" />
             </div>
-            {/* Fonte alterada para sans-serif bold */}
-            <span className="text-xl font-bold tracking-wide">JusContratos</span>
           </div>
 
           <div className="space-y-6 max-w-lg">
@@ -174,8 +173,7 @@ const AuthPage = () => {
       <div className="flex-1 flex flex-col relative bg-white">
         {/* Header Mobile */}
         <div className="lg:hidden p-6 flex items-center gap-2">
-          <Scale className="h-6 w-6 text-slate-900" />
-          <span className="font-bold text-lg">JusContratos</span>
+          <img src={logoJusContratos} alt="JusContratos" className="h-8 w-auto" />
         </div>
 
         {/* Botão Voltar */}

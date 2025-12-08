@@ -1,4 +1,5 @@
 import { Scale, ShieldCheck, Lock, Building2, Mail, Phone } from "lucide-react";
+import logoJusContratos from "@/assets/logo-juscontratos.png";
 
 export const Footer = () => {
     return (
@@ -16,8 +17,7 @@ export const Footer = () => {
                     {/* Coluna 1: Institucional */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-2 text-white">
-                            <Scale className="h-6 w-6" />
-                            <span className="text-xl font-bold tracking-tight">JusContratos</span>
+                            <img src={logoJusContratos} alt="JusContratos" className="h-8 md:h-10 brightness-0 invert" />
                         </div>
                         <p className="text-sm leading-relaxed text-slate-400">
                             Tecnologia de ponta para análise contratual, mitigação de riscos e recuperação de ativos financeiros. Segurança jurídica ao alcance de um clique.

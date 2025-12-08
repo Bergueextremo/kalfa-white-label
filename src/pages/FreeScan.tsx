@@ -4,6 +4,7 @@ import { Upload, ShieldCheck, Lock, Trash2, ArrowLeft, Scale } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import logoJusContratos from "@/assets/logo-juscontratos.png";
 
 // Contract type configurations for dynamic titles
 const contractTypeConfig: Record<string, { title: string; subtitle: string }> = {
@@ -37,12 +38,12 @@ const FreeScan = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
-    
+
     // Get contract type from URL params or location state
     const typeFromUrl = searchParams.get('type');
     const typeFromState = location.state?.contractType;
     const contractTypeId = typeFromUrl || typeFromState || "outros";
-    
+
     // Get dynamic content based on contract type
     const config = contractTypeConfig[contractTypeId] || contractTypeConfig.outros;
 
@@ -135,10 +136,9 @@ const FreeScan = () => {
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-                            <Scale className="h-7 w-7 text-[#0A192F]" />
-                            <span className="text-xl font-bold text-[#0A192F]">JusContratos</span>
+                            <img src={logoJusContratos} alt="JusContratos" className="h-8 md:h-10" />
                         </div>
-                        <button 
+                        <button
                             onClick={() => navigate('/consultas')}
                             className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
                         >
