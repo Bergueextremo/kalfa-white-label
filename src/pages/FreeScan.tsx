@@ -1,14 +1,50 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Upload, ShieldCheck, Lock, Trash2, ArrowLeft } from "lucide-react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { Upload, ShieldCheck, Lock, Trash2, ArrowLeft, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
+// Contract type configurations for dynamic titles
+const contractTypeConfig: Record<string, { title: string; subtitle: string }> = {
+    veiculo: {
+        title: "Anexe seu Contrato de Financiamento de Veículo",
+        subtitle: "Detectando juros abusivos, taxas ocultas e cláusulas de busca e apreensão"
+    },
+    imovel: {
+        title: "Anexe seu Contrato de Aluguel ou Imobiliário",
+        subtitle: "Detectando multas abusivas, reajuste IGP-M irregular e cláusulas de despejo"
+    },
+    emprestimo: {
+        title: "Anexe seu Contrato de Empréstimo Bancário",
+        subtitle: "Detectando venda casada, RMC irregular e anatocismo"
+    },
+    empresarial: {
+        title: "Anexe seu Contrato Social ou Empresarial",
+        subtitle: "Analisando cláusulas de exclusão de sócio e responsabilidade patrimonial"
+    },
+    servicos: {
+        title: "Anexe seu Contrato de Prestação de Serviços",
+        subtitle: "Verificando riscos trabalhistas, multas desproporcionais e prazos"
+    },
+    outros: {
+        title: "Anexe seu Contrato para Análise",
+        subtitle: "Varredura completa para identificação de cláusulas abusivas"
+    }
+};
+
 const FreeScan = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const contractType = location.state?.contractType || "Contrato";
+    const [searchParams] = useSearchParams();
+    
+    // Get contract type from URL params or location state
+    const typeFromUrl = searchParams.get('type');
+    const typeFromState = location.state?.contractType;
+    const contractTypeId = typeFromUrl || typeFromState || "outros";
+    
+    // Get dynamic content based on contract type
+    const config = contractTypeConfig[contractTypeId] || contractTypeConfig.outros;
 
     const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -59,7 +95,7 @@ const FreeScan = () => {
             const { data, error } = await supabase.functions.invoke('scan-contract-light', {
                 body: {
                     file_path: fileName,
-                    contract_type: contractType
+                    contract_type: contractTypeId
                 }
             });
 
@@ -80,7 +116,7 @@ const FreeScan = () => {
                 state: {
                     scanResult: scanData,
                     filePath: fileName,
-                    contractType
+                    contractType: contractTypeId
                 }
             });
 
@@ -93,31 +129,42 @@ const FreeScan = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="min-h-screen bg-[#F8F9FA]">
             {/* Header */}
-            <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
+            <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
                 <div className="container mx-auto px-4 py-4">
-                    <Button
-                        variant="ghost"
-                        onClick={() => navigate('/')}
-                        className="gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Voltar
-                    </Button>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+                            <Scale className="h-7 w-7 text-[#0A192F]" />
+                            <span className="text-xl font-bold text-[#0A192F]">JusContratos</span>
+                        </div>
+                        <button 
+                            onClick={() => navigate('/consultas')}
+                            className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            Voltar
+                        </button>
+                    </div>
                 </div>
             </header>
 
             {/* Main Content */}
             <div className="container mx-auto px-4 py-16">
                 <div className="max-w-3xl mx-auto">
-                    {/* Title */}
+                    {/* Title - Dynamic based on contract type */}
                     <div className="text-center mb-12">
-                        <h1 className="text-4xl font-bold text-slate-900 mb-4">
-                            Varredura de Risco Gratuita
+                        <div className="inline-flex items-center gap-2 bg-[#0A192F]/5 px-4 py-2 rounded-full mb-4">
+                            <ShieldCheck className="h-4 w-4 text-[#0A192F]" />
+                            <span className="text-xs font-semibold text-[#0A192F] uppercase tracking-wider">
+                                Auditoria Forense Especializada
+                            </span>
+                        </div>
+                        <h1 className="text-3xl md:text-4xl font-bold text-[#0A192F] mb-4">
+                            {config.title}
                         </h1>
-                        <p className="text-lg text-slate-600">
-                            Descubra se seu {contractType.toLowerCase()} possui cláusulas abusivas em segundos
+                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                            {config.subtitle}
                         </p>
                     </div>
 
