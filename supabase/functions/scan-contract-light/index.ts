@@ -36,14 +36,14 @@ Deno.serve(async (req) => {
         }
         console.log('File downloaded successfully, size:', fileData.size);
 
-        // 3. Prepare Gemini (Flash model for cost efficiency)
-        const apiKey = Deno.env.get('GEMINI_API_KEY');
+        // 3. Prepare Lovable AI Gateway
+        const apiKey = Deno.env.get('LOVABLE_API_KEY');
         if (!apiKey) {
-            throw new Error('GEMINI_API_KEY not found in environment variables');
+            throw new Error('LOVABLE_API_KEY not found in environment variables');
         }
-        console.log('Initializing Gemini via REST API... Key length:', apiKey.length);
+        console.log('Using Lovable AI Gateway for light scan...');
 
-        // 4. Generate Content via REST API
+        // 4. Generate Content via Lovable AI Gateway
         console.log('Generating content...');
         const prompt = `
         Analise este contrato de ${contract_type || 'geral'} e identifique APENAS os nomes das cláusulas ou termos que parecem perigosos ou abusivos.
@@ -67,49 +67,64 @@ Deno.serve(async (req) => {
         }
         `;
 
-        console.log('Sending to Gemini Flash for light scan...')
+        console.log('Sending to Lovable AI Gateway for light scan...')
 
-        // Convert Blob to Uint8Array for Gemini
+        // Convert Blob to base64
         const arrayBuffer = await fileData.arrayBuffer();
         const base64 = btoa(
             new Uint8Array(arrayBuffer)
                 .reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            {
-                                inline_data: {
-                                    mime_type: fileData.type || 'application/pdf',
-                                    data: base64
-                                }
+        // Determine mime type
+        const mimeType = fileData.type || 'application/pdf';
+        const base64DataUrl = `data:${mimeType};base64,${base64}`;
+
+        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'google/gemini-2.5-flash',
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: prompt },
+                            { 
+                                type: 'image_url', 
+                                image_url: { 
+                                    url: base64DataUrl
+                                } 
                             }
                         ]
-                    }],
-                    generationConfig: {
-                        response_mime_type: "application/json"
                     }
-                })
-            }
-        );
+                ]
+            })
+        });
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Gemini API Error:', errorText);
-            throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
+            console.error('Lovable AI Gateway Error:', errorText);
+            
+            if (response.status === 429) {
+                throw new Error('Rate limit exceeded. Please try again in a few moments.');
+            }
+            if (response.status === 402) {
+                throw new Error('AI credits exhausted. Please add credits to continue.');
+            }
+            throw new Error(`AI Gateway Error: ${response.status} - ${errorText}`);
         }
 
         const result = await response.json();
-        const responseText = result.candidates[0].content.parts[0].text;
+        const responseText = result.choices?.[0]?.message?.content;
+
+        if (!responseText) {
+            console.error('No response content from AI:', result);
+            throw new Error('No response content from AI');
+        }
 
         let scanResult;
         try {
