@@ -17,7 +17,7 @@ export const Footer = () => {
                     {/* Coluna 1: Institucional */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-2 text-white">
-                            <img src={logoJusContratos} alt="JusContratos" className="h-8 md:h-10 brightness-0 invert" />
+                            <img src={logoJusContratos} alt="JusContratos" className="h-12 md:h-14 brightness-0 invert" />
                         </div>
                         <p className="text-sm leading-relaxed text-slate-400">
                             Tecnologia de ponta para análise contratual, mitigação de riscos e recuperação de ativos financeiros. Segurança jurídica ao alcance de um clique.

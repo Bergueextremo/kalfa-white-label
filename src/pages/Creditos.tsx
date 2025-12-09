@@ -100,7 +100,7 @@ const Creditos = () => {
         {/* Planos */}
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-6">Planos Disponíveis</h2>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6 px-4 md:px-0">
             {plans.map((plan) => (
               <Card
                 key={plan.name}

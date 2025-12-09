@@ -519,7 +519,14 @@ export function CheckoutModal({ open, onOpenChange, initialPlan }: CheckoutModal
                                                         <Input
                                                             id="expiry"
                                                             value={cardData.expiry}
-                                                            onChange={(e) => setCardData({ ...cardData, expiry: e.target.value })}
+                                                            onChange={(e) => {
+                                                                // Format MM/YY
+                                                                let value = e.target.value.replace(/\D/g, '');
+                                                                if (value.length >= 2) {
+                                                                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                                                                }
+                                                                setCardData({ ...cardData, expiry: value });
+                                                            }}
                                                             placeholder="MM/AA"
                                                             required
                                                             maxLength={5}

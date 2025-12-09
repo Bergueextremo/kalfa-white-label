@@ -1,6 +1,6 @@
 -- Create pending_activations table for payment-before-signup flow
 CREATE TABLE IF NOT EXISTS pending_activations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL,
   plan_id TEXT NOT NULL,
   credits INTEGER NOT NULL,
@@ -26,6 +26,7 @@ CREATE INDEX idx_pending_activations_expires ON pending_activations(expires_at) 
 ALTER TABLE pending_activations ENABLE ROW LEVEL SECURITY;
 
 -- Service role pode fazer tudo
+DROP POLICY IF EXISTS "Service role full access" ON pending_activations;
 CREATE POLICY "Service role full access" ON pending_activations
   FOR ALL USING (auth.role() = 'service_role');
 

@@ -1,5 +1,14 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// SECURITY FIX: Define valid plans and prices server-side. 
+// DO NOT trust 'amount' or 'credits' from the client.
+const PLAN_REGISTRY: Record<string, { price: number, credits: number, name: string }> = {
+    'audit-unit': { price: 2.00, credits: 0, name: 'Auditoria Jurídica Avulsa' },
+    'start': { price: 49.90, credits: 15, name: 'Plano Start - 15 Créditos' },
+    'essencial': { price: 147.90, credits: 45, name: 'Plano Essencial - 45 Créditos' },
+    'enterprise': { price: 349.90, credits: 150, name: 'Plano Enterprise - 150 Créditos' },
+};
+
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -12,7 +21,7 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const { customer, audit_id, payment_method, card_data, installments, file_path, amount, credits, plan_name, plan_id } = await req.json()
+        const { customer, audit_id, payment_method, card_data, installments, file_path, plan_id, is_audit_purchase } = await req.json()
 
         // Initialize Supabase Admin Client (Service Role) for DB and Invoke
         const supabaseAdmin = createClient(
@@ -20,64 +29,99 @@ Deno.serve(async (req) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
 
-        // Get user from auth header (just for logging/linking)
+        // SECURITY FIX: Verify User Authentication
+        // We MUST rely on the JWT to identify the user. No fallbacks.
+        const authHeader = req.headers.get('Authorization');
+        if (!authHeader) {
+            console.error('SECURITY ALERT: Missing Authorization header');
+            return new Response(JSON.stringify({ error: 'Unauthorized', success: false }), { status: 401, headers: corsHeaders });
+        }
+
         const supabaseAuth = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+            { global: { headers: { Authorization: authHeader } } }
         )
-        const { data: { user } } = await supabaseAuth.auth.getUser()
+        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser()
 
-        console.log(`[Nova Versão] Iniciando. Audit: ${audit_id} | Método: ${payment_method} | User: ${user?.id}`);
+        if (authError || !user) {
+            console.error('SECURITY ALERT: Invalid Token or No User', authError);
+            return new Response(JSON.stringify({ error: 'Unauthorized', success: false }), { status: 401, headers: corsHeaders });
+        }
+
+        // SECURITY FIX: Removed "Ghost User" fallback logic. 
+        // Logic `const purchaseUserId = user?.id || '...'` was DESTROYED.
+
+        console.log(`[SECURE] Iniciando. Audit: ${audit_id} | Método: ${payment_method} | User: ${user.id}`);
+
 
         // --- VALIDAÇÕES & ENRIQUECIMENTO DE DADOS ---
+
+        // SECURITY FIX: Strict Pricing Validation
+        let finalAmount = 0;
+        let finalCredits = 0;
+        let finalPlanName = '';
+
+        if (is_audit_purchase) {
+            // Caso especial: compra de auditoria avulsa
+            const plan = PLAN_REGISTRY['audit-unit'];
+            finalAmount = plan.price;
+            finalPlanName = plan.name;
+        } else if (plan_id && PLAN_REGISTRY[plan_id]) {
+            // Compra de plano baseada no ID checado no servidor
+            const plan = PLAN_REGISTRY[plan_id];
+            finalAmount = plan.price;
+            finalCredits = plan.credits;
+            finalPlanName = plan.name;
+        } else {
+            // Se não for auditoria nem plano válido
+            throw new Error('Invalid Plan ID or Purchase Configuration.');
+        }
+
+        console.log(`[SECURE] Pricing Resolved: ${finalPlanName} - R$ ${finalAmount} - Credits: ${finalCredits}`);
+
 
         // Verifica dados faltantes
         let finalCustomer = { ...customer };
 
+        // Validação e Enriquecimento do Cliente
         if (!finalCustomer.cpf || !finalCustomer.phone || !finalCustomer.name) {
-            console.log('Dados do cliente incompletos no payload. Tentando buscar do perfil...');
+            const { data: profile } = await supabaseAdmin
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
 
-            if (user?.id) {
-                const { data: profile, error: profileError } = await supabaseAdmin
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
+            if (profile) {
+                finalCustomer.name = finalCustomer.name || profile.name || user.user_metadata?.name || '';
+                finalCustomer.email = finalCustomer.email || profile.email || user.email || '';
+                finalCustomer.cpf = finalCustomer.cpf || profile.cpf || '';
+                finalCustomer.phone = finalCustomer.phone || profile.phone || '';
 
-                if (profile) {
-                    console.log('Perfil encontrado. Completando dados...');
-                    finalCustomer.name = finalCustomer.name || profile.name || user.user_metadata?.name || '';
-                    finalCustomer.email = finalCustomer.email || profile.email || user.email || '';
-                    finalCustomer.cpf = finalCustomer.cpf || profile.cpf || '';
-                    finalCustomer.phone = finalCustomer.phone || profile.phone || '';
-
-                    // Fallback para endereço se existir no profile (opcional)
-                    if (!finalCustomer.address && profile.address) {
-                        finalCustomer.address = profile.address;
-                    }
-                } else {
-                    console.log('Perfil não encontrado ou erro:', profileError);
+                if (!finalCustomer.address && profile.address) {
+                    finalCustomer.address = profile.address;
                 }
             }
         }
 
-        // Validação Final
-        if (!finalCustomer.cpf) throw new Error('CPF é obrigatório e não foi encontrado no perfil.');
-        if (!finalCustomer.email) throw new Error('Email é obrigatório.');
+        // SECURITY FIX: Strict Input Validation
+        if (!finalCustomer.cpf) throw new Error('CPF obrigatório');
+        if (!finalCustomer.email) throw new Error('Email obrigatório');
 
-        // Recupera tokens
-        const appmaxToken = Deno.env.get('JUSCONTRATO-APPMAX') || '4B90F0B1-93FC472E-BF63BE63-97577F90';
+        // Recupera tokens de ambiente 
+        const appmaxToken = Deno.env.get('JUSCONTRATO-APPMAX');
+        if (!appmaxToken) throw new Error('Server Misconfiguration: Appmax Token missing');
+
         const baseUrl = (Deno.env.get('Endpoint-appmax') || 'https://admin.appmax.com.br/api/v3').replace(/\/$/, '');
 
+
         // ============================================================
-        // PASSO 1: CLIENTE
+        // PASSO 1: CLIENTE (Appmax)
         // ============================================================
         const rawName = (finalCustomer.name ?? 'Cliente').trim();
         const firstName = rawName.split(' ')[0];
         const lastName = rawName.split(' ').slice(1).join(' ') || firstName;
 
-        // Endereço (Usa o do front ou fallback seguro)
         const addressData = finalCustomer.address || {
             zip_code: "01001000",
             street: "Rua Digital",
@@ -103,12 +147,6 @@ Deno.serve(async (req) => {
             country: "BR"
         };
 
-        console.log('========================================');
-        console.log('PASSO 1: CRIANDO CLIENTE NA APPMAX');
-        console.log('========================================');
-        console.log('URL:', `${baseUrl}/customer`);
-        console.log('Payload:', JSON.stringify(customerPayload, null, 2));
-
         const custRes = await fetch(`${baseUrl}/customer`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -116,54 +154,31 @@ Deno.serve(async (req) => {
         });
 
         const custData = await custRes.json();
-        console.log('Status HTTP:', custRes.status);
-        console.log('Resposta Completa:', JSON.stringify(custData, null, 2));
 
         if ((!custData.success && custData.status !== 200) || !custData.data?.id) {
-            console.error('Erro Cliente:', JSON.stringify(custData));
+            console.error('Erro Appmax Cliente:', custData);
             throw new Error(`Erro Appmax (Cliente): ${custData.text || 'Dados inválidos'}`);
         }
 
         const customerId = custData.data.id;
 
         // ============================================================
-        // PASSO 2: PEDIDO
+        // PASSO 2: PEDIDO (Appmax)
         // ============================================================
-        // Usa valores do payload (com fallback para auditoria)
-        const finalAmount = amount || 2.00;
-        const finalCredits = credits || 0;
-        const finalPlanName = plan_name || 'Auditoria Jurídica Premium';
-
-        console.log('========================================');
-        console.log('VALORES RECEBIDOS DO PAYLOAD:');
-        console.log('========================================');
-        console.log('amount recebido:', amount);
-        console.log('credits recebido:', credits);
-        console.log('plan_name recebido:', plan_name);
-        console.log('Valor final (finalAmount):', finalAmount);
-        console.log('Créditos final (finalCredits):', finalCredits);
-        console.log('Nome final (finalPlanName):', finalPlanName);
 
         const orderPayload = {
             "access-token": appmaxToken,
             customer_id: customerId,
             products: [{
-                sku: finalCredits > 0 ? `CREDITOS-${finalCredits}` : "AUDITORIA-JUS-01",
+                sku: finalCredits > 0 ? `CREDITOS-${finalCredits}` : "AUDITORIA-AVULSA",
                 name: finalPlanName,
-                price: finalAmount,
+                price: finalAmount, // Using server-validated price
                 qty: 1,
                 digital_product: 1
             }],
             shipping: 0.00,
             total: finalAmount
         };
-
-        console.log('========================================');
-        console.log('PASSO 2: CRIANDO PEDIDO NA APPMAX');
-        console.log('========================================');
-        console.log('URL:', `${baseUrl}/order`);
-        console.log('Customer ID usado:', customerId);
-        console.log('Payload:', JSON.stringify(orderPayload, null, 2));
 
         const orderRes = await fetch(`${baseUrl}/order`, {
             method: 'POST',
@@ -172,19 +187,17 @@ Deno.serve(async (req) => {
         });
 
         const orderData = await orderRes.json();
-        console.log('Status HTTP:', orderRes.status);
-        console.log('Resposta Completa:', JSON.stringify(orderData, null, 2));
 
         if ((!orderData.success && orderData.status !== 200) || !orderData.data?.id) {
-            console.error('Erro Pedido:', JSON.stringify(orderData));
+            console.error('Erro Appmax Pedido:', orderData);
             throw new Error('Erro Appmax (Pedido): Falha ao gerar ID.');
         }
 
         const orderId = orderData.data.id;
-        console.log(`Pedido ID Gerado: ${orderId}`);
+
 
         // ============================================================
-        // PASSO 3: PAGAMENTO (CORREÇÃO AQUI)
+        // PASSO 3: PAGAMENTO 
         // ============================================================
         let responsePayload: any = {
             success: true,
@@ -192,10 +205,6 @@ Deno.serve(async (req) => {
         };
 
         if (payment_method === 'pix') {
-            console.log('========================================');
-            console.log('PASSO 3: PROCESSANDO PAGAMENTO PIX');
-            console.log('========================================');
-
             const pixPayload = {
                 "access-token": appmaxToken,
                 cart: { order_id: orderId },
@@ -208,11 +217,6 @@ Deno.serve(async (req) => {
                 }
             };
 
-            console.log('URL:', `${baseUrl}/payment/pix`);
-            console.log('Order ID usado:', orderId);
-            console.log('Customer ID usado:', customerId);
-            console.log('Payload:', JSON.stringify(pixPayload, null, 2));
-
             const payRes = await fetch(`${baseUrl}/payment/pix`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -220,22 +224,12 @@ Deno.serve(async (req) => {
             });
 
             const payData = await payRes.json();
-            console.log('Status HTTP:', payRes.status);
-            console.log('Resposta Completa PIX:', JSON.stringify(payData, null, 2));
 
-            // Lógica para ler a resposta, independente do formato
             if (payData.success === true || payData.success === "ATIVA" || payData.status === 200) {
                 const data = payData.data || {};
-
-                // Tenta achar a imagem em todos os campos possíveis que a Appmax usa
-                // O LOG MOSTROU QUE VEM EM: 'pix_qrcode'
                 let qrCodeImage = data.pix_qrcode || data.pix_qr_code_url || data.qr_code_url || data.qrcode_url;
-
-                // Tenta achar o copia e cola
                 let copyPaste = data.pix_emv || data.emv || data.qrcode_text || data.pix_raw_code;
 
-                // TRATAMENTO BASE64 (Crucial para o seu caso)
-                // Se o qrCodeImage começar com "iVBOR...", é uma imagem pura, precisa do prefixo
                 if (qrCodeImage && !qrCodeImage.startsWith('http') && !qrCodeImage.startsWith('data:image')) {
                     qrCodeImage = `data:image/png;base64,${qrCodeImage}`;
                 }
@@ -243,154 +237,99 @@ Deno.serve(async (req) => {
                 if (qrCodeImage) {
                     responsePayload.pix_data = {
                         qr_code_url: qrCodeImage,
-                        copy_paste: copyPaste || "Código Copia e Cola indisponível, use o QR Code visual."
+                        copy_paste: copyPaste || "Código Indisponível"
                     };
                 } else {
-                    // Se falhar em ler o QR Code, NÃO redireciona para URL 403. Lança erro.
-                    throw new Error('QR Code não encontrado na resposta da API.');
+                    throw new Error('QR Code não retornado pela Appmax');
                 }
             } else {
                 throw new Error(payData.text || 'Erro ao gerar PIX');
             }
 
         } else if (payment_method === 'credit_card') {
-            console.log('========================================');
-            console.log('PASSO 3: PROCESSANDO PAGAMENTO CARTÃO');
-            console.log('========================================');
-
             if (!card_data) throw new Error('Dados do cartão obrigatórios');
-
             const cardNumber = card_data.number.replace(/\s/g, '');
 
-            // --- MODO DE TESTE: Cartão Específico ---
-            if (cardNumber === '5502091933693849') {
-                console.log('!!! MODO DE TESTE ATIVADO: Cartão de Teste Detectado !!!');
-                console.log('Simulando aprovação imediata sem chamar Appmax...');
-
-                // Simula resposta de sucesso da Appmax
-                const cardData = {
-                    success: true,
-                    status: 200,
-                    data: {
-                        id: 123456,
-                        status: 'approved'
+            const cardPayload = {
+                "access-token": appmaxToken,
+                cart: { order_id: orderId },
+                customer: { customer_id: customerId },
+                payment: {
+                    CreditCard: {
+                        number: cardNumber,
+                        cvv: card_data.cvv,
+                        month: card_data.month,
+                        year: card_data.year,
+                        document_number: customer.cpf.replace(/\D/g, ''),
+                        name: card_data.name,
+                        installments: installments || 1,
+                        soft_descriptor: "JUSCONTRATO"
                     }
-                };
+                }
+            };
 
-                // Marca como aprovado
+            const cardRes = await fetch(`${baseUrl}/payment/credit-card`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cardPayload)
+            });
+            const cardData = await cardRes.json();
+
+            if (cardData.success === true && cardData.status === 200) {
                 responsePayload.payment_success = true;
                 responsePayload.payment_status = 'approved';
             } else {
-                // Fluxo Normal
-                const cardPayload = {
-                    "access-token": appmaxToken,
-                    cart: { order_id: orderId },
-                    customer: { customer_id: customerId },
-                    payment: {
-                        CreditCard: {
-                            number: cardNumber,
-                            cvv: card_data.cvv,
-                            month: card_data.month,
-                            year: card_data.year,
-                            document_number: customer.cpf.replace(/\D/g, ''),
-                            name: card_data.name,
-                            installments: installments || 1,
-                            soft_descriptor: "JUSCONTRATO"
-                        }
-                    }
-                };
-
-                console.log('URL:', `${baseUrl}/payment/credit-card`);
-                console.log('Order ID usado:', orderId);
-                console.log('Customer ID usado:', customerId);
-                console.log('Payload (cartão mascarado):', JSON.stringify({
-                    ...cardPayload,
-                    payment: {
-                        CreditCard: {
-                            ...cardPayload.payment.CreditCard,
-                            number: '****' + cardNumber.slice(-4),
-                            cvv: '***'
-                        }
-                    }
-                }, null, 2));
-
-                const cardRes = await fetch(`${baseUrl}/payment/credit-card`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(cardPayload)
-                });
-                const cardData = await cardRes.json();
-                console.log('Status HTTP:', cardRes.status);
-                console.log('Resposta Completa Cartão:', JSON.stringify(cardData, null, 2));
-
-                if (cardData.success === true && cardData.status === 200) {
-                    responsePayload.payment_success = true;
-                    responsePayload.payment_status = 'approved';
-                } else {
-                    console.warn('Pagamento recusado pela Appmax:', cardData);
-                    responsePayload.payment_success = false;
-                    responsePayload.payment_status = 'rejected';
-                    responsePayload.error_message = cardData.text || 'Pagamento recusado pelo banco';
-                    // Não lançamos erro aqui para permitir que o registro seja salvo no banco como recusado
-                }
+                responsePayload.payment_success = false;
+                responsePayload.payment_status = 'rejected';
+                responsePayload.error_message = cardData.text || 'Pagamento recusado';
             }
         }
 
-        // --- ATUALIZA OU CRIA NO BANCO ---
-        let finalAuditId = audit_id;
-        try {
-            // NOVO: Se for compra de plano (tem credits ou plan_id), criar em credit_purchases
-            if (credits || plan_id) {
-                console.log('Criando registro de compra de créditos...');
+        // ============================================================
+        // PASSO 4: REGISTRO SEGURO NO BANCO
+        // ============================================================
 
-                // WORKAROUND: Usar user_id padrão se não houver usuário autenticado
-                // Isso evita erro de NOT NULL constraint
-                const purchaseUserId = user?.id || '30441039-7beb-44ad-8bea-3506b979cbbc';
+        // SECURITY FIX: User ID is GUARANTEED to be present here because of the check at the top.
+        // No fallback used.
 
-                const { data: purchase, error: purchaseError } = await supabaseAdmin
-                    .from('credit_purchases')
-                    .insert({
-                        user_id: purchaseUserId,
-                        credits: credits,
-                        amount: amount,
-                        plan_name: plan_name,
-                        payment_method: payment_method, // ADICIONADO: campo obrigatório
-                        appmax_order_id: orderId,
-                        payment_status: responsePayload.payment_status || (responsePayload.payment_success ? 'approved' : 'pending'),
-                        payment_metadata: {
-                            ...responsePayload,
-                            customer: customer,
-                            plan_id: plan_id,
-                            is_new_user_purchase: !user?.id // Flag para identificar compras de novos usuários
-                        },
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    })
-                    .select()
-                    .single();
+        if (finalCredits > 0 || plan_id) {
+            // Compra de Créditos
+            const { data: purchase, error: purchaseError } = await supabaseAdmin
+                .from('credit_purchases')
+                .insert({
+                    user_id: user.id, // Authenticated User ID
+                    credits: finalCredits,
+                    amount: finalAmount,
+                    plan_name: finalPlanName,
+                    payment_method: payment_method,
+                    appmax_order_id: orderId,
+                    payment_status: responsePayload.payment_status || (responsePayload.payment_success ? 'approved' : 'pending'),
+                    payment_metadata: {
+                        ...responsePayload,
+                        plan_id: plan_id,
+                        secured_by: "AGENTE_ALPHA_FIX"
+                    },
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .select()
+                .single();
 
-                if (purchaseError) {
-                    console.error('Erro ao criar credit_purchase:', purchaseError);
-                    responsePayload.success = false;
-                    responsePayload.error = 'Erro ao criar registro de compra: ' + purchaseError.message;
-
-                    return new Response(JSON.stringify(responsePayload), {
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                        status: 200
-                    });
-                }
-
-                console.log('✅ Compra de créditos registrada:', purchase);
-                // Para compra de créditos, não há audit_id
-                responsePayload.purchase_id = purchase.id;
-
+            if (purchaseError) {
+                console.error('Database Error (Purchase):', purchaseError);
+                // We still return success to frontend because payment might have been triggered, but we log the error criticaly
             } else {
-                // Fluxo normal: criar auditoria (apenas se tiver file_path)
-                console.log('Criando nova auditoria no banco...');
+                responsePayload.purchase_id = purchase.id;
+            }
+
+        } else {
+            // Auditoria
+            // Apenas cria se tiver file_path
+            if (file_path) {
                 const { data: newAudit, error: createError } = await supabaseAdmin
                     .from('auditorias_contratos')
                     .insert({
-                        user_id: user?.id || '30441039-7beb-44ad-8bea-3506b979cbbc',
+                        user_id: user.id, // Authenticated User ID
                         status: 'PROCESSING',
                         payment_status: responsePayload.payment_status || (responsePayload.payment_success ? 'approved' : 'pending'),
                         appmax_order_id: orderId,
@@ -403,58 +342,17 @@ Deno.serve(async (req) => {
                     .single();
 
                 if (createError) {
-                    console.error('Erro ao criar auditoria:', createError);
-                    responsePayload.success = false;
-                    responsePayload.error = 'Erro ao criar registro de auditoria: ' + createError.message;
-                    responsePayload.audit_id = null;
-
-                    return new Response(JSON.stringify(responsePayload), {
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                        status: 200
-                    });
-                }
-
-                if (newAudit) {
-                    finalAuditId = newAudit.id;
-                    console.log('✅ Nova auditoria criada com ID:', finalAuditId);
+                    console.error('Database Error (Audit):', createError);
+                } else if (newAudit) {
+                    const finalAuditId = newAudit.id;
                     responsePayload.audit_id = finalAuditId;
 
-                    // Trigger AI processing asynchronously
-                    if (file_path) {
-                        console.log('🚀 Disparando processamento de IA...');
-                        supabaseAdmin.functions.invoke('process-audit', {
-                            body: {
-                                audit_id: finalAuditId,
-                                file_path: file_path
-                            }
-                        }).then(({ error }) => {
-                            if (error) console.error('Erro ao disparar process-audit:', error);
-                            else console.log('✅ process-audit disparado com sucesso');
-                        }).catch(err => {
-                            console.error('Erro na chamada do process-audit:', err);
-                        });
-                    }
-                } else {
-                    console.error('❌ Nenhum registro retornado após insert');
-                    responsePayload.success = false;
-                    responsePayload.error = 'Falha ao criar auditoria';
-                    responsePayload.audit_id = null;
-
-                    return new Response(JSON.stringify(responsePayload), {
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                        status: 200
-                    });
+                    // Trigger async processing
+                    supabaseAdmin.functions.invoke('process-audit', {
+                        body: { audit_id: finalAuditId, file_path: file_path }
+                    }).catch(e => console.error('Analyze trigger failed', e));
                 }
             }
-        } catch (e) {
-            console.error('❌ Erro DB exception:', e);
-            responsePayload.success = false;
-            responsePayload.error = 'Erro ao processar: ' + ((e as any).message || String(e));
-
-            return new Response(JSON.stringify(responsePayload), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200
-            });
         }
 
         return new Response(JSON.stringify(responsePayload), {
@@ -463,12 +361,12 @@ Deno.serve(async (req) => {
         });
 
     } catch (error: any) {
-        console.error('ERRO FATAL:', error.message);
+        console.error('FATAL ERROR:', error.message);
         return new Response(JSON.stringify({
             success: false,
             error: error.message
         }), {
-            status: 200,
+            status: 400, // Return 400 for logic/validation errors
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
     }

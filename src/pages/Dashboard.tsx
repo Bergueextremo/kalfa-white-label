@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { OnboardingTour } from "@/components/OnboardingTour";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -227,6 +228,7 @@ const Dashboard = () => {
           </>
         )}
       </div>
+      <OnboardingTour />
     </Layout>
   );
 };

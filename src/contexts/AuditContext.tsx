@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCredits } from '@/contexts/CreditContext';
@@ -90,7 +91,8 @@ const initialSteps: Step[] = [
 
 export const AuditProvider = ({ children }: { children: ReactNode }) => {
     const { user } = useAuth();
-    const { useCredit } = useCredits();
+    const { credits, useCredit } = useCredits();
+    const navigate = useNavigate();
 
     // UI State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -105,9 +107,14 @@ export const AuditProvider = ({ children }: { children: ReactNode }) => {
     const [corrections, setCorrections] = useState<any[]>([]);
 
     const openModal = useCallback(() => {
+        if (credits <= 0) {
+            toast.error("Você precisa de créditos para iniciar uma nova auditoria.");
+            navigate('/creditos');
+            return;
+        }
         setIsModalOpen(true);
         setIsMinimized(false);
-    }, []);
+    }, [credits, navigate]);
 
     const closeModal = useCallback(() => {
         // Only close if not processing, or if user explicitly wants to close (maybe add confirmation?)
@@ -145,7 +152,7 @@ export const AuditProvider = ({ children }: { children: ReactNode }) => {
         }
 
         // Check and use credit
-        if (!useCredit()) {
+        if (!(await useCredit())) {
             setShowCheckout(true);
             return;
         }

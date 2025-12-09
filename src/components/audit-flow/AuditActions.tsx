@@ -83,7 +83,7 @@ export function AuditActions({ auditData }: AuditActionsProps) {
                     doc.setFontSize(8);
                     doc.setTextColor(128);
                     doc.text(
-                        'Este documento é um aditivo gerado por IA (Jus Audit Pro) e deve ser validado por um advogado.',
+                        'Este documento é um aditivo gerado pelo Autenticador Jurídico (Jus Audit Pro) e deve ser validado por um advogado.',
                         105,
                         290,
                         { align: 'center' }

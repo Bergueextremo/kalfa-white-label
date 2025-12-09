@@ -15,6 +15,7 @@ CREATE POLICY "Users can view their own credit purchases"
     USING (auth.uid() = user_id);
 
 -- New policy: Service role can insert (for new users with null user_id)
+DROP POLICY IF EXISTS "Service role can insert credit purchases" ON public.credit_purchases;
 CREATE POLICY "Service role can insert credit purchases"
     ON public.credit_purchases
     FOR INSERT

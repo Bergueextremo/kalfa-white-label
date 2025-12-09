@@ -75,7 +75,7 @@ const Consultas = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <img src={logoJusContratos} alt="JusContratos" className="h-8 md:h-10" />
+            <img src={logoJusContratos} alt="JusContratos" className="h-12 md:h-14" />
           </div>
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors">
             <ArrowLeft className="h-4 w-4" />

@@ -22,17 +22,20 @@ CREATE INDEX IF NOT EXISTS idx_credit_purchases_payment_status ON public.credit_
 ALTER TABLE public.credit_purchases ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
+DROP POLICY IF EXISTS "Users can view their own credit purchases" ON public.credit_purchases;
 CREATE POLICY "Users can view their own credit purchases"
     ON public.credit_purchases
     FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own credit purchases" ON public.credit_purchases;
 CREATE POLICY "Users can insert their own credit purchases"
     ON public.credit_purchases
     FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
 -- Service role can do anything (for Edge Functions)
+DROP POLICY IF EXISTS "Service role has full access to credit purchases" ON public.credit_purchases;
 CREATE POLICY "Service role has full access to credit purchases"
     ON public.credit_purchases
     FOR ALL

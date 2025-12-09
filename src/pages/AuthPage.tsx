@@ -138,7 +138,7 @@ const AuthPage = () => {
         <div className="relative z-10 flex flex-col justify-between p-12 w-full h-full">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 p-2 rounded-lg backdrop-blur-sm border border-white/20">
-              <img src={logoJusContratos} alt="JusContratos" className="h-6 w-auto brightness-0 invert" />
+              <img src={logoJusContratos} alt="JusContratos" className="h-10 w-auto brightness-0 invert" />
             </div>
           </div>
 
@@ -173,7 +173,7 @@ const AuthPage = () => {
       <div className="flex-1 flex flex-col relative bg-white">
         {/* Header Mobile */}
         <div className="lg:hidden p-6 flex items-center gap-2">
-          <img src={logoJusContratos} alt="JusContratos" className="h-8 w-auto" />
+          <img src={logoJusContratos} alt="JusContratos" className="h-12 w-auto" />
         </div>
 
         {/* Botão Voltar */}

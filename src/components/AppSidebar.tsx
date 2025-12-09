@@ -53,10 +53,10 @@ export function AppSidebar() {
         {/* Logo */}
         <div className="flex items-center gap-2 px-4 py-6">
           {!isCollapsed && (
-            <img src={logoJusContratos} alt="JusContratos" className="h-8 md:h-10 brightness-0 invert" />
+            <img src={logoJusContratos} alt="JusContratos" className="h-12 md:h-14 brightness-0 invert" />
           )}
           {isCollapsed && (
-            <img src={logoJusContratos} alt="JusContratos" className="h-8 w-auto mx-auto brightness-0 invert" />
+            <img src={logoJusContratos} alt="JusContratos" className="h-12 w-auto mx-auto brightness-0 invert" />
           )}
         </div>
 

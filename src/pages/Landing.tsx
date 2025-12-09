@@ -1,18 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Scale, Shield, TrendingDown, FileText, Zap, Check, ArrowRight, Users, Home, Landmark, FileSearch, Banknote, ChevronRight } from "lucide-react";
+import { Scale, Shield, TrendingDown, FileText, Zap, Check, ArrowRight, Users, Home, Landmark, FileSearch, Banknote, ChevronRight, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer";
 import { ServiceGrid } from "@/components/ServiceGrid";
 import heroPadlockV2 from "@/assets/hero-padlock-v2.png";
 import logoJusContratos from "@/assets/logo-juscontratos.png";
+import { InfiniteScrollBanner } from '@/components/InfiniteScrollBanner';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useState } from 'react';
 const Landing = () => {
   const navigate = useNavigate();
   const {
     isAuthenticated
   } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const features = [{
     icon: Shield,
     title: "Análise Forense Completa",
@@ -75,8 +80,10 @@ const Landing = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={logoJusContratos} alt="JusContratos" className="h-8 md:h-10" />
+            <img src={logoJusContratos} alt="JusContratos" className="h-12 md:h-14" />
           </div>
+
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Recursos
@@ -94,44 +101,100 @@ const Landing = () => {
               Começar Gratuitamente
             </Button>}
           </nav>
+
+          {/* Mobile Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <nav className="flex flex-col gap-6 mt-8">
+                <a
+                  href="#features"
+                  className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Recursos
+                </a>
+                <a
+                  href="/consultas"
+                  className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Consultas
+                </a>
+                <a
+                  href="#pricing"
+                  className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Preços
+                </a>
+                <div className="flex flex-col gap-3 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      navigate(isAuthenticated ? "/dashboard" : "/auth");
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    {isAuthenticated ? "Dashboard" : "Entrar"}
+                  </Button>
+                  {!isAuthenticated && (
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        navigate("/auth");
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      Começar Gratuitamente
+                    </Button>
+                  )}
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
 
     {/* Hero Section */}
-    <section className="relative overflow-hidden bg-white py-16 md:py-24">
+    <section className="relative overflow-hidden bg-white py-12 md:py-20">
       {/* Decorative Circle Background */}
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-[600px] h-[600px] md:w-[800px] md:h-[800px] rounded-full bg-[#0A1E4B] -z-10" />
+      <div className="absolute left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-0 top-1/2 -translate-y-1/2 md:translate-x-1/4 w-[400px] h-[400px] md:w-[800px] md:h-[800px] lg:w-[1100px] lg:h-[1100px] rounded-full bg-[#0A1E4B] -z-10" />
 
       <div className="container mx-auto px-4">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-4 lg:gap-8 items-center">
           {/* Left Content */}
           <div className="flex flex-col gap-6 text-center lg:text-left items-center lg:items-start order-2 lg:order-1">
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold text-[#0A1E4B] leading-tight order-1">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-[#0A1E4B] leading-tight order-1">
               BLINDE SEU<br />
               CONTRATO
             </h1>
-            <p className="text-lg md:text-xl text-gray-500 max-w-lg order-2 mx-auto lg:mx-0">
+            <p className="text-base md:text-lg lg:text-xl text-gray-500 max-w-lg order-2 mx-auto lg:mx-0">
               Não arrisque seu dinheiro com <span className="font-bold text-[#0A1E4B]">cláusulas abusivas e juros ilegais!</span>
             </p>
 
             {/* Mobile Image - Visible only on mobile */}
-            <div className="relative flex justify-center py-6 order-3 lg:hidden">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-[#0A1E4B] -z-10" />
+            <div className="relative flex justify-center py-8 order-3 lg:hidden w-full">
               <img
                 alt="Blindagem de contrato"
                 src={heroPadlockV2}
-                className="w-[280px] drop-shadow-2xl"
+                className="w-[280px] sm:w-[320px] drop-shadow-2xl relative z-10"
               />
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-gray-500 pt-2 order-4 lg:order-5">
+            <div className="flex items-center justify-center lg:justify-start gap-2 text-sm text-gray-500 pt-2 order-4 lg:order-5">
               <Users className="h-4 w-4 text-[#0A1E4B]" />
               <span>+ de <span className="font-bold text-[#0A1E4B]">12.500</span> contratos já analisados</span>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4 order-5 lg:order-4 w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto bg-[#00C853] hover:bg-[#00A844] text-white text-base md:text-lg px-8 py-6 font-bold uppercase tracking-wide shadow-lg hover:shadow-xl transition-all" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}>
+              <Button size="lg" className="w-full sm:w-auto bg-[#00C853] hover:bg-[#00A844] text-white text-base md:text-lg px-8 py-6 font-bold uppercase tracking-wide shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/consultas")}>
                 QUERO BLINDAR MEU CONTRATO
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -139,18 +202,21 @@ const Landing = () => {
           </div>
 
           {/* Right Content - Padlock Image - Hidden on mobile */}
-          <div className="relative justify-center lg:justify-end order-1 lg:order-2 hidden lg:flex">
+          <div className="relative flex justify-center order-1 lg:order-2 hidden lg:flex">
             <div className="relative z-10">
               <img
                 alt="Blindagem de contrato"
                 src={heroPadlockV2}
-                className="w-[300px] md:w-[400px] lg:w-[500px] drop-shadow-2xl"
+                className="w-[500px] lg:w-[600px] xl:w-[700px] drop-shadow-2xl"
               />
             </div>
           </div>
         </div>
       </div>
     </section>
+
+    {/* Infinite Scroll Banner */}
+    <InfiniteScrollBanner />
 
     {/* Contract Types Section */}
     <section className="bg-muted/30 py-16 md:py-20">
@@ -297,7 +363,7 @@ const Landing = () => {
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            {plans.map((plan, index) => <Card key={index} className={`shadow-lg hover:shadow-xl transition-all ${plan.highlighted ? "border-2 border-primary scale-105" : ""}`}>
+            {plans.map((plan, index) => <Card key={index} className={`shadow - lg hover: shadow - xl transition - all ${plan.highlighted ? "border-2 border-primary scale-105" : ""} `}>
               {plan.highlighted && <div className="bg-primary text-primary-foreground text-center py-2 text-sm font-medium rounded-t-lg">
                 Mais Popular
               </div>}

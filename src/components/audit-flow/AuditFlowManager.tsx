@@ -1,6 +1,6 @@
 import { useRef, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, FileText, Sparkles, Minus } from "lucide-react";
+import { Upload, FileText, Search, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAudit } from "@/contexts/AuditContext";
@@ -72,25 +72,25 @@ export function AuditFlowManager() {
                                     onDragOver={(e) => e.preventDefault()}
                                     onDrop={handleDrop}
                                 >
-                                    <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 md:p-12 transition-all">
-                                        <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <Upload className="h-10 w-10 text-blue-600" />
+                                    <div className="border-2 border-dashed border-slate-200 rounded-2xl p-4 md:p-12 transition-all">
+                                        <div className="bg-blue-50 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
+                                            <Upload className="h-8 w-8 md:h-10 md:w-10 text-blue-600" />
                                         </div>
-                                        <h3 className="text-xl md:text-2xl font-semibold mb-3 text-slate-900">Arraste seu contrato (PDF ou DOCX)</h3>
-                                        <p className="text-slate-500 text-lg mb-4 max-w-lg mx-auto">
+                                        <h3 className="text-base md:text-xl lg:text-2xl font-semibold mb-2 md:mb-3 text-slate-900 px-2">Arraste seu contrato (PDF ou DOCX)</h3>
+                                        <p className="text-sm md:text-base lg:text-lg text-slate-500 mb-4 max-w-lg mx-auto px-2">
                                             O Sistema de Autenticação detectará automaticamente se é Financiamento, Aluguel ou Serviços.
                                         </p>
-                                        <div className="flex flex-col gap-1 mb-8 text-sm text-slate-400">
+                                        <div className="flex flex-col gap-1 mb-6 md:mb-8 text-xs md:text-sm text-slate-400 px-2">
                                             <p>Formatos aceitos: <strong>PDF e DOCX</strong> (até 10MB)</p>
                                             <p>Aceitamos documentos digitalizados/escaneados (OCR Inteligente)</p>
                                         </div>
                                         <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.doc,.docx" onChange={handleFileInput} />
                                         <Button
                                             size="lg"
-                                            className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-4 md:px-8 md:py-6 text-lg h-auto shadow-lg hover:shadow-xl transition-all w-full sm:w-auto"
+                                            className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-3 md:px-8 md:py-6 text-sm md:text-lg h-auto shadow-lg hover:shadow-xl transition-all w-full sm:w-auto"
                                             onClick={() => fileInputRef.current?.click()}
                                         >
-                                            <FileText className="mr-2 h-5 w-5" />
+                                            <FileText className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                                             Selecionar Arquivo Manualmente
                                         </Button>
                                     </div>
@@ -109,8 +109,8 @@ export function AuditFlowManager() {
                                                 className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-6 text-lg h-auto shadow-lg hover:shadow-xl transition-all w-full sm:w-auto"
                                                 onClick={() => startAudit(selectedFile)}
                                             >
-                                                <Sparkles className="mr-2 h-5 w-5" />
-                                                INICIAR M.A.P.A
+                                                <Search className="mr-2 h-5 w-5" />
+                                                Iniciar Autenticação
                                             </Button>
                                             <Button
                                                 variant="outline"
