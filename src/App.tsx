@@ -26,6 +26,11 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminSales from "./pages/admin/AdminSales";
 import Consultas from "./pages/Consultas";
+import TermosDeUso from "./pages/TermosDeUso";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import DiretrizesLgpd from "./pages/DiretrizesLgpd";
+import SobreTecnologia from "./pages/SobreTecnologia";
+import ParaEscritorios from "./pages/ParaEscritorios";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +57,11 @@ const App = () => {
                   <Route path="/scan-gratis" element={<FreeAuditFlow />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/consultas" element={<Consultas />} />
+                  <Route path="/termos-de-uso" element={<TermosDeUso />} />
+                  <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
+                  <Route path="/diretrizes-lgpd" element={<DiretrizesLgpd />} />
+                  <Route path="/sobre-a-tecnologia" element={<SobreTecnologia />} />
+                  <Route path="/para-escritorios" element={<ParaEscritorios />} />
 
                   {/* Protected routes */}
                   <Route

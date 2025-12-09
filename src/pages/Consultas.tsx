@@ -61,8 +61,7 @@ const Consultas = () => {
   const navigate = useNavigate();
   const [selectedContract, setSelectedContract] = useState<ContractType | null>(null);
   const handleContractClick = (contract: ContractType) => {
-    // Redirect immediately to upload page with contract type
-    navigate(`/scan-gratis?type=${contract.id}`);
+    setSelectedContract(contract);
   };
   const handleProceed = () => {
     if (selectedContract) {

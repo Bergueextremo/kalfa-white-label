@@ -15,8 +15,11 @@ import {
     CheckCircle2,
     Copy,
     ArrowLeft,
-    MapPin
+    Lock,
+    BadgeCheck
 } from "lucide-react";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
 export default function CheckoutPage() {
     const navigate = useNavigate();
@@ -55,13 +58,14 @@ export default function CheckoutPage() {
     const [cpf, setCpf] = useState('');
 
     // --- DADOS DE ENDEREÇO (Necessário para Antifraude Appmax) ---
-    const [cep, setCep] = useState('');
-    const [street, setStreet] = useState('');
-    const [number, setNumber] = useState('');
+    // --- DADOS DE ENDEREÇO (Padronizado para Digital) ---
+    const [cep, setCep] = useState('00000-000');
+    const [street, setStreet] = useState('Produto Digital');
+    const [number, setNumber] = useState('0');
     const [complement, setComplement] = useState('');
-    const [neighborhood, setNeighborhood] = useState('');
-    const [city, setCity] = useState('');
-    const [state, setState] = useState('');
+    const [neighborhood, setNeighborhood] = useState('Digital');
+    const [city, setCity] = useState('Digital');
+    const [state, setState] = useState('SP');
 
     // --- DADOS DO CARTÃO ---
     const [cardNumber, setCardNumber] = useState('');
@@ -101,13 +105,7 @@ export default function CheckoutPage() {
         setPhone(value);
     };
 
-    const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 8) value = value.slice(0, 8);
-        if (value.length > 5) value = `${value.slice(0, 5)}-${value.slice(5)}`;
-        setCep(value);
-        // Aqui você poderia adicionar uma chamada de API para buscar o CEP automaticamente
-    };
+
 
     const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let value = e.target.value.replace(/\D/g, '');
@@ -514,242 +512,226 @@ export default function CheckoutPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 py-12 px-4">
-            <div className="max-w-4xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 pl-0 hover:pl-2 transition-all">
-                        <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
-                    </Button>
-                    <h1 className="text-3xl font-bold text-slate-900">Finalizar Pagamento</h1>
-                    <p className="text-slate-600 mt-2">Dados seguros e criptografados.</p>
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-6">
-
-                    {/* Coluna da Esquerda: Resumo */}
-                    <div className="md:col-span-1">
-                        <Card className="sticky top-6">
-                            <CardHeader>
-                                <CardTitle className="text-lg">Resumo do Pedido</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg">
-                                    <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-semibold text-sm">
-                                            {planFromLanding ? `Plano ${planFromLanding.name}` : 'Auditoria Jurídica Premium'}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {planFromLanding ? `${planFromLanding.credits} créditos` : 'Laudo Completo + PDF'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="border-t pt-4 space-y-2">
-                                    <div className="flex justify-between font-bold text-lg">
-                                        <span>Total</span>
-                                        <span className="text-primary">
-                                            {planFromLanding ? planFromLanding.priceFormatted : 'R$ 2,00'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2 text-emerald-700 font-semibold text-xs">
-                                    <CheckCircle2 className="h-4 w-4" />
-                                    Ambiente 100% Seguro
-                                </div>
-                            </CardContent>
-                        </Card>
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+            <Header />
+            <div className="flex-1 py-12 px-4">
+                <div className="max-w-4xl mx-auto">
+                    {/* Header Page Title */}
+                    <div className="mb-8">
+                        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 pl-0 hover:pl-2 transition-all">
+                            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+                        </Button>
+                        <h1 className="text-3xl font-bold text-slate-900">Finalizar Pagamento</h1>
+                        <p className="text-slate-600 mt-2">Dados seguros e criptografados.</p>
                     </div>
 
-                    {/* Coluna da Direita: Formulários */}
-                    <div className="md:col-span-2 space-y-6">
+                    <div className="grid md:grid-cols-3 gap-6">
 
-                        {/* 1. Dados Pessoais */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Dados Pessoais</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Nome Completo</Label>
-                                        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" />
+                        {/* Coluna da Esquerda: Resumo */}
+                        <div className="md:col-span-1">
+                            <Card className="sticky top-6">
+                                <CardHeader>
+                                    <CardTitle className="text-lg">Resumo do Pedido</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg">
+                                        <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-sm">
+                                                {planFromLanding ? `Plano ${planFromLanding.name}` : 'Auditoria Jurídica Premium'}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {planFromLanding ? `${planFromLanding.credits} créditos` : 'Laudo Completo + PDF'}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>CPF</Label>
-                                        <Input value={cpf} onChange={handleCpfChange} placeholder="000.000.000-00" maxLength={14} />
+                                    <div className="border-t pt-4 space-y-2">
+                                        <div className="flex justify-between font-bold text-lg">
+                                            <span>Total</span>
+                                            <span className="text-primary">
+                                                {planFromLanding ? planFromLanding.priceFormatted : 'R$ 2,00'}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>E-mail</Label>
-                                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" />
+                                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2 text-emerald-700 font-semibold text-xs">
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        Ambiente 100% Seguro
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Telefone (WhatsApp)</Label>
-                                        <Input value={phone} onChange={handlePhoneChange} placeholder="(00) 00000-0000" maxLength={15} />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        </div>
 
-                        {/* 2. Endereço (NOVO - Obrigatório para cartão) */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <MapPin className="h-5 w-5" /> Endereço de Cobrança
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="space-y-2 col-span-1">
-                                        <Label>CEP</Label>
-                                        <Input value={cep} onChange={handleCepChange} placeholder="00000-000" maxLength={9} />
-                                    </div>
-                                    <div className="space-y-2 col-span-2">
-                                        <Label>Rua</Label>
-                                        <Input value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Nome da rua" />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-4 gap-4">
-                                    <div className="space-y-2 col-span-1">
-                                        <Label>Número</Label>
-                                        <Input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="123" />
-                                    </div>
-                                    <div className="space-y-2 col-span-3">
-                                        <Label>Complemento (Opcional)</Label>
-                                        <Input value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto 101" />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Bairro</Label>
-                                        <Input value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Cidade</Label>
-                                        <Input value={city} onChange={(e) => setCity(e.target.value)} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Estado (UF)</Label>
-                                        <Input value={state} onChange={(e) => setState(e.target.value.toUpperCase())} maxLength={2} placeholder="SP" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        {/* Coluna da Direita: Formulários */}
+                        <div className="md:col-span-2 space-y-6">
 
-                        {/* 3. Pagamento */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Forma de Pagamento</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
-                                    <TabsList className="grid w-full grid-cols-2 mb-6">
-                                        <TabsTrigger value="credit_card">
-                                            <CreditCard className="h-4 w-4 mr-2" /> Cartão de Crédito
-                                        </TabsTrigger>
-                                        <TabsTrigger value="pix">
-                                            <QrCode className="h-4 w-4 mr-2" /> PIX
-                                        </TabsTrigger>
-                                    </TabsList>
-
-                                    <TabsContent value="credit_card" className="space-y-4">
+                            {/* 1. Dados Pessoais */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Dados Pessoais</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label>Número do Cartão</Label>
-                                            <Input value={cardNumber} onChange={handleCardNumberChange} placeholder="0000 0000 0000 0000" maxLength={19} />
+                                            <Label>Nome Completo</Label>
+                                            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Nome Impresso no Cartão</Label>
-                                            <Input value={cardName} onChange={(e) => setCardName(e.target.value.toUpperCase())} placeholder="NOME COMO NO CARTÃO" />
+                                            <Label>CPF</Label>
+                                            <Input value={cpf} onChange={handleCpfChange} placeholder="000.000.000-00" maxLength={14} />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>E-mail</Label>
+                                            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Telefone (WhatsApp)</Label>
+                                            <Input value={phone} onChange={handlePhoneChange} placeholder="(00) 00000-0000" maxLength={15} />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* 3. Pagamento */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Forma de Pagamento</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
+                                        <TabsList className="grid w-full grid-cols-2 mb-6">
+                                            <TabsTrigger value="credit_card">
+                                                <CreditCard className="h-4 w-4 mr-2" /> Cartão de Crédito
+                                            </TabsTrigger>
+                                            <TabsTrigger value="pix">
+                                                <QrCode className="h-4 w-4 mr-2" /> PIX
+                                            </TabsTrigger>
+                                        </TabsList>
+
+                                        <TabsContent value="credit_card" className="space-y-4">
                                             <div className="space-y-2">
-                                                <Label>Validade (MM/AA)</Label>
-                                                <Input value={cardExpiry} onChange={handleExpiryChange} placeholder="MM/AA" maxLength={5} />
+                                                <Label>Número do Cartão</Label>
+                                                <Input value={cardNumber} onChange={handleCardNumberChange} placeholder="0000 0000 0000 0000" maxLength={19} />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label>CVV</Label>
-                                                <Input value={cardCvv} onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))} placeholder="123" maxLength={4} />
+                                                <Label>Nome Impresso no Cartão</Label>
+                                                <Input value={cardName} onChange={(e) => setCardName(e.target.value.toUpperCase())} placeholder="NOME COMO NO CARTÃO" />
                                             </div>
-                                        </div>
-                                    </TabsContent>
-
-                                    <TabsContent value="pix">
-                                        <div className="flex flex-col items-center space-y-4 p-4 border rounded-lg bg-slate-50">
-                                            {pixQrCode ? (
-                                                <>
-                                                    <div className="bg-white p-2 rounded-lg shadow-sm">
-                                                        <img
-                                                            src={pixQrCode.startsWith('http') ? pixQrCode : `data:image/jpeg;base64,${pixQrCode.replace(/\s/g, '')}`}
-                                                            onError={(e) => {
-                                                                // Fallback para gerador de QR Code externo se a imagem da Appmax falhar
-                                                                e.currentTarget.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixCopyPaste)}`;
-                                                            }}
-                                                            alt="QR Code PIX"
-                                                            className="w-48 h-48"
-                                                        />
-                                                    </div>
-                                                    <div className="flex items-center gap-2 w-full max-w-sm">
-                                                        <Input value={pixCopyPaste} readOnly className="font-mono text-xs" />
-                                                        <Button size="icon" variant="outline" onClick={() => {
-                                                            navigator.clipboard.writeText(pixCopyPaste);
-                                                            toast({ title: "Copiado!" });
-                                                        }}>
-                                                            <Copy className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-
-                                                    {timeLeft !== null && (
-                                                        <div className="text-center space-y-1">
-                                                            <p className="text-sm text-muted-foreground">Tempo restante para pagar:</p>
-                                                            <p className={`text-xl font-bold font-mono ${timeLeft < 60 ? 'text-red-500' : 'text-slate-700'}`}>
-                                                                {formatTime(timeLeft)}
-                                                            </p>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium animate-pulse">
-                                                        <div className="w-2 h-2 bg-emerald-600 rounded-full" />
-                                                        Aguardando pagamento...
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div className="text-center text-muted-foreground py-8">
-                                                    <QrCode className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                                                    <p>O QR Code será gerado após clicar em Pagar</p>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label>Validade (MM/AA)</Label>
+                                                    <Input value={cardExpiry} onChange={handleExpiryChange} placeholder="MM/AA" maxLength={5} />
                                                 </div>
-                                            )}
+                                                <div className="space-y-2">
+                                                    <Label>CVV</Label>
+                                                    <Input value={cardCvv} onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))} placeholder="123" maxLength={4} />
+                                                </div>
+                                            </div>
+                                        </TabsContent>
+
+                                        <TabsContent value="pix">
+                                            <div className="flex flex-col items-center space-y-4 p-4 border rounded-lg bg-slate-50">
+                                                {pixQrCode ? (
+                                                    <>
+                                                        <div className="bg-white p-2 rounded-lg shadow-sm">
+                                                            <img
+                                                                src={pixQrCode.startsWith('http') ? pixQrCode : `data:image/jpeg;base64,${pixQrCode.replace(/\s/g, '')}`}
+                                                                onError={(e) => {
+                                                                    // Fallback para gerador de QR Code externo se a imagem da Appmax falhar
+                                                                    e.currentTarget.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixCopyPaste)}`;
+                                                                }}
+                                                                alt="QR Code PIX"
+                                                                className="w-48 h-48"
+                                                            />
+                                                        </div>
+                                                        <div className="flex items-center gap-2 w-full max-w-sm">
+                                                            <Input value={pixCopyPaste} readOnly className="font-mono text-xs" />
+                                                            <Button size="icon" variant="outline" onClick={() => {
+                                                                navigator.clipboard.writeText(pixCopyPaste);
+                                                                toast({ title: "Copiado!" });
+                                                            }}>
+                                                                <Copy className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+
+                                                        {timeLeft !== null && (
+                                                            <div className="text-center space-y-1">
+                                                                <p className="text-sm text-muted-foreground">Tempo restante para pagar:</p>
+                                                                <p className={`text-xl font-bold font-mono ${timeLeft < 60 ? 'text-red-500' : 'text-slate-700'}`}>
+                                                                    {formatTime(timeLeft)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium animate-pulse">
+                                                            <div className="w-2 h-2 bg-emerald-600 rounded-full" />
+                                                            Aguardando pagamento...
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="text-center text-muted-foreground py-8">
+                                                        <QrCode className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                                                        <p>O QR Code será gerado após clicar em Pagar</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </TabsContent>
+                                    </Tabs>
+
+                                    <Button
+                                        className="w-full mt-6 h-12 text-lg font-bold"
+                                        size="lg"
+                                        onClick={handleSubmit}
+                                        disabled={loading || !isFormValid}
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...
+                                            </>
+                                        ) : (
+                                            `Pagar ${planFromLanding ? planFromLanding.priceFormatted : 'R$ 2,00'}`
+                                        )}
+                                    </Button>
+
+                                    {/* Selos de Segurança */}
+                                    <div className="mt-6 pt-6 border-t border-slate-100">
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex items-center justify-center gap-6 text-slate-500 opacity-80">
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <BadgeCheck className="h-6 w-6 text-emerald-600" />
+                                                    <span className="text-[10px] font-medium text-center uppercase tracking-wider">Compra<br />Segura</span>
+                                                </div>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <Lock className="h-6 w-6 text-slate-600" />
+                                                    <span className="text-[10px] font-medium text-center uppercase tracking-wider">Dados<br />Protegidos</span>
+                                                </div>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <ShieldCheck className="h-6 w-6 text-blue-600" />
+                                                    <span className="text-[10px] font-medium text-center uppercase tracking-wider">Privacidade<br />Garantida</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-center gap-2 text-xs text-slate-400 bg-slate-50 p-2 rounded">
+                                                <Lock className="h-3 w-3" />
+                                                <span>Pagamento processado em ambiente criptografado (256-bit SSL).</span>
+                                            </div>
                                         </div>
-                                    </TabsContent>
-                                </Tabs>
+                                    </div>
 
-                                <Button
-                                    className="w-full mt-6 h-12 text-lg font-bold"
-                                    size="lg"
-                                    onClick={handleSubmit}
-                                    disabled={loading || !isFormValid}
-                                >
-                                    {loading ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...
-                                        </>
-                                    ) : (
-                                        `Pagar ${planFromLanding ? planFromLanding.priceFormatted : 'R$ 2,00'}`
-                                    )}
-                                </Button>
-
-                                <div className="mt-4 flex justify-center gap-4 opacity-50 grayscale">
-                                    {/* Ícones ilustrativos de bandeiras */}
-                                    <div className="h-6 w-8 bg-slate-300 rounded"></div>
-                                    <div className="h-6 w-8 bg-slate-300 rounded"></div>
-                                    <div className="h-6 w-8 bg-slate-300 rounded"></div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                    <div className="mt-4 flex justify-center gap-4 opacity-50 grayscale">
+                                        {/* Ícones ilustrativos de bandeiras */}
+                                        <div className="h-6 w-8 bg-slate-300 rounded"></div>
+                                        <div className="h-6 w-8 bg-slate-300 rounded"></div>
+                                        <div className="h-6 w-8 bg-slate-300 rounded"></div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

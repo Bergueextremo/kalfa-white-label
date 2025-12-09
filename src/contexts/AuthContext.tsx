@@ -12,8 +12,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, userType?: 'PF' | 'PJ', document?: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -56,9 +56,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, password: string) => {
+    let emailToUse = identifier;
+
+    // Se não for email, tenta buscar o email pelo CPF/CNPJ
+    if (!identifier.includes('@')) {
+      const cleanDoc = identifier.replace(/\D/g, '');
+      const docType = cleanDoc.length > 11 ? 'cnpj' : 'cpf';
+
+      const { data: foundEmail, error: lookupError } = await supabase
+        .rpc('get_email_by_document', {
+          doc_type: docType,
+          doc_value: cleanDoc
+        });
+
+      if (lookupError || !foundEmail) {
+        throw new Error("Documento não encontrado ou inválido.");
+      }
+      emailToUse = foundEmail;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: emailToUse,
       password,
     });
 
@@ -66,13 +85,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     navigate("/dashboard");
   };
 
-  const signup = async (name: string, email: string, password: string) => {
+  const signup = async (name: string, email: string, password: string, userType?: 'PF' | 'PJ', document?: string) => {
     const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           name,
+          user_type: userType || 'PF',
+          // Armazenamos o documento limpo (apenas números)
+          cpf: userType === 'PF' ? document?.replace(/\D/g, '') : null,
+          cnpj: userType === 'PJ' ? document?.replace(/\D/g, '') : null,
         },
       },
     });

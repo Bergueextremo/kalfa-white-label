@@ -1,5 +1,6 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
+import { Footer } from "@/components/Footer";
 
 const NotFound = () => {
   const location = useLocation();
@@ -9,14 +10,38 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
+    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
+      <div className="flex flex-grow flex-col items-center justify-center p-4 text-center">
+        <div className="mb-8 relative w-64 h-64 md:w-96 md:h-96">
+          <img
+            src="/src/assets/vector-principal.png"
+            alt="Página não encontrada"
+            className="w-full h-full object-contain animate-float"
+          />
+        </div>
+
+        <h1 className="mb-4 text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          404
+        </h1>
+
+        <h2 className="mb-4 text-2xl font-semibold text-slate-200">
+          Página não encontrada
+        </h2>
+
+        <p className="mb-8 text-lg text-slate-400 max-w-md">
+          Parece que você navegou para um lugar inexistente.
+          Verifique o endereço ou retorne para a página inicial.
+        </p>
+
+        <Link
+          to="/"
+          className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors duration-200 shadow-lg shadow-blue-900/20"
+        >
+          Voltar para o Início
+        </Link>
       </div>
+
+      <Footer />
     </div>
   );
 };

@@ -17,6 +17,10 @@ interface User {
     credits: number;
     status: string;
     created_at: string;
+    // New fields
+    cpf?: string;
+    cnpj?: string;
+    user_type?: 'PF' | 'PJ';
 }
 
 const AdminUsers = () => {
@@ -115,6 +119,7 @@ const AdminUsers = () => {
                                     <tr>
                                         <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Nome / Email</th>
                                         <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Tipo</th>
+                                        <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Documento</th>
                                         <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Cadastro</th>
                                         <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Status</th>
                                         <th className="text-right py-4 px-6 font-semibold text-slate-600 text-sm">Ações</th>
@@ -128,7 +133,10 @@ const AdminUsers = () => {
                                                 <div className="text-sm text-slate-500">{user.email}</div>
                                             </td>
                                             <td className="py-4 px-6">
-                                                <Badge variant="outline">{user.type}</Badge>
+                                                <Badge variant="outline">{user.user_type || user.type || 'PF'}</Badge>
+                                            </td>
+                                            <td className="py-4 px-6 text-slate-600 text-sm">
+                                                {user.cpf || user.cnpj || '-'}
                                             </td>
                                             <td className="py-4 px-6 font-medium text-slate-700">
                                                 {new Date(user.created_at).toLocaleDateString()}

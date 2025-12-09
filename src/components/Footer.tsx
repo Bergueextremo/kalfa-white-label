@@ -49,11 +49,11 @@ export const Footer = () => {
                     <div>
                         <h3 className="text-white font-semibold mb-6 text-sm uppercase tracking-wider">Legal & Compliance</h3>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="#" className="hover:text-white transition-colors">Termos de Uso</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">Política de Privacidade</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">Diretrizes de LGPD</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">Sobre a Tecnologia</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">Para Escritórios (API)</a></li>
+                            <li><a href="/termos-de-uso" className="hover:text-white transition-colors">Termos de Uso</a></li>
+                            <li><a href="/politica-de-privacidade" className="hover:text-white transition-colors">Política de Privacidade</a></li>
+                            <li><a href="/diretrizes-lgpd" className="hover:text-white transition-colors">Diretrizes de LGPD</a></li>
+                            <li><a href="/sobre-a-tecnologia" className="hover:text-white transition-colors">Sobre a Tecnologia</a></li>
+                            <li><a href="/para-escritorios" className="hover:text-white transition-colors">Para Escritórios (API)</a></li>
                         </ul>
                     </div>
 
@@ -85,6 +85,10 @@ export const Footer = () => {
                     <div className="text-xs text-slate-500">
                         © 2024 JusContratos Tecnologia Ltda. CNPJ 00.000.000/0001-00. <br className="hidden md:block" />
                         Todos os direitos reservados.
+                        <br />
+                        <span className="opacity-75">
+                            Desenvolvida por <a href="https://arca-bergue.vercel.app/" target="_blank" rel="noreferrer" className="hover:text-slate-300 transition-colors">ARCA BERGUE SOFTWARE HOUSE</a>
+                        </span>
                     </div>
 
                     {/* Simulação de Ícones de Pagamento */}

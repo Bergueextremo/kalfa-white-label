@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Scale, Shield, ArrowLeft, Building2, User, LockKeyhole, CheckCircle2 } from "lucide-react";
+import { Scale, Shield, ArrowLeft, Building2, User, LockKeyhole, CheckCircle2, FileText, Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +22,16 @@ const signupSchema = z.object({
   name: z.string().trim().min(2, { message: "Nome muito curto" }),
   email: z.string().trim().email({ message: "E-mail inválido" }),
   password: z.string().min(6, { message: "Mínimo 6 caracteres" }),
-  document: z.string().optional(),
+  confirmPassword: z.string().min(6, { message: "Confirmação necessária" }),
+  // Validação simples de documento (apenas comprimento)
+  document: z.string().optional().refine((val) => {
+    if (!val) return true; // Opcional aqui pois depende do contexto, mas validaremos no submit
+    const clean = val.replace(/\D/g, '');
+    return clean.length === 11 || clean.length === 14;
+  }, { message: "Documento inválido" }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
 });
 
 type UserType = "PF" | "PJ";
@@ -34,13 +44,21 @@ const AuthPage = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Estado para controlar o tipo de usuário (Segmentação B2B)
+  // Estado para controlar o tipo de usuário (Segmentação B2B)
   const [userType, setUserType] = useState<UserType>("PF");
+  const [document, setDocument] = useState(""); // Novo estado para CPF/CNPJ
+
+  // NOVO: Estado para visibilidade de senha
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // NOVO: Estado para dados vindos do pagamento
   const [emailFromPayment, setEmailFromPayment] = useState<string>("");
   const [planFromPayment, setPlanFromPayment] = useState<string>("");
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [lgpdConsent, setLgpdConsent] = useState(false);
 
   // NOVO: Detectar parâmetros da URL (vindo do checkout)
   useEffect(() => {
@@ -77,6 +95,7 @@ const AuthPage = () => {
       loginSchema.parse(data);
       setIsLoading(true);
 
+      // Login agora aceita email OU documento
       await login(data.email, data.password);
       toast.success("Acesso autorizado com sucesso.");
     } catch (error) {
@@ -98,16 +117,29 @@ const AuthPage = () => {
     const formData = new FormData(e.currentTarget);
 
     try {
+      if (!lgpdConsent) {
+        toast.error("É necessário aceitar os Termos e Diretrizes de LGPD.");
+        return;
+      }
+
       const data = {
         name: formData.get("name") as string,
         email: formData.get("signup-email") as string,
         password: formData.get("signup-password") as string,
+        confirmPassword: formData.get("signup-confirm-password") as string,
       };
 
       signupSchema.parse(data);
       setIsLoading(true);
 
-      await signup(data.name, data.email, data.password);
+      const doc = formData.get("document") as string;
+      if (!doc || doc.length < 11) {
+        setErrors({ ...errors, document: "Documento obrigatório" });
+        setIsLoading(false);
+        return;
+      }
+
+      await signup(data.name, data.email, data.password, userType, doc);
 
       toast.success(userType === 'PJ' ? "Ambiente corporativo criado com sucesso." : "Conta criada com sucesso.");
     } catch (error) {
@@ -211,12 +243,12 @@ const AuthPage = () => {
               <TabsContent value="login" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">E-mail Corporativo ou Pessoal</Label>
+                    <Label htmlFor="email">E-mail, CPF ou CNPJ</Label>
                     <Input
                       id="email"
                       name="email"
-                      type="email"
-                      placeholder="nome@exemplo.com"
+                      type="text"
+                      placeholder="seu@email.com ou documento" // Placeholder mais genérico
                       className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
                       required
                     />
@@ -228,14 +260,23 @@ const AuthPage = () => {
                       <Label htmlFor="password">Senha</Label>
                       <a href="#" className="text-xs text-blue-700 hover:underline font-medium">Esqueceu a senha?</a>
                     </div>
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      placeholder="••••••••"
-                      className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        name="password"
+                        type={showLoginPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11 pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
 
                   <Button type="submit" className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium" disabled={isLoading}>
@@ -286,6 +327,36 @@ const AuthPage = () => {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="document">{userType === "PF" ? "CPF" : "CNPJ"}</Label>
+                    <Input
+                      id="document"
+                      name="document"
+                      type="text"
+                      placeholder={userType === "PF" ? "000.000.000-00" : "00.000.000/0000-00"}
+                      value={document}
+                      onChange={(e) => {
+                        let v = e.target.value.replace(/\D/g, '');
+                        if (userType === 'PF') {
+                          if (v.length > 11) v = v.slice(0, 11);
+                          v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                          v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                          v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                        } else {
+                          if (v.length > 14) v = v.slice(0, 14);
+                          v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+                          v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                          v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                          v = v.replace(/(\d{4})(\d)/, '$1-$2');
+                        }
+                        setDocument(v);
+                      }}
+                      className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
+                      required
+                    />
+                    {errors.document && <p className="text-sm text-red-500">{errors.document}</p>}
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="signup-email">E-mail Profissional</Label>
                     {emailFromPayment ? (
                       <>
@@ -325,14 +396,57 @@ const AuthPage = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Criar Senha</Label>
-                    <Input
-                      id="signup-password"
-                      name="signup-password"
-                      type="password"
-                      placeholder="Mínimo 6 caracteres"
-                      className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        name="signup-password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Mínimo 6 caracteres"
+                        className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11 pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm-password">Confirmar Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-confirm-password"
+                        name="signup-confirm-password"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Repita a senha"
+                        className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11 pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
+                  </div>
+
+                  <div className="flex items-start space-x-2 pt-2">
+                    <Checkbox id="lgpd-consent" checked={lgpdConsent} onCheckedChange={(checked) => setLgpdConsent(checked as boolean)} />
+                    <div className="grid gap-1.5 leading-none">
+                      <Label
+                        htmlFor="lgpd-consent"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-600"
+                      >
+                        Concordo com os <a href="/termos-de-uso" target="_blank" className="underline text-blue-600 hover:text-blue-800">Termos de Uso</a>, <a href="/politica-de-privacidade" target="_blank" className="underline text-blue-600 hover:text-blue-800">Política de Privacidade</a> e <a href="/diretrizes-lgpd" target="_blank" className="underline text-blue-600 hover:text-blue-800">Diretrizes de LGPD</a>.
+                      </Label>
+                    </div>
                   </div>
 
                   <Button type="submit" className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium" disabled={isLoading}>
@@ -359,7 +473,7 @@ const AuthPage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

@@ -36,7 +36,9 @@ Deno.serve(async (req) => {
                 created_at: u.created_at,
                 last_sign_in_at: u.last_sign_in_at,
                 status: (u as any).banned_until ? 'Banned' : 'Active',
-                type: u.user_metadata?.type || 'PF' // Assuming type is stored in metadata, default to PF
+                type: u.user_metadata?.user_type || u.user_metadata?.type || 'PF',
+                cpf: u.user_metadata?.cpf,
+                cnpj: u.user_metadata?.cnpj
             }))
 
             return new Response(
