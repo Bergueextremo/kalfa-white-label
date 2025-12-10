@@ -13,14 +13,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-
 const ContratoBlindado = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const {
+    isAuthenticated
+  } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  return (
-    <div className="min-h-screen bg-white">
+  return <div className="min-h-screen bg-white">
       {/* Header - Replicated from Landing for consistency */}
       <header className="border-b border-border bg-white sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -69,27 +68,15 @@ const ContratoBlindado = () => {
               enganado no<br />
               seu contrato.
             </h1>
-            <p className="text-gray-600 text-lg md:text-xl mb-8 leading-relaxed">
-              Nosso sistema combina regras jurídicas e análise forense para identificar
-              cláusulas abusivas, taxas ocultas e cálculos incorretos. Já ajudamos clientes a
-              recuperar valores significativos.
-            </p>
-            <Button
-              size="lg"
-              className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold text-base md:text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all uppercase tracking-wide"
-              onClick={() => navigate("/auth")}
-            >
+            <p className="text-gray-600 text-lg md:text-xl mb-8 leading-relaxed">Nosso sistema analisa automaticamente cláusulas, cálculos e riscos jurídicos para mostrar se você está pagando ou assumindo algo que não deveria. Rápido, seguro e explicado de forma simples.</p>
+            <Button size="lg" className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold text-base md:text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all uppercase tracking-wide" onClick={() => navigate("/auth")}>
               AUTENTICAR CONTRATO
             </Button>
           </div>
 
           {/* Right Content - Image */}
           <div className="relative flex justify-center lg:justify-end">
-            <img
-              src={heroImage}
-              alt="Análise de Contrato"
-              className="w-full max-w-md lg:max-w-full h-auto object-contain drop-shadow-xl"
-            />
+            <img src={heroImage} alt="Análise de Contrato" className="w-full max-w-md lg:max-w-full h-auto object-contain drop-shadow-xl" />
           </div>
         </div>
       </section>
@@ -212,10 +199,7 @@ const ContratoBlindado = () => {
               </div>
 
               <div className="mt-10">
-                <Button
-                  className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all"
-                  onClick={() => navigate("/auth")}
-                >
+                <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/auth")}>
                   Proteja suas vendas
                 </Button>
               </div>
@@ -223,11 +207,7 @@ const ContratoBlindado = () => {
 
             {/* Right Content - Image */}
             <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
-              <img
-                src={protectionImage}
-                alt="Proteção Jurídica"
-                className="w-full max-w-lg lg:max-w-xl h-auto drop-shadow-2xl"
-              />
+              <img src={protectionImage} alt="Proteção Jurídica" className="w-full max-w-lg lg:max-w-xl h-auto drop-shadow-2xl" />
             </div>
           </div>
         </div>
@@ -239,11 +219,7 @@ const ContratoBlindado = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left Content - Image */}
             <div className="flex justify-center lg:justify-start">
-              <img
-                src={socialProofImage}
-                alt="Auditoria Moderna"
-                className="w-full max-w-lg lg:max-w-xl h-auto drop-shadow-2xl"
-              />
+              <img src={socialProofImage} alt="Auditoria Moderna" className="w-full max-w-lg lg:max-w-xl h-auto drop-shadow-2xl" />
             </div>
 
             {/* Right Content - Text */}
@@ -276,10 +252,7 @@ const ContratoBlindado = () => {
                 </li>
               </ul>
 
-              <Button
-                className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all"
-                onClick={() => navigate("/auth")}
-              >
+              <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/auth")}>
                 COMECE A AUDITAR
               </Button>
             </div>
@@ -295,15 +268,7 @@ const ContratoBlindado = () => {
           </h2>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
-            {[
-              "Bancos e empresas colocam taxas escondidas.",
-              "Juros calculados fora da norma legal.",
-              "Multas e encargos abusivos.",
-              "Cláusulas que prendem você ilegalmente.",
-              "Termos que violam o Código de Defesa do Consumidor.",
-              "Falta de clareza e transparência nas informações."
-            ].map((item, index) => (
-              <div key={index} className="bg-[#EFF6FF] rounded-2xl p-8 flex items-start gap-4 hover:shadow-md transition-shadow">
+            {["Bancos e empresas colocam taxas escondidas.", "Juros calculados fora da norma legal.", "Multas e encargos abusivos.", "Cláusulas que prendem você ilegalmente.", "Termos que violam o Código de Defesa do Consumidor.", "Falta de clareza e transparência nas informações."].map((item, index) => <div key={index} className="bg-[#EFF6FF] rounded-2xl p-8 flex items-start gap-4 hover:shadow-md transition-shadow">
                 <div className="flex-shrink-0 mt-1">
                   <div className="w-8 h-8 rounded-full border-2 border-[#4338ca] flex items-center justify-center bg-white">
                     <Check className="w-4 h-4 text-[#4338ca] stroke-[3]" />
@@ -312,8 +277,7 @@ const ContratoBlindado = () => {
                 <p className="text-[#1e1b4b] font-bold text-lg leading-snug">
                   {item}
                 </p>
-              </div>
-            ))}
+              </div>)}
           </div>
 
           <div className="text-center max-w-4xl mx-auto">
@@ -335,11 +299,7 @@ const ContratoBlindado = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-20">
             {/* Left Content - Image */}
             <div className="flex justify-center lg:justify-start">
-              <img
-                src={solutionImage}
-                alt="Solução Completa"
-                className="w-full max-w-lg lg:max-w-xl h-auto drop-shadow-2xl"
-              />
+              <img src={solutionImage} alt="Solução Completa" className="w-full max-w-lg lg:max-w-xl h-auto drop-shadow-2xl" />
             </div>
 
             {/* Right Content - Text */}
@@ -353,10 +313,7 @@ const ContratoBlindado = () => {
                 Crie e gerencie seus laudos de forma simples e eficiente.
               </p>
 
-              <Button
-                className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all"
-                onClick={() => navigate("/auth")}
-              >
+              <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/auth")}>
                 COMEÇAR AGORA
               </Button>
             </div>
@@ -411,11 +368,7 @@ const ContratoBlindado = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left Content - Image */}
             <div className="flex justify-center lg:justify-start">
-              <img
-                src={managementImage}
-                alt="Gestão Centralizada"
-                className="w-full max-w-lg lg:max-w-xl h-auto drop-shadow-2xl"
-              />
+              <img src={managementImage} alt="Gestão Centralizada" className="w-full max-w-lg lg:max-w-xl h-auto drop-shadow-2xl" />
             </div>
 
             {/* Right Content - Text */}
@@ -448,10 +401,7 @@ const ContratoBlindado = () => {
                 </li>
               </ul>
 
-              <Button
-                className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all"
-                onClick={() => navigate("/auth")}
-              >
+              <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/auth")}>
                 Cadastre-se agora
               </Button>
             </div>
@@ -540,10 +490,7 @@ const ContratoBlindado = () => {
 
               {/* Button */}
               <div className="text-center">
-                <Button
-                  className="w-full md:w-auto bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-xl px-12 py-8 text-xl shadow-lg hover:shadow-xl transition-all mb-4"
-                  onClick={() => navigate("/auth")}
-                >
+                <Button className="w-full md:w-auto bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-xl px-12 py-8 text-xl shadow-lg hover:shadow-xl transition-all mb-4" onClick={() => navigate("/auth")}>
                   Auditar Meu Contrato Agora • R$ 49
                 </Button>
 
@@ -596,11 +543,7 @@ const ContratoBlindado = () => {
                 </li>
               </ul>
 
-              <Button
-                variant="outline"
-                className="w-full border-gray-300 text-gray-700 hover:border-[#00C853] hover:text-[#00C853] font-bold"
-                onClick={() => navigate("/auth")}
-              >
+              <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:border-[#00C853] hover:text-[#00C853] font-bold" onClick={() => navigate("/auth")}>
                 Fazer Upgrade
               </Button>
             </div>
@@ -638,10 +581,7 @@ const ContratoBlindado = () => {
                 </li>
               </ul>
 
-              <Button
-                className="w-full bg-white text-[#1a2b4b] hover:bg-gray-100 font-bold"
-                onClick={() => navigate("/auth")}
-              >
+              <Button className="w-full bg-white text-[#1a2b4b] hover:bg-gray-100 font-bold" onClick={() => navigate("/auth")}>
                 Fazer Upgrade para Essencial
               </Button>
             </div>
@@ -673,11 +613,7 @@ const ContratoBlindado = () => {
                 </li>
               </ul>
 
-              <Button
-                variant="outline"
-                className="w-full border-gray-300 text-gray-700 hover:border-[#00C853] hover:text-[#00C853] font-bold"
-                onClick={() => window.open("https://wa.me/5511999999999", "_blank")}
-              >
+              <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:border-[#00C853] hover:text-[#00C853] font-bold" onClick={() => window.open("https://wa.me/5511999999999", "_blank")}>
                 Fale com um Especialista
               </Button>
             </div>
@@ -745,21 +681,14 @@ const ContratoBlindado = () => {
                 </div>
               </div>
 
-              <Button
-                className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all"
-                onClick={() => window.open("https://wa.me/5511999999999", "_blank")}
-              >
+              <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => window.open("https://wa.me/5511999999999", "_blank")}>
                 Fale com um especialista
               </Button>
             </div>
 
             {/* Right Content - Image */}
             <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
-              <img
-                src={apiImage}
-                alt="API Robusta"
-                className="w-full max-w-lg lg:max-w-xl h-auto drop-shadow-2xl"
-              />
+              <img src={apiImage} alt="API Robusta" className="w-full max-w-lg lg:max-w-xl h-auto drop-shadow-2xl" />
             </div>
           </div>
         </div>
@@ -780,10 +709,7 @@ const ContratoBlindado = () => {
               <p className="text-gray-600 mb-8 text-lg leading-relaxed">
                 Confira nossas perguntas mais frequentes para entender como protegemos seus contratos.
               </p>
-              <Button
-                className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all"
-                onClick={() => window.open("https://wa.me/5511999999999", "_blank")}
-              >
+              <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => window.open("https://wa.me/5511999999999", "_blank")}>
                 Fale com um especialista
               </Button>
             </div>
@@ -857,8 +783,6 @@ const ContratoBlindado = () => {
       </section>
 
       <Footer />
-    </div >
-  );
+    </div>;
 };
-
 export default ContratoBlindado;
