@@ -1,1 +1,4 @@
 project_id = "yiacsonjcfhzmpkjkqqv"
+
+[functions.get-public-audit]
+verify_jwt = true
