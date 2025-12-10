@@ -70,15 +70,13 @@ export function Layout({ children }: LayoutProps) {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
-        {/* Sidebar apenas em desktop */}
-        <div className="hidden md:block">
-          <AppSidebar />
-        </div>
+        {/* Sidebar em todas as telas */}
+        <AppSidebar />
         <div className="flex-1 flex flex-col">
           {/* Header com trigger e user menu */}
           <header className="h-14 border-b border-border flex items-center justify-between px-4 md:px-6 bg-card">
             <div className="flex items-center gap-4">
-              <SidebarTrigger className="hidden md:flex hover:bg-accent transition-colors" />
+              <SidebarTrigger className="hover:bg-accent transition-colors" />
             </div>
 
             <div className="flex items-center gap-2 md:gap-4">
