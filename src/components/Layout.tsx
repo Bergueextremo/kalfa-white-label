@@ -1,6 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { Button } from "@/components/ui/button";
 import { LogOut, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -69,12 +70,15 @@ export function Layout({ children }: LayoutProps) {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar />
+        {/* Sidebar apenas em desktop */}
+        <div className="hidden md:block">
+          <AppSidebar />
+        </div>
         <div className="flex-1 flex flex-col">
           {/* Header com trigger e user menu */}
           <header className="h-14 border-b border-border flex items-center justify-between px-4 md:px-6 bg-card">
             <div className="flex items-center gap-4">
-              <SidebarTrigger className="md:hidden hover:bg-accent transition-colors" />
+              <SidebarTrigger className="hidden md:flex hover:bg-accent transition-colors" />
             </div>
 
             <div className="flex items-center gap-2 md:gap-4">
@@ -106,12 +110,16 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </header>
 
-          {/* Main Content */}
-          <main className="flex-1 p-4 md:p-6 overflow-auto">
+          {/* Main Content - padding bottom para não sobrepor o menu mobile */}
+          <main className="flex-1 p-4 md:p-6 overflow-auto pb-20 md:pb-6">
             {children}
           </main>
         </div>
       </div>
+      
+      {/* Menu inferior mobile */}
+      <MobileBottomNav />
+      
       <GlobalAuditModal />
       <AuditProgressWidget />
     </SidebarProvider>
