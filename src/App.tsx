@@ -31,6 +31,7 @@ import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import DiretrizesLgpd from "./pages/DiretrizesLgpd";
 import SobreTecnologia from "./pages/SobreTecnologia";
 import ParaEscritorios from "./pages/ParaEscritorios";
+import ContratoBlindado from "./pages/ContratoBlindado";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const App = () => {
                   <Route path="/diretrizes-lgpd" element={<DiretrizesLgpd />} />
                   <Route path="/sobre-a-tecnologia" element={<SobreTecnologia />} />
                   <Route path="/para-escritorios" element={<ParaEscritorios />} />
+                  <Route path="/contratoblindado" element={<ContratoBlindado />} />
 
                   {/* Protected routes */}
                   <Route
