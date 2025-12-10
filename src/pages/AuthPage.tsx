@@ -14,7 +14,15 @@ import logoJusContratos from "@/assets/logo-juscontratos.png";
 
 // Schemas de Validação
 const loginSchema = z.object({
-  email: z.string().trim().email({ message: "E-mail inválido" }),
+  identifier: z.string().trim().min(1, { message: "E-mail ou documento obrigatório" }).refine((val) => {
+    // Aceita email OU CPF/CNPJ
+    if (val.includes('@')) {
+      return z.string().email().safeParse(val).success;
+    }
+    // Valida como CPF (11 dígitos) ou CNPJ (14 dígitos)
+    const cleanDoc = val.replace(/\D/g, '');
+    return cleanDoc.length === 11 || cleanDoc.length === 14;
+  }, { message: "E-mail, CPF ou CNPJ inválido" }),
   password: z.string().min(6, { message: "Mínimo 6 caracteres" }),
 });
 
@@ -88,7 +96,7 @@ const AuthPage = () => {
 
     try {
       const data = {
-        email: formData.get("email") as string,
+        identifier: formData.get("identifier") as string,
         password: formData.get("password") as string,
       };
 
@@ -96,13 +104,15 @@ const AuthPage = () => {
       setIsLoading(true);
 
       // Login agora aceita email OU documento
-      await login(data.email, data.password);
+      await login(data.identifier, data.password);
       toast.success("Acesso autorizado com sucesso.");
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
         error.errors.forEach((err) => { if (err.path[0]) fieldErrors[err.path[0] as string] = err.message; });
         setErrors(fieldErrors);
+      } else if (error instanceof Error) {
+        toast.error(error.message || "Credenciais inválidas ou erro no servidor.");
       } else {
         toast.error("Credenciais inválidas ou erro no servidor.");
       }
@@ -243,16 +253,16 @@ const AuthPage = () => {
               <TabsContent value="login" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">E-mail, CPF ou CNPJ</Label>
+                    <Label htmlFor="identifier">E-mail, CPF ou CNPJ</Label>
                     <Input
-                      id="email"
-                      name="email"
+                      id="identifier"
+                      name="identifier"
                       type="text"
-                      placeholder="seu@email.com ou documento" // Placeholder mais genérico
+                      placeholder="seu@email.com ou 000.000.000-00"
                       className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-11"
                       required
                     />
-                    {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+                    {errors.identifier && <p className="text-sm text-red-500">{errors.identifier}</p>}
                   </div>
 
                   <div className="space-y-2">
