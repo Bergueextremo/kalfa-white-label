@@ -11,14 +11,50 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const { action, userId, page = 1, limit = 50 } = await req.json()
-
         // Create Supabase client with Service Role Key to bypass RLS and access auth.users
         const supabaseAdmin = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
             { auth: { autoRefreshToken: false, persistSession: false } }
         )
+
+        // ============ SERVER-SIDE AUTHORIZATION CHECK ============
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) {
+            console.error('No authorization header provided')
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized' }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+            )
+        }
+
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+        
+        if (authError || !user) {
+            console.error('Invalid token or user not found:', authError)
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized' }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+            )
+        }
+
+        // Check if user has admin role using the has_role function
+        const { data: isAdmin, error: roleError } = await supabaseAdmin
+            .rpc('has_role', { _user_id: user.id, _role: 'admin' })
+
+        if (roleError || !isAdmin) {
+            console.error('User is not admin:', user.email, roleError)
+            return new Response(
+                JSON.stringify({ error: 'Forbidden - Admin access required' }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+            )
+        }
+
+        console.log('Admin access verified for:', user.email)
+        // ============ END AUTHORIZATION CHECK ============
+
+        const { action, userId, page = 1, limit = 50 } = await req.json()
 
         if (action === 'list_users') {
             const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers({
@@ -59,13 +95,8 @@ Deno.serve(async (req) => {
             if (salesError) throw salesError
 
             // We need user emails for the sales report
-            // Fetch all users involved in these sales to avoid N+1 queries
             const userIds = [...new Set(sales.map(s => s.user_id))]
             const usersMap = new Map()
-
-            // auth.admin.listUsers doesn't support filtering by ID list easily in one go without looping or fetching all
-            // For simplicity in this MVP, we'll fetch details for these users. 
-            // Optimization: If list is huge, this might be slow.
 
             for (const uid of userIds) {
                 if (uid) {
@@ -95,9 +126,9 @@ Deno.serve(async (req) => {
             if (!userId) throw new Error('UserId is required')
 
             // Get User Profile
-            const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
+            const { data: { user: targetUser }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
             if (userError) throw userError
-            if (!user) throw new Error('User not found')
+            if (!targetUser) throw new Error('User not found')
 
             // Get User Activity (Audits)
             const { data: activity, error: activityError } = await supabaseAdmin
@@ -109,14 +140,14 @@ Deno.serve(async (req) => {
             if (activityError) throw activityError
 
             const userDetails = {
-                id: user.id,
-                name: user.user_metadata?.name || user.email?.split('@')[0],
-                email: user.email,
-                phone: user.phone || 'N/A',
-                document: user.user_metadata?.document || 'N/A',
-                type: user.user_metadata?.type || 'PF',
-                status: (user as any).banned_until ? 'Banned' : 'Active',
-                joinedAt: user.created_at,
+                id: targetUser.id,
+                name: targetUser.user_metadata?.name || targetUser.email?.split('@')[0],
+                email: targetUser.email,
+                phone: targetUser.phone || 'N/A',
+                document: targetUser.user_metadata?.document || 'N/A',
+                type: targetUser.user_metadata?.type || 'PF',
+                status: (targetUser as any).banned_until ? 'Banned' : 'Active',
+                joinedAt: targetUser.created_at,
                 credits: 0, // Placeholder
                 purchases: activity.filter(a => a.payment_status === 'approved').map(a => ({
                     id: a.id,
