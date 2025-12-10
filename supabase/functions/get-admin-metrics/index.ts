@@ -11,14 +11,50 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const { start_date, end_date } = await req.json()
-
         // Create Supabase client with Service Role Key to bypass RLS
         const supabaseAdmin = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
             { auth: { autoRefreshToken: false, persistSession: false } }
         )
+
+        // ============ SERVER-SIDE AUTHORIZATION CHECK ============
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) {
+            console.error('No authorization header provided')
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized' }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+            )
+        }
+
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+        
+        if (authError || !user) {
+            console.error('Invalid token or user not found:', authError)
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized' }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+            )
+        }
+
+        // Check if user has admin role using the has_role function
+        const { data: isAdmin, error: roleError } = await supabaseAdmin
+            .rpc('has_role', { _user_id: user.id, _role: 'admin' })
+
+        if (roleError || !isAdmin) {
+            console.error('User is not admin:', user.email, roleError)
+            return new Response(
+                JSON.stringify({ error: 'Forbidden - Admin access required' }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+            )
+        }
+
+        console.log('Admin access verified for:', user.email)
+        // ============ END AUTHORIZATION CHECK ============
+
+        const { start_date, end_date } = await req.json()
 
         // Fetch total audits count
         const { count: totalAudits, error: auditsError } = await supabaseAdmin
@@ -49,10 +85,6 @@ Deno.serve(async (req) => {
         // Generate daily sales data for chart
         const dailySalesMap = new Map<string, number>();
 
-        // Initialize map with 0 for all days in range? 
-        // Or just return what we have and let frontend handle filling gaps?
-        // Let's return what we have, but formatted.
-
         salesData?.forEach(sale => {
             const date = sale.created_at.split('T')[0]; // YYYY-MM-DD
             const current = dailySalesMap.get(date) || 0;
@@ -80,7 +112,6 @@ Deno.serve(async (req) => {
         })) || []
 
         // Fetch total users count (Active Users proxy)
-        // We fetch a larger page to get a reasonable count for this scale.
         const { data: { users: allUsers }, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
         const totalUsers = allUsers?.length || 0
 
@@ -96,7 +127,7 @@ Deno.serve(async (req) => {
                     totalUsers
                 },
                 recentAudits: auditsWithAmount,
-                chartData // Added this
+                chartData
             }),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
