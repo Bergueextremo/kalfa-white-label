@@ -145,14 +145,10 @@ const ContratoBlindado = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left Content - Text */}
             <div className="order-2 lg:order-1">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-6 leading-tight">
-                Proteção antifraude para suas<br />
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-6 leading-tight">Proteção jurídica para os seus contratos<br />
                 vendas
               </h2>
-              <p className="text-gray-600 mb-10 text-lg leading-relaxed">
-                Conte com um sistema antifraude integrado que analisa automaticamente cada
-                transação e bloqueia compras suspeitas.
-              </p>
+              <p className="text-gray-600 mb-10 text-lg leading-relaxed">Conte com uma análise especializada que identifica riscos, falhas e cláusulas prejudiciais antes que você assine — garantindo segurança e previsibilidade em cada acordo.</p>
 
               <div className="space-y-8">
                 {/* List Item 1 */}
@@ -161,11 +157,8 @@ const ContratoBlindado = () => {
                     <Database className="w-6 h-6 text-[#00C853]" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Inteligência de dados</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Nosso sistema é segmentado por nicho de mercado e aprende com seu histórico para
-                      tornar as análises cada vez mais precisas.
-                    </p>
+                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Leitura inteligente de cláusulas</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">Nosso sistema analisa ponto a ponto do contrato e destaca riscos ocultos, ambiguidades e termos que podem gerar prejuízos no futuro.</p>
                   </div>
                 </div>
 
@@ -175,10 +168,8 @@ const ContratoBlindado = () => {
                     <Activity className="w-6 h-6 text-[#00C853]" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Score Pagar.me</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Visualize o grau de risco de cada transação para tomar decisões estratégicas.
-                    </p>
+                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Avaliação de risco contratual</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">Receba um diagnóstico claro do nível de segurança do documento, com orientações práticas para corrigir problemas antes de fechar o acordo.</p>
                   </div>
                 </div>
 
@@ -188,11 +179,8 @@ const ContratoBlindado = () => {
                     <CheckCircle className="w-6 h-6 text-[#00C853]" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Autenticação 3DS 2.0</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Valide a identidade do comprador e aumente sua aprovação de pagamentos, sem
-                      comprometer a experiência do cliente.
-                    </p>
+                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Validação de identidade e legitimidade</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">Confirmamos partes envolvidas, verificamos coerência e asseguramos que o contrato está juridicamente alinhado às normas aplicáveis.</p>
                   </div>
                 </div>
               </div>
