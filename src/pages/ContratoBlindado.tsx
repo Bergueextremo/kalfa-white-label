@@ -62,8 +62,7 @@ const ContratoBlindado = () => {
         <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Left Content */}
           <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#1a2b4b] leading-[1.1] mb-6">
-              Descubra se<br />
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#1a2b4b] leading-[1.1] mb-6">Auditoria Jurídica Online do Seu Contrato — Rápida, Completa e Sem Advogado<br />
               você está sendo<br />
               enganado no<br />
               seu contrato.
