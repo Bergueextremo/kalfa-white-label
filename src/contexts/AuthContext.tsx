@@ -64,16 +64,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const cleanDoc = identifier.replace(/\D/g, '');
       const docType = cleanDoc.length > 11 ? 'cnpj' : 'cpf';
 
-      const { data: foundEmail, error: lookupError } = await supabase
-        .rpc('get_email_by_document', {
-          doc_type: docType,
-          doc_value: cleanDoc
+      try {
+        // Chama Edge Function para buscar email por documento
+        const { data, error } = await supabase.functions.invoke('get-email-by-document', {
+          body: {
+            doc_type: docType,
+            doc_value: cleanDoc
+          }
         });
 
-      if (lookupError || !foundEmail) {
-        throw new Error("Documento não encontrado ou inválido.");
+        if (error || !data?.email) {
+          throw new Error("CPF/CNPJ não encontrado. Verifique o documento digitado ou use seu e-mail.");
+        }
+
+        emailToUse = data.email;
+      } catch (err) {
+        throw new Error("CPF/CNPJ não encontrado. Verifique o documento digitado ou use seu e-mail.");
       }
-      emailToUse = foundEmail;
     }
 
     const { error } = await supabase.auth.signInWithPassword({

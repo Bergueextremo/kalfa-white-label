@@ -67,14 +67,14 @@ export function Layout({ children }: LayoutProps) {
   }, [credits, isLoading, location, navigate, user]);
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           {/* Header com trigger e user menu */}
           <header className="h-14 border-b border-border flex items-center justify-between px-4 md:px-6 bg-card">
             <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover:bg-accent transition-colors" />
+              <SidebarTrigger className="md:hidden hover:bg-accent transition-colors" />
             </div>
 
             <div className="flex items-center gap-2 md:gap-4">

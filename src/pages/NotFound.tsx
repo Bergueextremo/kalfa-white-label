@@ -1,13 +1,30 @@
-import { useLocation, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Footer } from "@/components/Footer";
 
 const NotFound = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          navigate("/");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [navigate]);
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
@@ -31,6 +48,10 @@ const NotFound = () => {
         <p className="mb-8 text-lg text-slate-400 max-w-md">
           Parece que você navegou para um lugar inexistente.
           Verifique o endereço ou retorne para a página inicial.
+        </p>
+
+        <p className="mb-6 text-sm text-slate-500">
+          Redirecionando automaticamente em <span className="font-bold text-blue-400">{countdown}</span> segundo{countdown !== 1 ? 's' : ''}...
         </p>
 
         <Link
