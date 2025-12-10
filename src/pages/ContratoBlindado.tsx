@@ -148,7 +148,7 @@ const ContratoBlindado = () => {
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-6 leading-tight">Proteção completa para os seus contratos<br />
                 vendas
               </h2>
-              <p className="text-gray-600 mb-10 text-lg leading-relaxed">Conte com uma análise especializada que identifica riscos, falhas e cláusulas prejudiciais antes que você assine — garantindo segurança e previsibilidade em cada acordo.</p>
+              <p className="text-gray-600 mb-10 text-lg leading-relaxed">Tenha uma análise clara e rápida que identifica erros, riscos e pontos que podem te prejudicar antes de assinar qualquer contrato.</p>
 
               <div className="space-y-8">
                 {/* List Item 1 */}
@@ -157,8 +157,8 @@ const ContratoBlindado = () => {
                     <Database className="w-6 h-6 text-[#00C853]" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Leitura inteligente de cláusulas</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">Nosso sistema analisa ponto a ponto do contrato e destaca riscos ocultos, ambiguidades e termos que podem gerar prejuízos no futuro.</p>
+                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Análise de cláusulas</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">Verificamos cada parte do contrato e mostramos onde existem riscos ou termos que podem gerar problemas.</p>
                   </div>
                 </div>
 
@@ -168,8 +168,8 @@ const ContratoBlindado = () => {
                     <Activity className="w-6 h-6 text-[#00C853]" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Avaliação de risco contratual</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">Receba um diagnóstico claro do nível de segurança do documento, com orientações práticas para corrigir problemas antes de fechar o acordo.</p>
+                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Revisão de riscos</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">Você recebe um relatório simples que mostra se o contrato é seguro e o que precisa ser ajustado.</p>
                   </div>
                 </div>
 
@@ -179,8 +179,8 @@ const ContratoBlindado = () => {
                     <CheckCircle className="w-6 h-6 text-[#00C853]" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Validação de identidade e legitimidade</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">Confirmamos partes envolvidas, verificamos coerência e asseguramos que o contrato está juridicamente alinhado às normas aplicáveis.</p>
+                    <h3 className="text-xl font-bold text-[#1a2b4b] mb-2">Verificação das partes</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">Checamos as informações do documento para garantir que tudo está correto e dentro das regras.</p>
                   </div>
                 </div>
               </div>
