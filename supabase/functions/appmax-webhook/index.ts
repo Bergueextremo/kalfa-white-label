@@ -1,8 +1,57 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { crypto } from "https://deno.land/std@0.177.0/crypto/mod.ts";
+import { encode } from "https://deno.land/std@0.177.0/encoding/hex.ts";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-appmax-signature',
+}
+
+// Verify webhook signature using HMAC-SHA256
+async function verifyWebhookSignature(payload: string, signature: string | null, secret: string): Promise<boolean> {
+    if (!signature || !secret) {
+        console.error('Missing signature or secret for verification');
+        return false;
+    }
+
+    try {
+        // Create HMAC-SHA256 hash of the payload
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+            "raw",
+            encoder.encode(secret),
+            { name: "HMAC", hash: "SHA-256" },
+            false,
+            ["sign"]
+        );
+        
+        const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+        const computedSignature = new TextDecoder().decode(encode(new Uint8Array(signatureBuffer)));
+        
+        // Compare signatures (timing-safe comparison)
+        const expectedLength = computedSignature.length;
+        const receivedLength = signature.length;
+        
+        if (expectedLength !== receivedLength) {
+            console.error('Signature length mismatch');
+            return false;
+        }
+        
+        let result = 0;
+        for (let i = 0; i < expectedLength; i++) {
+            result |= computedSignature.charCodeAt(i) ^ signature.charCodeAt(i);
+        }
+        
+        const isValid = result === 0;
+        if (!isValid) {
+            console.error('Signature verification failed - signatures do not match');
+        }
+        
+        return isValid;
+    } catch (error) {
+        console.error('Error verifying signature:', error);
+        return false;
+    }
 }
 
 Deno.serve(async (req) => {
@@ -16,7 +65,43 @@ Deno.serve(async (req) => {
         console.log('WEBHOOK APPMAX RECEBIDO');
         console.log('========================================');
 
-        const payload = await req.json();
+        // Get the raw body for signature verification
+        const rawBody = await req.text();
+        
+        // Verify webhook signature
+        const webhookSecret = Deno.env.get('APPMAX_WEBHOOK_SECRET');
+        const signature = req.headers.get('x-appmax-signature') || req.headers.get('X-Appmax-Signature');
+        
+        if (!webhookSecret) {
+            console.error('APPMAX_WEBHOOK_SECRET not configured');
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Webhook verification not configured'
+            }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+
+        const isValidSignature = await verifyWebhookSignature(rawBody, signature, webhookSecret);
+        
+        if (!isValidSignature) {
+            console.error('========================================');
+            console.error('WEBHOOK SIGNATURE VERIFICATION FAILED');
+            console.error('Received signature:', signature);
+            console.error('========================================');
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Invalid webhook signature'
+            }), {
+                status: 401,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+        
+        console.log('✅ Webhook signature verified successfully');
+
+        const payload = JSON.parse(rawBody);
         console.log('Payload completo:', JSON.stringify(payload, null, 2));
 
         // Extract data based on Appmax documentation structure
