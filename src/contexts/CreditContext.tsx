@@ -7,7 +7,7 @@ interface CreditContextType {
     credits: number;
     maxCredits: number;
     addCredits: (amount: number) => void;
-    useCredit: () => boolean;
+    useCredit: () => Promise<boolean>;
     isLoading: boolean;
 }
 

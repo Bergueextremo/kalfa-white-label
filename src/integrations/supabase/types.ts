@@ -74,7 +74,7 @@ export type Database = {
           payment_status: string
           plan_name: string
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -87,7 +87,7 @@ export type Database = {
           payment_status?: string
           plan_name: string
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -100,7 +100,76 @@ export type Database = {
           payment_status?: string
           plan_name?: string
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      pending_activations: {
+        Row: {
+          activated: boolean | null
+          activated_at: string | null
+          amount: number
+          appmax_order_id: string
+          created_at: string | null
+          credits: number
+          email: string
+          expires_at: string | null
+          id: string
+          payment_status: string | null
+          plan_id: string
+          user_id: string | null
+        }
+        Insert: {
+          activated?: boolean | null
+          activated_at?: string | null
+          amount: number
+          appmax_order_id: string
+          created_at?: string | null
+          credits: number
+          email: string
+          expires_at?: string | null
+          id?: string
+          payment_status?: string | null
+          plan_id: string
+          user_id?: string | null
+        }
+        Update: {
+          activated?: boolean | null
+          activated_at?: string | null
+          amount?: number
+          appmax_order_id?: string
+          created_at?: string | null
+          credits?: number
+          email?: string
+          expires_at?: string | null
+          id?: string
+          payment_status?: string | null
+          plan_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          credits: number | null
+          has_seen_onboarding: boolean | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number | null
+          has_seen_onboarding?: boolean | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number | null
+          has_seen_onboarding?: boolean | null
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -109,7 +178,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      decrement_credits: {
+        Args: { amount: number; row_id: string }
+        Returns: undefined
+      }
+      get_email_by_document: {
+        Args: { doc_type: string; doc_value: string }
+        Returns: string
+      }
+      increment_credits: {
+        Args: { amount: number; row_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       auditoria_status: "UPLOADING" | "PROCESSING" | "COMPLETED" | "FAILED"
