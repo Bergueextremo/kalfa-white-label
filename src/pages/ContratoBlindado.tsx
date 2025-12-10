@@ -145,7 +145,7 @@ const ContratoBlindado = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left Content - Text */}
             <div className="order-2 lg:order-1">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-6 leading-tight">Proteção jurídica para os seus contratos<br />
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-6 leading-tight">Proteção completa para os seus contratos<br />
                 vendas
               </h2>
               <p className="text-gray-600 mb-10 text-lg leading-relaxed">Conte com uma análise especializada que identifica riscos, falhas e cláusulas prejudiciais antes que você assine — garantindo segurança e previsibilidade em cada acordo.</p>
