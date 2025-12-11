@@ -32,9 +32,28 @@ export default function CheckoutPage() {
     // Tenta recuperar do sessionStorage se não vier do state (ex: refresh)
     const savedCheckoutData = JSON.parse(sessionStorage.getItem('checkout_data') || '{}');
 
-    // NOVO: Detectar se é novo usuário comprando plano (vindo da Landing)
-    const planFromLanding = locationState.plan || savedCheckoutData.plan;
-    const isNewUserFlow = locationState.isNewUser || savedCheckoutData.isNewUser || false;
+    // Mapeamento dos planos disponíveis
+    const plansMap: Record<string, { id: string; name: string; credits: number; price: number; priceFormatted: string }> = {
+        start: { id: 'start', name: 'Start', credits: 10, price: 97, priceFormatted: 'R$ 97,00' },
+        essencial: { id: 'essencial', name: 'Blindagem Essencial', credits: 50, price: 324, priceFormatted: 'R$ 324,00' },
+        corporativo: { id: 'corporativo', name: 'Corporativo', credits: 999, price: 997, priceFormatted: 'R$ 997,00' },
+    };
+
+    // NOVO: Ler plano da URL (query parameter) - TEM PRIORIDADE sobre sessionStorage
+    const urlParams = new URLSearchParams(location.search);
+    const planFromUrl = urlParams.get('plan');
+    const planDataFromUrl = planFromUrl ? plansMap[planFromUrl] : null;
+
+    // Se vier plano pela URL, limpa sessionStorage para evitar conflitos
+    useEffect(() => {
+        if (planDataFromUrl) {
+            sessionStorage.removeItem('checkout_data');
+        }
+    }, [planFromUrl]);
+
+    // PRIORIDADE: URL > State > SessionStorage
+    const planFromLanding = planDataFromUrl || locationState.plan || savedCheckoutData.plan;
+    const isNewUserFlow = !!planDataFromUrl || locationState.isNewUser || savedCheckoutData.isNewUser || false;
 
     const scanResult = locationState.scanResult || savedCheckoutData.scanResult;
     const leadData = locationState.leadData || savedCheckoutData.leadData;

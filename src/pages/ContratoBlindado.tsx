@@ -86,7 +86,7 @@ const ContratoBlindado = () => {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#1a2b4b] leading-[1.1] mb-6">Auditoria Jurídica Online do Seu Contrato<br />
           </h1>
           <p className="text-gray-600 text-lg md:text-xl mb-8 leading-relaxed">Nosso sistema analisa automaticamente cláusulas, cálculos e riscos jurídicos para mostrar se você está pagando ou assumindo algo que não deveria. Rápido, seguro e explicado de forma simples.</p>
-          <Button size="lg" className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold text-base md:text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all uppercase tracking-wide" onClick={() => navigate("/auth")}>
+          <Button size="lg" className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold text-base md:text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all uppercase tracking-wide" onClick={() => navigate("/consultas")}>
             AUTENTICAR CONTRATO
           </Button>
         </div>
@@ -163,10 +163,9 @@ const ContratoBlindado = () => {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Left Content - Text */}
           <div className="order-2 lg:order-1">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-6 leading-tight">Proteção completa para os seus contratos<br />
-              vendas
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-6 leading-tight">Proteção jurídica para os seus contratos<br />
             </h2>
-            <p className="text-gray-600 mb-10 text-lg leading-relaxed">Tenha uma análise clara e rápida que identifica erros, riscos e pontos que podem te prejudicar antes de assinar qualquer contrato.</p>
+            <p className="text-gray-600 mb-10 text-lg leading-relaxed">Conte com uma análise especializada que identifica riscos, falhas e cláusulas prejudiciais antes que você assine — garantindo segurança e previsibilidade em cada acordo.</p>
 
             <div className="space-y-8">
               {/* List Item 1 */}
@@ -204,7 +203,7 @@ const ContratoBlindado = () => {
             </div>
 
             <div className="mt-10">
-              <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/auth")}>
+              <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/consultas")}>
                 Proteja seus contratos antes de assinar
               </Button>
             </div>
@@ -252,7 +251,7 @@ const ContratoBlindado = () => {
               </li>
             </ul>
 
-            <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/auth")}>
+            <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/consultas")}>
               COMEÇAR AUDITORIA
             </Button>
           </div>
@@ -311,7 +310,7 @@ const ContratoBlindado = () => {
               Crie e gerencie seus laudos de forma simples e eficiente.
             </p>
 
-            <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/auth")}>
+            <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/consultas")}>
               COMEÇAR AGORA
             </Button>
           </div>
@@ -399,7 +398,7 @@ const ContratoBlindado = () => {
               </li>
             </ul>
 
-            <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/auth")}>
+            <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/consultas")}>
               Cadastre-se agora
             </Button>
           </div>
@@ -499,7 +498,7 @@ const ContratoBlindado = () => {
 
             {/* Button */}
             <div className="text-center">
-              <Button className="w-full md:w-auto bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-xl px-12 py-8 text-xl shadow-lg hover:shadow-xl transition-all mb-4" onClick={() => navigate("/auth")}>
+              <Button className="w-full md:w-auto bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-xl px-12 py-8 text-xl shadow-lg hover:shadow-xl transition-all mb-4" onClick={() => navigate("/consultas")}>
                 Auditar Meu Contrato Agora
               </Button>
 
@@ -561,8 +560,8 @@ const ContratoBlindado = () => {
               </li>
             </ul>
 
-            <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:border-[#00C853] hover:text-[#00C853] font-bold" onClick={() => navigate("/auth")}>
-              Fazer Upgrade
+            <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:border-[#00C853] hover:text-[#00C853] font-bold" onClick={() => navigate("/checkout?plan=start")}>
+              ESCOLHER PLANO
             </Button>
           </div>
 
@@ -612,8 +611,8 @@ const ContratoBlindado = () => {
               </li>
             </ul>
 
-            <Button className="w-full bg-white text-[#1a2b4b] hover:bg-gray-100 font-bold" onClick={() => navigate("/auth")}>
-              Fazer Upgrade para Essencial
+            <Button className="w-full bg-white text-[#1a2b4b] hover:bg-gray-100 font-bold" onClick={() => navigate("/checkout?plan=essencial")}>
+              ESCOLHER PLANO
             </Button>
           </div>
 
@@ -656,8 +655,8 @@ const ContratoBlindado = () => {
               </li>
             </ul>
 
-            <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:border-[#00C853] hover:text-[#00C853] font-bold" onClick={() => window.open("https://wa.me/5511999999999", "_blank")}>
-              Fale com um Especialista
+            <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:border-[#00C853] hover:text-[#00C853] font-bold" onClick={() => navigate("/checkout?plan=corporativo")}>
+              ESCOLHER PLANO
             </Button>
           </div>
 
