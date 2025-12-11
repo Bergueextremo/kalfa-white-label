@@ -16,7 +16,7 @@ const NotFound = () => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigate("/");
+          navigate("/contratoblindado");
           return 0;
         }
         return prev - 1;
@@ -55,7 +55,7 @@ const NotFound = () => {
         </p>
 
         <Link
-          to="/"
+          to="/contratoblindado"
           className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors duration-200 shadow-lg shadow-blue-900/20"
         >
           Voltar para o Início

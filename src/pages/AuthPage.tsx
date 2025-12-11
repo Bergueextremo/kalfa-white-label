@@ -222,7 +222,7 @@ const AuthPage = () => {
         <div className="absolute top-6 right-6 lg:top-8 lg:right-8">
           <Button
             variant="ghost"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/home")}
             className="text-slate-500 hover:text-slate-900 hover:bg-slate-50"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

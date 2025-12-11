@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CreditProvider } from "@/contexts/CreditContext";
 import { AuditProvider } from "@/contexts/AuditContext";
@@ -53,7 +53,8 @@ const App = () => {
                 <Sonner />
                 <Routes>
                   {/* Public routes */}
-                  <Route path="/" element={<Landing />} />
+                  <Route path="/" element={<Navigate to="/contratoblindado" replace />} />
+                  <Route path="/home" element={<Landing />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/scan-gratis" element={<FreeAuditFlow />} />
                   <Route path="/checkout" element={<CheckoutPage />} />

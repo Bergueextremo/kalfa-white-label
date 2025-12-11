@@ -135,7 +135,7 @@ const FreeScan = () => {
             <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/home")}>
                             <img src={logoJusContratos} alt="JusContratos" className="h-12 md:h-14" />
                         </div>
                         <button

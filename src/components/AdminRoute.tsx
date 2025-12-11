@@ -60,7 +60,7 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
 
     // Redirect to home if not admin
     if (!isAdmin) {
-        return <Navigate to="/" replace />;
+        return <Navigate to="/contratoblindado" replace />;
     }
 
     return <>{children}</>;
