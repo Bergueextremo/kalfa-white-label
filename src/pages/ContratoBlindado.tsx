@@ -246,9 +246,7 @@ const ContratoBlindado = () => {
       {/* Education Section */}
       <section className="bg-white py-16 md:py-24">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#312E81] text-center mb-16 leading-tight">
-            Por que 73% dos contratos têm erro?
-          </h2>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#312E81] text-center mb-16 leading-tight">Por que tantos contratos têm erros?</h2>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
             {["Bancos e empresas colocam taxas escondidas.", "Juros calculados fora da norma legal.", "Multas e encargos abusivos.", "Cláusulas que prendem você ilegalmente.", "Termos que violam o Código de Defesa do Consumidor.", "Falta de clareza e transparência nas informações."].map((item, index) => <div key={index} className="bg-[#EFF6FF] rounded-2xl p-8 flex items-start gap-4 hover:shadow-md transition-shadow">
