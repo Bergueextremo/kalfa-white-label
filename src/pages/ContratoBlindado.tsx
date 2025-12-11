@@ -211,36 +211,32 @@ const ContratoBlindado = () => {
 
             {/* Right Content - Text */}
             <div>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-6 leading-tight">
-                Auditoria jurídica moderna e<br />
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-6 leading-tight">Auditoria de contratos simples, rápida e acessível<br />
                 acessível
               </h2>
-              <p className="text-gray-600 mb-8 text-lg leading-relaxed">
-                Simplifique a análise de contratos complexos. Envie um laudo seguro e
-                personalizado para seu cliente com poucos cliques.
-              </p>
+              <p className="text-gray-600 mb-8 text-lg leading-relaxed">Simplifique a análise de contratos e gere laudos completos em poucos minutos. Entregue um parecer claro, seguro e personalizado para cada cliente.</p>
 
               <ul className="space-y-4 mb-10">
                 <li className="flex items-center gap-3">
                   <Check className="w-5 h-5 text-[#00C853]" />
-                  <span className="text-gray-700 font-medium">Crie laudos e pareceres customizados</span>
+                  <span className="text-gray-700 font-medium">Gere laudos profissionais sem complicação</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Check className="w-5 h-5 text-[#00C853]" />
-                  <span className="text-gray-700 font-medium">Audite sem precisar de escritório físico</span>
+                  <span className="text-gray-700 font-medium">Audite contratos de qualquer lugar, 100% online</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Check className="w-5 h-5 text-[#00C853]" />
-                  <span className="text-gray-700 font-medium">Recupere valores de contratos antigos</span>
+                  <span className="text-gray-700 font-medium">Identifique erros e recupere valores de contratos antigos</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Check className="w-5 h-5 text-[#00C853]" />
-                  <span className="text-gray-700 font-medium">Acompanhe seus processos em tempo real</span>
+                  <span className="text-gray-700 font-medium">Acompanhe todas as auditorias em tempo real</span>
                 </li>
               </ul>
 
               <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => navigate("/auth")}>
-                COMECE A AUDITAR
+                COMEÇAR AUDITORIA
               </Button>
             </div>
           </div>
