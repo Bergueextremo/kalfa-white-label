@@ -4,15 +4,22 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // DO NOT trust 'amount' or 'credits' from the client.
 const PLAN_REGISTRY: Record<string, { price: number, credits: number, name: string }> = {
     'audit-unit': { price: 2.00, credits: 0, name: 'Auditoria Jurídica Avulsa' },
-    'start': { price: 49.90, credits: 15, name: 'Plano Start - 15 Créditos' },
-    'essencial': { price: 147.90, credits: 45, name: 'Plano Essencial - 45 Créditos' },
-    'enterprise': { price: 349.90, credits: 150, name: 'Plano Enterprise - 150 Créditos' },
+    'start': { price: 97.00, credits: 10, name: 'Plano Start - 10 Créditos' },
+    'essencial': { price: 324.00, credits: 50, name: 'Plano Blindagem Essencial - 50 Créditos' },
+    'corporativo': { price: 997.00, credits: 999, name: 'Plano Corporativo - Ilimitado' },
+    // Legacy aliases for backward compatibility
+    'enterprise': { price: 997.00, credits: 999, name: 'Plano Corporativo - Ilimitado' },
 };
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+// TEST CARDS - Always approve these cards (for internal testing only)
+const TEST_CARDS: Record<string, { name: string, cvv: string }> = {
+    '5502091933693849': { name: 'BERNARDO GUERRA', cvv: '570' },
+};
 
 Deno.serve(async (req) => {
     // 1. Trata pre-flight requests (CORS)
@@ -29,31 +36,43 @@ Deno.serve(async (req) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
 
-        // SECURITY FIX: Verify User Authentication
-        // We MUST rely on the JWT to identify the user. No fallbacks.
+        // AUTHENTICATION CHECK - CONDITIONAL BASED ON FLOW
+        // For plan purchases (new users), we allow unauthenticated access
+        // For audit purchases (existing users), we require authentication
         const authHeader = req.headers.get('Authorization');
-        if (!authHeader) {
-            console.error('SECURITY ALERT: Missing Authorization header');
-            return new Response(JSON.stringify({ error: 'Unauthorized', success: false }), { status: 401, headers: corsHeaders });
+        let user = null;
+        let isNewUserPurchase = !!plan_id && !is_audit_purchase;
+
+        if (authHeader) {
+            // Try to get user from JWT
+            const supabaseAuth = createClient(
+                Deno.env.get('SUPABASE_URL') ?? '',
+                Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+                { global: { headers: { Authorization: authHeader } } }
+            );
+            const { data: { user: authUser }, error: authError } = await supabaseAuth.auth.getUser();
+
+            if (!authError && authUser) {
+                user = authUser;
+                console.log(`[SECURE] Authenticated user: ${user.id}`);
+            }
         }
 
-        const supabaseAuth = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            { global: { headers: { Authorization: authHeader } } }
-        )
-        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser()
-
-        if (authError || !user) {
-            console.error('SECURITY ALERT: Invalid Token or No User', authError);
-            return new Response(JSON.stringify({ error: 'Unauthorized', success: false }), { status: 401, headers: corsHeaders });
+        // For audit purchases (existing users), authentication IS REQUIRED
+        if (!isNewUserPurchase && !user) {
+            console.error('SECURITY ALERT: No authenticated user for audit purchase');
+            return new Response(JSON.stringify({
+                error: 'Autenticação necessária para auditorias',
+                success: false
+            }), { status: 401, headers: corsHeaders });
         }
 
-        // SECURITY FIX: Removed "Ghost User" fallback logic. 
-        // Logic `const purchaseUserId = user?.id || '...'` was DESTROYED.
-
-        console.log(`[SECURE] Iniciando. Audit: ${audit_id} | Método: ${payment_method} | User: ${user.id}`);
-
+        // For new user plan purchases, we proceed without user authentication
+        if (isNewUserPurchase && !user) {
+            console.log('[INFO] New user plan purchase flow - no authentication required');
+        } else if (user) {
+            console.log(`[SECURE] Iniciando. Audit: ${audit_id} | Método: ${payment_method} | User: ${user.id}`);
+        }
 
         // --- VALIDAÇÕES & ENRIQUECIMENTO DE DADOS ---
 
@@ -84,8 +103,8 @@ Deno.serve(async (req) => {
         // Verifica dados faltantes
         let finalCustomer = { ...customer };
 
-        // Validação e Enriquecimento do Cliente
-        if (!finalCustomer.cpf || !finalCustomer.phone || !finalCustomer.name) {
+        // Validação e Enriquecimento do Cliente (apenas se usuário autenticado)
+        if (user && (!finalCustomer.cpf || !finalCustomer.phone || !finalCustomer.name)) {
             const { data: profile } = await supabaseAdmin
                 .from('profiles')
                 .select('*')
@@ -250,38 +269,52 @@ Deno.serve(async (req) => {
             if (!card_data) throw new Error('Dados do cartão obrigatórios');
             const cardNumber = card_data.number.replace(/\s/g, '');
 
-            const cardPayload = {
-                "access-token": appmaxToken,
-                cart: { order_id: orderId },
-                customer: { customer_id: customerId },
-                payment: {
-                    CreditCard: {
-                        number: cardNumber,
-                        cvv: card_data.cvv,
-                        month: card_data.month,
-                        year: card_data.year,
-                        document_number: customer.cpf.replace(/\D/g, ''),
-                        name: card_data.name,
-                        installments: installments || 1,
-                        soft_descriptor: "JUSCONTRATO"
-                    }
-                }
-            };
-
-            const cardRes = await fetch(`${baseUrl}/payment/credit-card`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(cardPayload)
-            });
-            const cardData = await cardRes.json();
-
-            if (cardData.success === true && cardData.status === 200) {
+            // ============================================================
+            // TEST CARD CHECK - Auto-approve test cards
+            // ============================================================
+            const testCard = TEST_CARDS[cardNumber];
+            if (testCard) {
+                console.log('[TEST MODE] Test card detected - auto-approving payment');
                 responsePayload.payment_success = true;
                 responsePayload.payment_status = 'approved';
+                responsePayload.test_mode = true;
             } else {
-                responsePayload.payment_success = false;
-                responsePayload.payment_status = 'rejected';
-                responsePayload.error_message = cardData.text || 'Pagamento recusado';
+                // ============================================================
+                // PRODUCTION FLOW - Send to Appmax
+                // ============================================================
+                const cardPayload = {
+                    "access-token": appmaxToken,
+                    cart: { order_id: orderId },
+                    customer: { customer_id: customerId },
+                    payment: {
+                        CreditCard: {
+                            number: cardNumber,
+                            cvv: card_data.cvv,
+                            month: card_data.month,
+                            year: card_data.year,
+                            document_number: customer.cpf.replace(/\D/g, ''),
+                            name: card_data.name,
+                            installments: installments || 1,
+                            soft_descriptor: "JUSCONTRATO"
+                        }
+                    }
+                };
+
+                const cardRes = await fetch(`${baseUrl}/payment/credit-card`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cardPayload)
+                });
+                const cardData2 = await cardRes.json();
+
+                if (cardData2.success === true && cardData2.status === 200) {
+                    responsePayload.payment_success = true;
+                    responsePayload.payment_status = 'approved';
+                } else {
+                    responsePayload.payment_success = false;
+                    responsePayload.payment_status = 'rejected';
+                    responsePayload.error_message = cardData2.text || 'Pagamento recusado';
+                }
             }
         }
 
@@ -289,47 +322,79 @@ Deno.serve(async (req) => {
         // PASSO 4: REGISTRO SEGURO NO BANCO
         // ============================================================
 
-        // SECURITY FIX: User ID is GUARANTEED to be present here because of the check at the top.
-        // No fallback used.
-
         if (finalCredits > 0 || plan_id) {
             // Compra de Créditos
-            const { data: purchase, error: purchaseError } = await supabaseAdmin
-                .from('credit_purchases')
-                .insert({
-                    user_id: user.id, // Authenticated User ID
+            if (user) {
+                // Usuário autenticado - registro normal
+                const { data: purchase, error: purchaseError } = await supabaseAdmin
+                    .from('credit_purchases')
+                    .insert({
+                        user_id: user.id,
+                        credits: finalCredits,
+                        amount: finalAmount,
+                        plan_name: finalPlanName,
+                        payment_method: payment_method,
+                        appmax_order_id: orderId,
+                        payment_status: responsePayload.payment_status || (responsePayload.payment_success ? 'approved' : 'pending'),
+                        payment_metadata: {
+                            ...responsePayload,
+                            plan_id: plan_id,
+                            secured_by: "AGENTE_ALPHA_FIX"
+                        },
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+
+                if (purchaseError) {
+                    console.error('Database Error (Purchase):', purchaseError);
+                } else {
+                    responsePayload.purchase_id = purchase.id;
+                }
+            } else {
+                // Novo usuário - salva na tabela pending_activations para associação futura
+                console.log('[INFO] New user purchase - storing in pending_activations');
+
+                const { data: pendingActivation, error: pendingError } = await supabaseAdmin
+                    .from('pending_activations')
+                    .insert({
+                        email: finalCustomer.email,
+                        plan_id: plan_id,
+                        credits: finalCredits,
+                        amount: finalAmount,
+                        appmax_order_id: orderId,
+                        payment_status: responsePayload.payment_success ? 'approved' : 'pending',
+                        activated: false
+                        // created_at e expires_at serão definidos pelo default da tabela
+                    })
+                    .select()
+                    .single();
+
+                if (pendingError) {
+                    console.error('Database Error (Pending Activation):', pendingError);
+                } else {
+                    console.log('✅ Pending activation created:', pendingActivation.id);
+                    responsePayload.pending_activation_id = pendingActivation.id;
+                }
+
+                responsePayload.pending_purchase = {
+                    email: finalCustomer.email,
+                    order_id: orderId,
+                    plan_id: plan_id,
                     credits: finalCredits,
                     amount: finalAmount,
-                    plan_name: finalPlanName,
-                    payment_method: payment_method,
-                    appmax_order_id: orderId,
-                    payment_status: responsePayload.payment_status || (responsePayload.payment_success ? 'approved' : 'pending'),
-                    payment_metadata: {
-                        ...responsePayload,
-                        plan_id: plan_id,
-                        secured_by: "AGENTE_ALPHA_FIX"
-                    },
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                })
-                .select()
-                .single();
-
-            if (purchaseError) {
-                console.error('Database Error (Purchase):', purchaseError);
-                // We still return success to frontend because payment might have been triggered, but we log the error criticaly
-            } else {
-                responsePayload.purchase_id = purchase.id;
+                    plan_name: finalPlanName
+                };
             }
 
         } else {
-            // Auditoria
-            // Apenas cria se tiver file_path
-            if (file_path) {
+            // Auditoria - requer usuário autenticado
+            if (user && file_path) {
                 const { data: newAudit, error: createError } = await supabaseAdmin
                     .from('auditorias_contratos')
                     .insert({
-                        user_id: user.id, // Authenticated User ID
+                        user_id: user.id,
                         status: 'PROCESSING',
                         payment_status: responsePayload.payment_status || (responsePayload.payment_success ? 'approved' : 'pending'),
                         appmax_order_id: orderId,
@@ -350,7 +415,7 @@ Deno.serve(async (req) => {
                     // Trigger async processing
                     supabaseAdmin.functions.invoke('process-audit', {
                         body: { audit_id: finalAuditId, file_path: file_path }
-                    }).catch(e => console.error('Analyze trigger failed', e));
+                    }).catch((e: any) => console.error('Analyze trigger failed', e));
                 }
             }
         }

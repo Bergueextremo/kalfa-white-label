@@ -2,3 +2,11 @@ project_id = "yiacsonjcfhzmpkjkqqv"
 
 [functions.get-public-audit]
 verify_jwt = true
+
+# Permite acesso sem autenticação para compra de planos por novos usuários
+[functions.create-appmax-order]
+verify_jwt = false
+
+# Permite webhook da Appmax sem autenticação
+[functions.appmax-webhook]
+verify_jwt = false

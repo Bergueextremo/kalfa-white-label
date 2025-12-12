@@ -36,7 +36,7 @@ export const Footer = () => {
                     <div>
                         <h3 className="text-white font-semibold mb-6 text-sm uppercase tracking-wider">Auditorias Frequentes</h3>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="/consultas" className="hover:text-white hover:underline decoration-slate-700 underline-offset-4 transition-colors">Consultas Avulsas (R$ 49)</a></li>
+                            <li><a href="/consultas" className="hover:text-white hover:underline decoration-slate-700 underline-offset-4 transition-colors">Consultas Avulsas</a></li>
                             <li><a href="/consultas" className="hover:text-white hover:underline decoration-slate-700 underline-offset-4 transition-colors">Contratos de Financiamento</a></li>
                             <li><a href="/consultas" className="hover:text-white hover:underline decoration-slate-700 underline-offset-4 transition-colors">Contratos de Aluguel (Imobiliário)</a></li>
                             <li><a href="/consultas" className="hover:text-white hover:underline decoration-slate-700 underline-offset-4 transition-colors">Empréstimos Bancários & CDC</a></li>
