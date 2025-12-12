@@ -46,6 +46,9 @@ export const Header = () => {
                         <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                             Preços
                         </button>
+                        <button onClick={() => navigate('/contrato-blindado')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                            Consultas Blindadas
+                        </button>
                         <Button variant="outline" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}>
                             {isAuthenticated ? "Dashboard" : "Entrar"}
                         </Button>
@@ -83,6 +86,15 @@ export const Header = () => {
                                     onClick={() => scrollToSection('pricing')}
                                 >
                                     Preços
+                                </button>
+                                <button
+                                    className="text-lg font-medium text-foreground hover:text-primary transition-colors text-left"
+                                    onClick={() => {
+                                        navigate('/contratoblindado');
+                                        setMobileMenuOpen(false);
+                                    }}
+                                >
+                                    Consultas Blindadas
                                 </button>
                                 <div className="flex flex-col gap-3 pt-4 border-t">
                                     <Button

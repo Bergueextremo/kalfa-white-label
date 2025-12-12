@@ -94,6 +94,9 @@ const Landing = () => {
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Preços
             </a>
+            <a href="/contratoblindado" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Consultas Blindadas
+            </a>
             <Button variant="outline" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}>
               {isAuthenticated ? "Dashboard" : "Entrar"}
             </Button>
@@ -131,6 +134,13 @@ const Landing = () => {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Preços
+                </a>
+                <a
+                  href="/contratoblindado"
+                  className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Consultas Blindadas
                 </a>
                 <div className="flex flex-col gap-3 pt-4 border-t">
                   <Button
