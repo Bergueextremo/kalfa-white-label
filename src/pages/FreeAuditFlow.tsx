@@ -46,6 +46,17 @@ export default function FreeAuditFlow() {
     const [scanResult, setScanResult] = useState<ScanResult | null>(null);
     const [uploadedFilePath, setUploadedFilePath] = useState<string | null>(null);
 
+    // Fallback for crypto.randomUUID in non-secure contexts
+    const generateUUID = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
+
     useEffect(() => {
         if (location.state?.contractType) {
             setContractType(location.state.contractType);
@@ -108,7 +119,7 @@ export default function FreeAuditFlow() {
 
         try {
             // 1. Upload File
-            const fileName = `${crypto.randomUUID()}-${file.name.replace(/[^\x00-\x7F]/g, '')}`;
+            const fileName = `${generateUUID()}-${file.name.replace(/[^\x00-\x7F]/g, '')}`;
             const { error: uploadError } = await supabase.storage
                 .from('contracts')
                 .upload(`temp-scans/${fileName}`, file);
@@ -324,7 +335,7 @@ export default function FreeAuditFlow() {
                                     Desbloquear Laudo Completo
                                 </Button>
                                 <p className="text-center text-xs text-muted-foreground">
-                                    Apenas R$ 49,00 - Acesso Imediato
+                                    Apenas R$ 147,00 - Acesso Imediato
                                 </p>
                             </div>
                         </div>

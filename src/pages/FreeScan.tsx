@@ -51,6 +51,17 @@ const FreeScan = () => {
     const [uploading, setUploading] = useState(false);
     const [scanning, setScanning] = useState(false);
 
+    // Fallback for crypto.randomUUID in non-secure contexts
+    const generateUUID = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setFile(e.target.files[0]);
@@ -79,7 +90,7 @@ const FreeScan = () => {
         try {
             // Upload to temporary path
             const fileExt = file.name.split('.').pop();
-            const fileName = `temp-scans/${crypto.randomUUID()}.${fileExt}`;
+            const fileName = `temp-scans/${generateUUID()}.${fileExt}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('contracts')

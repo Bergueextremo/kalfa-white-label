@@ -25,6 +25,8 @@ import Admin from "./pages/Admin";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminSales from "./pages/admin/AdminSales";
+import AdminContracts from "./pages/admin/AdminContracts";
+import AdminContractEditor from "./pages/admin/AdminContractEditor";
 import Consultas from "./pages/Consultas";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
@@ -32,6 +34,9 @@ import DiretrizesLgpd from "./pages/DiretrizesLgpd";
 import SobreTecnologia from "./pages/SobreTecnologia";
 import ParaEscritorios from "./pages/ParaEscritorios";
 import ContratoBlindado from "./pages/ContratoBlindado";
+import Catalog from "./pages/Catalog";
+import ContractWizard from "./pages/ContractWizard";
+import SuccessPage from "./pages/SuccessPage";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +70,9 @@ const App = () => {
                   <Route path="/sobre-a-tecnologia" element={<SobreTecnologia />} />
                   <Route path="/para-escritorios" element={<ParaEscritorios />} />
                   <Route path="/contratoblindado" element={<ContratoBlindado />} />
+                  <Route path="/catalogo" element={<Catalog />} />
+                  <Route path="/catalogo/:slug" element={<ContractWizard />} />
+                  <Route path="/sucesso" element={<SuccessPage />} />
 
                   {/* Protected routes */}
                   <Route
@@ -149,6 +157,30 @@ const App = () => {
                     element={
                       <AdminRoute>
                         <AdminSales />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/contratos"
+                    element={
+                      <AdminRoute>
+                        <AdminContracts />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/contratos/novo"
+                    element={
+                      <AdminRoute>
+                        <AdminContractEditor />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/contratos/:id"
+                    element={
+                      <AdminRoute>
+                        <AdminContractEditor />
                       </AdminRoute>
                     }
                   />

@@ -51,27 +51,27 @@ const Landing = () => {
   const plans = [{
     id: "start",
     name: "Start",
-    price: "R$ 97,00",
-    priceNumeric: 97.00,
+    price: "R$ 197,00",
+    priceNumeric: 197.00,
     credits: "10 análises",
     creditsNumeric: 10,
     features: ["Laudos em PDF", "Suporte por email", "Acesso 24/7"]
   }, {
     id: "essencial",
     name: "Essencial",
-    price: "R$ 324,00",
-    priceNumeric: 324.00,
-    credits: "50 análises",
-    creditsNumeric: 50,
+    price: "R$ 497,00",
+    priceNumeric: 497.00,
+    credits: "30 análises",
+    creditsNumeric: 30,
     features: ["Laudos personalizados", "Suporte prioritário", "Acesso multi-dispositivo", "Consultoria jurídica"],
     highlighted: true
   }, {
     id: "enterprise",
     name: "Enterprise",
-    price: "R$ 997,00",
-    priceNumeric: 997.00,
-    credits: "Análises Ilimitadas",
-    creditsNumeric: 200,
+    price: "R$ 1.497,00",
+    priceNumeric: 1497.00,
+    credits: "100 análises",
+    creditsNumeric: 100,
     features: ["Gerente dedicado", "Integrações customizadas", "SLA garantido", "Treinamento incluído"]
   }];
   return <div className="min-h-screen bg-background">

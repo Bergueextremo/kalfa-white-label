@@ -8,7 +8,7 @@ import solutionImage from "@/assets/solution-illustration.png";
 import managementImage from "@/assets/management-illustration.png";
 import apiImage from "@/assets/api-illustration.png";
 import logoJusContratos from "@/assets/logo-juscontratos.png";
-import { Menu, Scale, ShieldCheck, FileText, BadgeDollarSign, CheckCircle, Activity, Database, Check, RefreshCw, Mail, Settings, Briefcase, Layers, Shield, Lock } from "lucide-react";
+import { Menu, Scale, ShieldCheck, FileText, BadgeDollarSign, CheckCircle, Activity, Database, Check, RefreshCw, Mail, Settings, Briefcase, Layers, Shield, Lock, XCircle, AlertCircle, X } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -83,7 +83,7 @@ const ContratoBlindado = () => {
       <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
         {/* Left Content */}
         <div className="max-w-2xl">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#1a2b4b] leading-[1.1] mb-6">Auditoria Jurídica Online do Seu Contrato<br />
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#1a2b4b] leading-[1.1] mb-6">Consultoria Jurídica Online do Seu Contrato<br />
           </h1>
           <p className="text-gray-600 text-lg md:text-xl mb-8 leading-relaxed">Nosso sistema analisa automaticamente cláusulas, cálculos e riscos jurídicos para mostrar se você está pagando ou assumindo algo que não deveria. Rápido, seguro e explicado de forma simples.</p>
           <Button size="lg" className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold text-base md:text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all uppercase tracking-wide" onClick={() => navigate("/consultas")}>
@@ -279,7 +279,7 @@ const ContratoBlindado = () => {
 
         <div className="text-center max-w-4xl mx-auto">
           <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
-            Nosso sistema de inteligência artificial identifica automaticamente mais de{" "}
+            Nosso sistema de Consultoria Jurídica identifica automaticamente mais de{" "}
             <span className="text-[#4338ca] font-bold">318 irregularidades possíveis</span>{" "}
             em segundos, protegendo você de prejuízos futuros.
           </p>
@@ -287,6 +287,157 @@ const ContratoBlindado = () => {
       </div>
     </section>
 
+
+    {/* Cost Comparison Section */}
+    <section className="bg-[#F8FAFC] py-16 md:py-24 border-y border-gray-100">
+      <div className="container mx-auto px-4">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-4">
+            Advogado VS Juscontratos
+          </h2>
+          <p className="text-gray-600 text-lg md:text-xl font-medium">
+            Compare antes de decidir. Segurança jurídica não precisa ser cara.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
+          {/* Advogado Tradicional */}
+          <div className="bg-white rounded-3xl p-8 shadow-md border border-red-50 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-2 h-full bg-red-500"></div>
+            <div className="flex items-center gap-3 mb-6 font-bold text-red-600 text-xl">
+              <XCircle className="w-6 h-6" />
+              Advogado tradicional
+            </div>
+
+            <div className="mb-6">
+              <span className="text-gray-400 text-sm block mb-1">Consulta jurídica</span>
+              <span className="text-2xl font-bold text-gray-800">R$ 300 a R$ 600</span>
+            </div>
+
+            <ul className="space-y-4 mb-8">
+              {[
+                "Atendimento depende de agenda",
+                "Prazo imprevisível",
+                "Cada ajuste gera novo custo",
+                "Valor final difícil de prever"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-gray-600">
+                  <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="bg-red-50 rounded-2xl p-6 border border-red-100">
+              <span className="font-bold text-red-700 block mb-2">Resultado:</span>
+              <ul className="space-y-2">
+                <li className="text-red-700 font-medium flex items-center gap-2">
+                  <X className="w-4 h-4" />
+                  Alto custo para demandas simples
+                </li>
+                <li className="text-red-700 font-medium flex items-center gap-2">
+                  <X className="w-4 h-4" />
+                  Baixa previsibilidade
+                </li>
+                <li className="text-red-700 font-medium flex items-center gap-2">
+                  <X className="w-4 h-4" />
+                  Processo lento
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Juscontratos */}
+          <div className="bg-white rounded-3xl p-8 shadow-xl border-2 border-[#00C853] relative overflow-hidden transform md:scale-105 z-10">
+            <div className="absolute top-0 right-0">
+              <span className="bg-[#00C853] text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+                Recomendado
+              </span>
+            </div>
+            <div className="flex items-center gap-3 mb-6 font-bold text-[#00C853] text-xl">
+              <CheckCircle className="w-6 h-6" />
+              Juscontratos | Contratos Blindados
+            </div>
+
+            <div className="mb-6">
+              <span className="text-gray-400 text-sm block mb-1">Consulta jurídica online</span>
+              <span className="text-2xl font-bold text-[#00C853]">R$ 147,00</span>
+            </div>
+
+            <ul className="space-y-4 mb-8">
+              {[
+                "Resposta rápida, sem espera",
+                "Disponível 24h por dia",
+                "Ajustes sem burocracia",
+                "Preço claro desde o início"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-gray-700">
+                  <Check className="w-5 h-5 text-[#00C853] mt-0.5 flex-shrink-0" />
+                  <span className="font-medium">{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="bg-[#E8F5E9] rounded-2xl p-6 border border-[#B9F6CA]">
+              <span className="font-bold text-[#1B5E20] block mb-2">Resultado:</span>
+              <ul className="space-y-2">
+                <li className="text-[#2E7D32] font-semibold flex items-center gap-2">
+                  <Check className="w-4 h-4" />
+                  Economia imediata
+                </li>
+                <li className="text-[#2E7D32] font-semibold flex items-center gap-2">
+                  <Check className="w-4 h-4" />
+                  Agilidade
+                </li>
+                <li className="text-[#2E7D32] font-semibold flex items-center gap-2">
+                  <Check className="w-4 h-4" />
+                  Segurança jurídica acessível
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Anchoring Phrase */}
+        <div className="text-center mb-16 px-4">
+          <p className="text-xl md:text-2xl font-extrabold text-[#1a2b4b] leading-tight max-w-2xl mx-auto">
+            "O valor de uma única consulta tradicional pode custar o dobro do que você paga aqui."
+          </p>
+        </div>
+
+        {/* Confidence Block */}
+        <div className="bg-white rounded-3xl p-8 md:p-12 border border-blue-50 shadow-lg max-w-4xl mx-auto">
+          <div className="grid sm:grid-cols-2 gap-6 mb-10">
+            {[
+              "Ideal para quem precisa de orientação jurídica rápida",
+              "Perfeito para quem analisa contratos com frequência",
+              "Sem surpresas na fatura",
+              "Sem burocracia"
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="bg-[#E0F2F1] rounded-full p-1">
+                  <Check className="w-5 h-5 text-[#00C853]" />
+                </div>
+                <span className="text-gray-700 font-medium">{item}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Button
+              size="lg"
+              className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold text-lg px-12 py-8 rounded-2xl shadow-lg hover:shadow-xl transition-all w-full md:w-auto mb-4"
+              onClick={() => navigate("/consultas")}
+            >
+              Consultar contrato agora por R$ 147,00
+            </Button>
+            <p className="text-gray-500 font-medium italic">
+              Rápido. Claro. Sem dor de cabeça.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
 
 
     {/* Solution Section */}
@@ -428,9 +579,9 @@ const ContratoBlindado = () => {
 
             {/* Price */}
             <div className="flex flex-col items-center justify-center mb-4">
-              <span className="text-gray-400 text-xl font-medium line-through">R$ 97,00</span>
+              <span className="text-gray-400 text-xl font-medium line-through">R$ 197,00</span>
               <div className="flex items-baseline gap-2 text-[#00C853]">
-                <span className="text-6xl md:text-7xl font-extrabold">R$ 49</span>
+                <span className="text-6xl md:text-7xl font-extrabold">R$ 147,00</span>
               </div>
             </div>
 
@@ -532,9 +683,9 @@ const ContratoBlindado = () => {
           <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg hover:shadow-xl transition-all h-full flex flex-col">
             <h3 className="text-gray-500 font-bold text-sm uppercase mb-4">Plano Start</h3>
             <div className="mb-2">
-              <span className="text-4xl font-extrabold text-[#1a2b4b]">R$ 97</span>
+              <span className="text-4xl font-extrabold text-[#1a2b4b]">R$ 197,00</span>
             </div>
-            <p className="text-gray-400 text-sm mb-8">10 análises · R$ 9,70 cada</p>
+            <p className="text-gray-400 text-sm mb-8">10 análises · R$ 19,70 cada</p>
 
             <ul className="space-y-5 mb-8 flex-grow">
               <li className="flex flex-col gap-1">
@@ -575,9 +726,9 @@ const ContratoBlindado = () => {
 
             <h3 className="text-[#00C853] font-bold text-sm uppercase mb-4 mt-2">Blindagem Essencial</h3>
             <div className="mb-2">
-              <span className="text-5xl font-extrabold text-white">R$ 324</span>
+              <span className="text-5xl font-extrabold text-white">R$ 497,00</span>
             </div>
-            <p className="text-gray-300 text-sm mb-2">50 análises · Apenas R$ 6,48 cada</p>
+            <p className="text-gray-300 text-sm mb-2">30 análises · Apenas R$ 16,56 cada</p>
             <p className="text-gray-400 text-xs mb-8 italic">(O mais escolhido por escritórios e imobiliárias)</p>
 
             <ul className="space-y-5 mb-8 flex-grow">
@@ -618,11 +769,11 @@ const ContratoBlindado = () => {
 
           {/* Plan 3: Corporativo */}
           <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg hover:shadow-xl transition-all h-full flex flex-col">
-            <h3 className="text-gray-500 font-bold text-sm uppercase mb-4">Plano Corporativo</h3>
+            <h3 className="text-gray-500 font-bold text-sm uppercase mb-4">Plano Enterprise</h3>
             <div className="mb-2">
-              <span className="text-4xl font-extrabold text-[#1a2b4b]">R$ 997</span>
+              <span className="text-4xl font-extrabold text-[#1a2b4b]">R$ 1.497,00</span>
             </div>
-            <p className="text-gray-400 text-sm mb-8">Análises ilimitadas</p>
+            <p className="text-gray-400 text-sm mb-8">100 análises · R$ 14,97 cada</p>
 
             <ul className="space-y-5 mb-8 flex-grow">
               <li className="flex flex-col gap-1">

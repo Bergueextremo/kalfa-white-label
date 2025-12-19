@@ -170,7 +170,7 @@ const Consultas = () => {
               <div className="text-center space-y-1">
                 <span className="text-xs text-slate-500 uppercase tracking-wider">Sessão Única</span>
                 <div className="text-4xl font-extrabold text-[#0A192F]">
-                  R$ 49<span className="text-2xl">,00</span>
+                  R$ 147<span className="text-2xl">,00</span>
                 </div>
               </div>
 
@@ -207,7 +207,7 @@ const Consultas = () => {
       <div className="flex items-center justify-between gap-4">
         <div>
           <span className="text-xs text-slate-500 block">Sessão Única</span>
-          <span className="text-2xl font-extrabold text-[#0A192F]">R$ 49,00</span>
+          <span className="text-2xl font-extrabold text-[#0A192F]">R$ 147,00</span>
         </div>
         <Button size="lg" className={cn("flex-1 py-5 font-bold", selectedContract ? "bg-[#10B981] hover:bg-[#059669] text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed")} disabled={!selectedContract} onClick={handleProceed}>
           BLINDAR CONTRATO

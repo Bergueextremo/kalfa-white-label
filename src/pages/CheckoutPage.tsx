@@ -34,9 +34,9 @@ export default function CheckoutPage() {
 
     // Mapeamento dos planos disponíveis
     const plansMap: Record<string, { id: string; name: string; credits: number; price: number; priceFormatted: string }> = {
-        start: { id: 'start', name: 'Start', credits: 10, price: 97, priceFormatted: 'R$ 97,00' },
-        essencial: { id: 'essencial', name: 'Blindagem Essencial', credits: 50, price: 324, priceFormatted: 'R$ 324,00' },
-        corporativo: { id: 'corporativo', name: 'Corporativo', credits: 999, price: 997, priceFormatted: 'R$ 997,00' },
+        start: { id: 'start', name: 'Start', credits: 10, price: 197, priceFormatted: 'R$ 197,00' },
+        essencial: { id: 'essencial', name: 'Blindagem Essencial', credits: 30, price: 497, priceFormatted: 'R$ 497,00' },
+        corporativo: { id: 'corporativo', name: 'Corporativo', credits: 100, price: 1497, priceFormatted: 'R$ 1.497,00' },
     };
 
     // NOVO: Ler plano da URL (query parameter) - TEM PRIORIDADE sobre sessionStorage
@@ -59,6 +59,11 @@ export default function CheckoutPage() {
     const leadData = locationState.leadData || savedCheckoutData.leadData;
     const auditId = locationState.auditId || savedCheckoutData.auditId;
     const filePath = locationState.filePath || savedCheckoutData.filePath;
+
+    // NOVO: Suporte para compra de contrato individual
+    const contractFromWizard = locationState.contract || savedCheckoutData.contract;
+    const isContractPurchase = locationState.isContractPurchase || savedCheckoutData.isContractPurchase;
+    const formData = locationState.formData || savedCheckoutData.formData;
 
     // Salva no sessionStorage sempre que tiver dados novos
     useEffect(() => {
@@ -197,6 +202,17 @@ export default function CheckoutPage() {
                         return;
                     }
 
+                    // NOVO: Se for compra de contrato, redireciona para página de sucesso do contrato
+                    if (isContractPurchase && contractFromWizard) {
+                        navigate('/sucesso', {
+                            state: {
+                                contract: contractFromWizard,
+                                formData: formData
+                            }
+                        });
+                        return;
+                    }
+
                     // Fluxo normal: redireciona para resultado
                     const finalId = data.audit_id || currentAuditId;
 
@@ -323,8 +339,8 @@ export default function CheckoutPage() {
             const cleanCep = cep.replace(/\D/g, '');
             const cleanCardNumber = cardNumber.replace(/\D/g, '');
 
-            // Validação de file_path apenas para auditorias (não para compra de planos)
-            if (!planFromLanding && !filePath) {
+            // Validação de file_path apenas para auditorias (não para compra de planos ou contratos)
+            if (!planFromLanding && !isContractPurchase && !filePath) {
                 toast({
                     title: "Erro no arquivo",
                     description: "O arquivo do contrato não foi encontrado. Por favor, refaça o upload.",
@@ -355,13 +371,23 @@ export default function CheckoutPage() {
                 audit_id: auditId || 'temp-' + Date.now(),
                 file_path: filePath, // Caminho do arquivo para auditoria premium
                 installments: 1, // Padrão 1x (adicione um select na UI se quiser mudar)
+                is_audit_purchase: !planFromLanding && !isContractPurchase, // Sinaliza que é uma auditoria avulsa
 
-                // NOVO: Adicionar dados do plano se for novo usuário
+                // NOVO: Adicionar dados do plano se for compra de créditos
                 ...(planFromLanding && {
                     plan_id: planFromLanding.id,
                     amount: planFromLanding.price,
                     credits: planFromLanding.credits,
                     plan_name: planFromLanding.name
+                }),
+
+                // NOVO: Adicionar dados do contrato se for compra individual
+                ...(isContractPurchase && contractFromWizard && {
+                    contract_id: contractFromWizard.id,
+                    amount: contractFromWizard.price,
+                    contract_name: contractFromWizard.title,
+                    type: 'contract_purchase',
+                    form_data: formData
                 })
             };
 
@@ -461,6 +487,17 @@ export default function CheckoutPage() {
                         return;
                     }
 
+                    // NOVO: Se for compra de contrato, redireciona para página de sucesso do contrato
+                    if (isContractPurchase && contractFromWizard) {
+                        navigate('/sucesso', {
+                            state: {
+                                contract: contractFromWizard,
+                                formData: formData
+                            }
+                        });
+                        return;
+                    }
+
                     // Fluxo normal: redireciona para resultado
                     const finalId = data.audit_id || auditId;
 
@@ -517,8 +554,8 @@ export default function CheckoutPage() {
         });
     };
 
-    // Fallback se não houver sessão E não for compra de plano
-    if (!scanResult && !auditId && !planFromLanding) {
+    // Fallback se não houver sessão E não for compra de plano OU contrato
+    if (!scanResult && !auditId && !planFromLanding && !isContractPurchase) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background">
                 <Card className="max-w-md text-center p-6">
@@ -557,10 +594,14 @@ export default function CheckoutPage() {
                                         <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                                         <div>
                                             <p className="font-semibold text-sm">
-                                                {planFromLanding ? `Plano ${planFromLanding.name}` : 'Auditoria Jurídica Premium'}
+                                                {planFromLanding ? `Plano ${planFromLanding.name}` :
+                                                    isContractPurchase && contractFromWizard ? contractFromWizard.title :
+                                                        'Auditoria Jurídica Premium'}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {planFromLanding ? `${planFromLanding.credits} créditos` : 'Laudo Completo + PDF'}
+                                                {planFromLanding ? `${planFromLanding.credits} créditos` :
+                                                    isContractPurchase ? 'Emissão de Contrato Completo' :
+                                                        'Laudo Completo + PDF'}
                                             </p>
                                         </div>
                                     </div>
@@ -568,7 +609,9 @@ export default function CheckoutPage() {
                                         <div className="flex justify-between font-bold text-lg">
                                             <span>Total</span>
                                             <span className="text-primary">
-                                                {planFromLanding ? planFromLanding.priceFormatted : 'R$ 2,00'}
+                                                {planFromLanding ? planFromLanding.priceFormatted :
+                                                    isContractPurchase && contractFromWizard ? `R$ ${contractFromWizard.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` :
+                                                        'R$ 147,00'}
                                             </span>
                                         </div>
                                     </div>
@@ -709,7 +752,9 @@ export default function CheckoutPage() {
                                                 <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...
                                             </>
                                         ) : (
-                                            `Pagar ${planFromLanding ? planFromLanding.priceFormatted : 'R$ 2,00'}`
+                                            `Pagar ${planFromLanding ? planFromLanding.priceFormatted :
+                                                isContractPurchase && contractFromWizard ? `R$ ${contractFromWizard.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` :
+                                                    'R$ 147,00'}`
                                         )}
                                     </Button>
 

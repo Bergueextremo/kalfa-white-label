@@ -3,12 +3,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // SECURITY FIX: Define valid plans and prices server-side. 
 // DO NOT trust 'amount' or 'credits' from the client.
 const PLAN_REGISTRY: Record<string, { price: number, credits: number, name: string }> = {
-    'audit-unit': { price: 2.00, credits: 0, name: 'Auditoria Jurídica Avulsa' },
-    'start': { price: 97.00, credits: 10, name: 'Plano Start - 10 Créditos' },
-    'essencial': { price: 324.00, credits: 50, name: 'Plano Blindagem Essencial - 50 Créditos' },
-    'corporativo': { price: 997.00, credits: 999, name: 'Plano Corporativo - Ilimitado' },
+    'audit-unit': { price: 147.00, credits: 0, name: 'Consulta Avulsa' },
+    'start': { price: 197.00, credits: 10, name: 'Plano Start - 10 Créditos' },
+    'essencial': { price: 497.00, credits: 30, name: 'Plano Blindagem Essencial - 30 Créditos' },
+    'corporativo': { price: 1497.00, credits: 100, name: 'Plano Corporativo - 100 Créditos' },
     // Legacy aliases for backward compatibility
-    'enterprise': { price: 997.00, credits: 999, name: 'Plano Corporativo - Ilimitado' },
+    'enterprise': { price: 1497.00, credits: 100, name: 'Plano Corporativo - 100 Créditos' },
 };
 
 const corsHeaders = {
@@ -28,7 +28,20 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const { customer, audit_id, payment_method, card_data, installments, file_path, plan_id, is_audit_purchase } = await req.json()
+        const payloadJson = await req.json()
+        const {
+            customer,
+            audit_id,
+            payment_method,
+            card_data,
+            installments,
+            file_path,
+            plan_id,
+            is_audit_purchase,
+            type,
+            contract_id,
+            form_data
+        } = payloadJson
 
         // Initialize Supabase Admin Client (Service Role) for DB and Invoke
         const supabaseAdmin = createClient(
@@ -59,7 +72,10 @@ Deno.serve(async (req) => {
         }
 
         // For audit purchases (existing users), authentication IS REQUIRED
-        if (!isNewUserPurchase && !user) {
+        // UNLESS it's a guest audit purchase (Lead flow)
+        const isGuestAuditPurchase = is_audit_purchase && !user;
+
+        if (!isNewUserPurchase && !isGuestAuditPurchase && !user) {
             console.error('SECURITY ALERT: No authenticated user for audit purchase');
             return new Response(JSON.stringify({
                 error: 'Autenticação necessária para auditorias',
@@ -92,9 +108,25 @@ Deno.serve(async (req) => {
             finalAmount = plan.price;
             finalCredits = plan.credits;
             finalPlanName = plan.name;
+        } else if (type === 'contract_purchase' && contract_id) {
+            // NOVO: Compra de Contrato Individual
+            const { data: contract, error: contractErr } = await supabaseAdmin
+                .from('contracts')
+                .select('price, title')
+                .eq('id', contract_id)
+                .single();
+
+            if (contractErr || !contract) {
+                console.error('Contract not found:', contractErr);
+                throw new Error('Contrato não encontrado ou inválido.');
+            }
+
+            finalAmount = Number(contract.price);
+            finalPlanName = `Contrato: ${contract.title}`;
         } else {
-            // Se não for auditoria nem plano válido
-            throw new Error('Invalid Plan ID or Purchase Configuration.');
+            // Se não for auditoria nem plano nem contrato válido
+            console.error('Invalid purchase configuration:', { is_audit_purchase, plan_id, type, contract_id });
+            throw new Error('Configuração de compra inválida.');
         }
 
         console.log(`[SECURE] Pricing Resolved: ${finalPlanName} - R$ ${finalAmount} - Credits: ${finalCredits}`);
@@ -189,7 +221,8 @@ Deno.serve(async (req) => {
             "access-token": appmaxToken,
             customer_id: customerId,
             products: [{
-                sku: finalCredits > 0 ? `CREDITOS-${finalCredits}` : "AUDITORIA-AVULSA",
+                sku: finalCredits > 0 ? `CREDITOS-${finalCredits}` :
+                    type === 'contract_purchase' ? `CONTRATO-${contract_id}` : "AUDITORIA-AVULSA",
                 name: finalPlanName,
                 price: finalAmount, // Using server-validated price
                 qty: 1,
@@ -388,8 +421,32 @@ Deno.serve(async (req) => {
                 };
             }
 
+        } else if (type === 'contract_purchase' && contract_id && user) {
+            // NOVO: Registro de Compra de Contrato
+            const { data: contractPurchase, error: cpError } = await supabaseAdmin
+                .from('contract_purchases')
+                .insert({
+                    user_id: user.id,
+                    contract_id: contract_id,
+                    amount: finalAmount,
+                    payment_method: payment_method,
+                    appmax_order_id: orderId,
+                    payment_status: responsePayload.payment_status || (responsePayload.payment_success ? 'approved' : 'pending'),
+                    form_data: form_data,
+                    payment_metadata: responsePayload,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+
+            if (cpError) {
+                console.error('Database Error (Contract Purchase):', cpError);
+            } else {
+                responsePayload.purchase_id = contractPurchase.id;
+            }
         } else {
-            // Auditoria - requer usuário autenticado
+            // Auditoria - requer usuário autenticado e file_path
             if (user && file_path) {
                 const { data: newAudit, error: createError } = await supabaseAdmin
                     .from('auditorias_contratos')
@@ -417,6 +474,8 @@ Deno.serve(async (req) => {
                         body: { audit_id: finalAuditId, file_path: file_path }
                     }).catch((e: any) => console.error('Analyze trigger failed', e));
                 }
+            } else if (!user && !plan_id) {
+                console.warn('Purchase attempt without user or plan alignment');
             }
         }
 
