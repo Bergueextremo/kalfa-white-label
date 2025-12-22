@@ -80,7 +80,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         },
         editorProps: {
             attributes: {
-                class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[500px] p-6 text-sm leading-relaxed',
+                class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none p-12 bg-white shadow-sm border border-slate-100 min-h-[400px] text-sm leading-relaxed my-8 document-page',
             },
         },
     });
@@ -213,7 +213,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
             </div>
 
             {/* Editor Content Area */}
-            <div className="flex-1 overflow-auto bg-white min-h-[500px]">
+            <div className="flex-1 overflow-y-auto bg-slate-100/50 p-4">
                 <EditorContent editor={editor} />
             </div>
 
@@ -228,6 +228,13 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         }
         .tiptap {
           outline: none !important;
+          max-width: 800px !important;
+        }
+        .document-page {
+          background-color: white;
+          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+          margin-left: auto;
+          margin-right: auto;
         }
         .tiptap p {
           margin-bottom: 0.5rem;

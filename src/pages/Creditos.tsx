@@ -14,6 +14,7 @@ const Creditos = () => {
 
   const plans = [
     {
+      id: "start",
       name: "Start",
       credits: 10,
       price: 97.00,
@@ -22,6 +23,7 @@ const Creditos = () => {
       features: ["10 análises completas", "Suporte por email", "Laudos em PDF"],
     },
     {
+      id: "essencial",
       name: "Essencial",
       credits: 50,
       price: 324.00,
@@ -36,6 +38,7 @@ const Creditos = () => {
       popular: true,
     },
     {
+      id: "corporativo",
       name: "Enterprise",
       credits: 200,
       price: 997.00,

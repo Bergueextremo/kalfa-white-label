@@ -4,11 +4,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // DO NOT trust 'amount' or 'credits' from the client.
 const PLAN_REGISTRY: Record<string, { price: number, credits: number, name: string }> = {
     'audit-unit': { price: 147.00, credits: 0, name: 'Consulta Avulsa' },
-    'start': { price: 197.00, credits: 10, name: 'Plano Start - 10 Créditos' },
-    'essencial': { price: 497.00, credits: 30, name: 'Plano Blindagem Essencial - 30 Créditos' },
-    'corporativo': { price: 1497.00, credits: 100, name: 'Plano Corporativo - 100 Créditos' },
+    'start': { price: 97.00, credits: 10, name: 'Plano Start - 10 Créditos' },
+    'essencial': { price: 324.00, credits: 50, name: 'Plano Blindagem Essencial - 50 Créditos' },
+    'corporativo': { price: 997.00, credits: 200, name: 'Plano Corporativo - 200 Créditos' },
     // Legacy aliases for backward compatibility
-    'enterprise': { price: 1497.00, credits: 100, name: 'Plano Corporativo - 100 Créditos' },
+    'enterprise': { price: 997.00, credits: 200, name: 'Plano Corporativo - 200 Créditos' },
 };
 
 const corsHeaders = {
@@ -50,11 +50,15 @@ Deno.serve(async (req) => {
         )
 
         // AUTHENTICATION CHECK - CONDITIONAL BASED ON FLOW
-        // For plan purchases (new users), we allow unauthenticated access
-        // For audit purchases (existing users), we require authentication
+        // For plan/contract purchases (potentially new users), we allow unauthenticated access
+        // For existing user audit purchases, we require authentication
         const authHeader = req.headers.get('Authorization');
         let user = null;
-        let isNewUserPurchase = !!plan_id && !is_audit_purchase;
+
+        // A purchase is considered "New User/Guest friendly" if it's a plan or a contract purchase
+        let isGuestFriendlyPurchase = (!!plan_id && !is_audit_purchase) || (type === 'contract_purchase' && !!contract_id);
+
+        console.log(`[AUTH] Flow: ${is_audit_purchase ? 'Audit' : 'Plan/Contract'} | GuestFriendly: ${isGuestFriendlyPurchase}`);
 
         if (authHeader) {
             // Try to get user from JWT
@@ -75,19 +79,25 @@ Deno.serve(async (req) => {
         // UNLESS it's a guest audit purchase (Lead flow)
         const isGuestAuditPurchase = is_audit_purchase && !user;
 
-        if (!isNewUserPurchase && !isGuestAuditPurchase && !user) {
-            console.error('SECURITY ALERT: No authenticated user for audit purchase');
+        if (!isGuestFriendlyPurchase && !isGuestAuditPurchase && !user) {
+            console.error('SECURITY ALERT: Authentication required for this operation', {
+                isGuestFriendlyPurchase,
+                isGuestAuditPurchase,
+                hasUser: !!user,
+                type,
+                plan_id
+            });
             return new Response(JSON.stringify({
-                error: 'Autenticação necessária para auditorias',
+                error: 'Autenticação necessária',
                 success: false
             }), { status: 401, headers: corsHeaders });
         }
 
-        // For new user plan purchases, we proceed without user authentication
-        if (isNewUserPurchase && !user) {
-            console.log('[INFO] New user plan purchase flow - no authentication required');
-        } else if (user) {
-            console.log(`[SECURE] Iniciando. Audit: ${audit_id} | Método: ${payment_method} | User: ${user.id}`);
+        // Logging flow details
+        if (user) {
+            console.log(`[SECURE] Authenticated: ${user.id} | Audit: ${audit_id} | Plan: ${plan_id} | Contract: ${contract_id}`);
+        } else {
+            console.log(`[GUEST] Guest flow initiated. Plan: ${plan_id} | Contract: ${contract_id} | IsAudit: ${is_audit_purchase}`);
         }
 
         // --- VALIDAÇÕES & ENRIQUECIMENTO DE DADOS ---

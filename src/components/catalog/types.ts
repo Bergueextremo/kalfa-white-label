@@ -17,6 +17,7 @@ export interface Contract {
     price: number;
     template_body: string | null;
     wizard_stages: string[] | null;
+    is_active?: boolean;
 }
 
 export interface ContractVariable {

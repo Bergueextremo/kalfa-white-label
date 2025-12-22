@@ -27,6 +27,16 @@ export function DynamicWizardManager({
 }: DynamicWizardManagerProps & { wizardStages?: string[] | null }) {
     const [currentStep, setCurrentStep] = useState(0);
 
+    // Memory: Load values from localStorage on mount
+    useEffect(() => {
+        variables.forEach(v => {
+            const savedValue = localStorage.getItem(`jus_var_${v.name}`);
+            if (savedValue && !formData[v.name]) {
+                onChange(v.name, savedValue);
+            }
+        });
+    }, [variables]); // Run once when variables are ready
+
     // Group variables based on explicit stages order
     const stages = (wizardStages && wizardStages.length > 0) ? wizardStages : ["Informações Gerais"];
 
@@ -44,13 +54,22 @@ export function DynamicWizardManager({
     const groups = stages.filter(s => groupedVariables[s] && groupedVariables[s].length > 0);
     const totalSteps = groups.length;
     const currentGroup = groups[currentStep];
-    const currentVariables = groupedVariables[currentGroup] || [];
+    const rawVariables = groupedVariables[currentGroup] || [];
 
+    // Deduplicate variables in the current group by label/name
+    // This ensures if "CPF" appears twice in the same step, it's only shown once.
+    const currentVariables = rawVariables.reduce((acc, v) => {
+        if (!acc.find(item => item.label === v.label || item.name === v.name)) {
+            acc.push(v);
+        }
+        return acc;
+    }, [] as ContractVariable[]);
 
     const isLastStep = currentStep === totalSteps - 1 || totalSteps === 0;
 
     const handleNext = () => {
         // Validation: Verify all required variables in the CURRENT group
+        // We check against rawVariables because all of them must be eventually filled (via sync)
         const missingField = currentVariables.find(v => v.required && !formData[v.name]);
         if (missingField) {
             toast.error(`O campo "${missingField.label}" é obrigatório.`);
@@ -76,7 +95,37 @@ export function DynamicWizardManager({
 
         const handleMaskedChange = (val: string, maskFn?: (v: string) => string) => {
             const maskedValue = maskFn ? maskFn(val) : val;
-            onChange(variable.name, maskedValue);
+
+            // Save to memory
+            localStorage.setItem(`jus_var_${variable.name}`, maskedValue);
+
+            // Sync all variables with the same label or name across the entire formData
+            const relatedVars = variables.filter(v =>
+                v.label === variable.label ||
+                v.name === variable.name
+            );
+
+            relatedVars.forEach(v => {
+                onChange(v.name, maskedValue);
+                localStorage.setItem(`jus_var_${v.name}`, maskedValue);
+            });
+        };
+
+        const handleChange = (val: string) => {
+            // Save to memory
+            localStorage.setItem(`jus_var_${variable.name}`, val);
+
+            // Sync all variables with the same label or name
+            const relatedVars = variables.filter(v =>
+                v.label === variable.label ||
+                v.name === variable.name
+            );
+
+            relatedVars.forEach(v => {
+                onChange(v.name, val);
+                // Also save related ones to memory if they differ
+                localStorage.setItem(`jus_var_${v.name}`, val);
+            });
         };
 
         switch (variable.type) {
@@ -85,7 +134,7 @@ export function DynamicWizardManager({
                     <Input
                         type="date"
                         value={value}
-                        onChange={e => onChange(variable.name, e.target.value)}
+                        onChange={e => handleChange(e.target.value)}
                     />
                 );
             case 'number':
@@ -93,7 +142,7 @@ export function DynamicWizardManager({
                     <Input
                         type="number"
                         value={value}
-                        onChange={e => onChange(variable.name, e.target.value)}
+                        onChange={e => handleChange(e.target.value)}
                         placeholder="0"
                     />
                 );
@@ -131,7 +180,7 @@ export function DynamicWizardManager({
                 return (
                     <Select
                         value={value}
-                        onValueChange={val => onChange(variable.name, val)}
+                        onValueChange={val => handleChange(val)}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Selecione..." />
@@ -149,7 +198,7 @@ export function DynamicWizardManager({
                     <Input
                         type="text"
                         value={value}
-                        onChange={e => onChange(variable.name, e.target.value)}
+                        onChange={e => handleChange(e.target.value)}
                         placeholder={variable.label}
                     />
                 );
@@ -171,22 +220,16 @@ export function DynamicWizardManager({
         <div className="flex flex-col h-full bg-card border rounded-xl shadow-sm overflow-hidden">
             {/* Header */}
             <div className="bg-muted/30 border-b p-4">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex flex-col">
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-primary" />
-                            {contractTitle}
-                        </h3>
-                        <span className="text-xs text-muted-foreground font-medium">
-                            {currentGroup}
-                        </span>
-                    </div>
-                    <div className="text-xs font-mono text-muted-foreground bg-background px-2 py-1 rounded border">
-                        Etapa {currentStep + 1} de {totalSteps}
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <FileText className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-sm font-bold text-primary uppercase tracking-tight">Etapa {currentStep + 1} de {totalSteps}</span>
                     </div>
                 </div>
                 {/* Progress Bar */}
-                <div className="flex gap-1 mb-2">
+                <div className="flex gap-1">
                     {Array.from({ length: totalSteps }).map((_, idx) => (
                         <div
                             key={idx}
@@ -200,16 +243,27 @@ export function DynamicWizardManager({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {currentVariables.map(variable => (
-                    <div key={variable.id || variable.name} className="space-y-2">
-                        <Label className="flex items-center gap-1">
-                            {variable.label}
-                            {variable.required && <span className="text-red-500">*</span>}
-                        </Label>
-                        {renderInput(variable)}
-                    </div>
-                ))}
+            <div className="flex-1 overflow-y-auto p-6">
+                {/* Moved Title & Group here for better UX as requested */}
+                <div className="mb-8 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-1">{contractTitle}</h2>
+                    <p className="text-slate-500 font-medium flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-primary" />
+                        {currentGroup}
+                    </p>
+                </div>
+
+                <div className="space-y-6">
+                    {currentVariables.map(variable => (
+                        <div key={variable.id || variable.name} className="space-y-2">
+                            <Label className="flex items-center gap-1">
+                                {variable.label}
+                                {variable.required && <span className="text-red-500">*</span>}
+                            </Label>
+                            {renderInput(variable)}
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Footer */}

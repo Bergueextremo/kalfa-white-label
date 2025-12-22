@@ -6,21 +6,23 @@ import { normalizeKey } from '@/lib/utils';
  * with standard professional legal clauses.
  */
 export function generateRobustContract(contract: Contract, variables: Record<string, string>): string {
-    const robustTemplate = getRobustTemplate(contract);
+    const robustTemplate = getRobustTemplate(contract, variables);
     return fillVariables(robustTemplate, variables);
 }
 
 /**
  * Returns the robust template structure (with placeholders) suitable for the LivePreview.
  */
-export function getRobustTemplate(contract: Contract): string {
+export function getRobustTemplate(contract: Contract, variables?: Record<string, string>): string {
     const date = new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    return `
-<div class="contract-wrapper">
-    <h1 style="text-align: center; font-weight: bold; font-size: 16pt; margin-bottom: 5pt;">MINUTA DE CONTRATO</h1>
-    <h2 style="text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 20pt;">${contract.title.toUpperCase()}</h2>
+    // Check if we have the standard variables for the robust wrapper
+    const hasStandardVars = variables && Object.keys(variables).some(k => k.includes('nome_parte_1'));
 
+    // If we don't have standard vars, we strictly return the styled body to avoid broken headers.
+    // However, we still want the Title and basic page structure.
+
+    const headerSection = hasStandardVars ? `
     <h3 style="font-weight: bold; text-decoration: underline; margin-top: 15pt; margin-bottom: 10pt;">IDENTIFICAÇÃO DAS PARTES</h3>
 
     <p style="margin-bottom: 10pt; text-indent: 0;">
@@ -33,12 +35,9 @@ export function getRobustTemplate(contract: Contract): string {
 
     <p style="margin-bottom: 20pt; text-indent: 0;">
         As partes acima identificadas têm, entre si, justo e acertado o presente Contrato, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente.
-    </p>
+    </p>` : '';
 
-    <div class="user-content" style="margin-top: 20pt; margin-bottom: 20pt;">
-        ${contract.template_body}
-    </div>
-
+    const footerSection = hasStandardVars ? `
     <h3 style="font-weight: bold; margin-top: 15pt; margin-bottom: 10pt;">CLÁUSULA GERAL - DAS OBRIGAÇÕES DAS PARTES</h3>
     <p style="margin-bottom: 10pt;">
         As partes se comprometem a cumprir fielmente o estipulado neste instrumento, agindo sempre com boa-fé objetiva e probidade, zelando pela correta execução do objeto contratual.
@@ -94,7 +93,17 @@ export function getRobustTemplate(contract: Contract): string {
     <div style="margin-top: 20pt;">
         <p>2. _____________________________________________</p>
         <p>CPF:</p>
+    </div>` : '';
+
+    return `
+<div>
+    ${headerSection}
+
+    <div class="user-content" style="margin-top: 20pt; margin-bottom: 20pt;">
+        ${contract.template_body}
     </div>
+
+    ${footerSection}
 </div>
     `.trim();
 }

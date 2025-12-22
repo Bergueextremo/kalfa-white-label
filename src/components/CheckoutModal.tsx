@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
 interface PlanData {
+    id: string;
     name: string;
     credits: number;
     price: number;
@@ -143,6 +144,7 @@ export function CheckoutModal({ open, onOpenChange, initialPlan }: CheckoutModal
                 amount: initialPlan.price,
                 credits: initialPlan.credits,
                 plan_name: initialPlan.name,
+                plan_id: initialPlan.id,
                 ...(paymentMethod === 'credit_card' && {
                     card_data: {
                         number: cardData.number.replace(/\s/g, ''),

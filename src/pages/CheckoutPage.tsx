@@ -412,6 +412,8 @@ export default function CheckoutPage() {
             console.log('Método de Pagamento:', paymentMethod);
             console.log('Payload enviado:', JSON.stringify(payload, null, 2));
 
+            console.log('Enviando payload para create-appmax-order:', payload);
+
             const { data, error } = await supabase.functions.invoke('create-appmax-order', {
                 body: payload
             });

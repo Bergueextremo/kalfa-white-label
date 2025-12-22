@@ -13,7 +13,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Save, ArrowLeft, Loader2, RefreshCw, Trash2, Plus } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { Category } from "@/components/catalog/types";
-import { normalizeKey } from "@/lib/utils";
+import { normalizeKey, cn } from "@/lib/utils";
 
 // Helper to parse comma-separated options
 const parseOptions = (str: string | string[] | null | undefined): string[] => {
@@ -52,6 +52,7 @@ export default function AdminContractEditor() {
     }
     const [detectedVariables, setDetectedVariables] = useState<DetectedVariable[]>([]);
     const [initialVariables, setInitialVariables] = useState<DetectedVariable[]>([]); // To store variables from DB
+    const [selectedVars, setSelectedVars] = useState<string[]>([]); // For bulk actions
 
     // Fetch Categories
     useEffect(() => {
@@ -224,6 +225,33 @@ export default function AdminContractEditor() {
         ));
     };
 
+    const handleBulkStepChange = (newStep: string) => {
+        if (selectedVars.length === 0) return;
+
+        setDetectedVariables(prev => prev.map(v =>
+            selectedVars.includes(v.name) ? { ...v, group_name: newStep } : v
+        ));
+
+        toast.success(`${selectedVars.length} variáveis movidas para: ${newStep === '_default' ? 'Informações Gerais' : newStep}`);
+        setSelectedVars([]); // Clear selection after action
+    };
+
+    const toggleVarSelection = (name: string) => {
+        setSelectedVars(prev =>
+            prev.includes(name)
+                ? prev.filter(n => n !== name)
+                : [...prev, name]
+        );
+    };
+
+    const toggleAllSelection = () => {
+        if (selectedVars.length === detectedVariables.length) {
+            setSelectedVars([]);
+        } else {
+            setSelectedVars(detectedVariables.map(v => v.name));
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
@@ -291,7 +319,7 @@ export default function AdminContractEditor() {
 
     return (
         <AdminLayout>
-            <div className="max-w-5xl mx-auto pb-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-4 mb-6">
                     <Button variant="ghost" size="icon" onClick={() => navigate('/admin/contratos')}>
                         <ArrowLeft className="h-4 w-4" />
@@ -300,53 +328,57 @@ export default function AdminContractEditor() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
-                    {/* Basic Info */}
-                    <Card>
-                        <CardHeader><CardTitle>Informações Básicas</CardTitle></CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="title">Título *</Label>
-                                <Input id="title" value={title} onChange={e => setTitle(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="slug">Slug (URL) *</Label>
-                                <Input id="slug" value={slug} onChange={e => setSlug(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="category">Categoria *</Label>
-                                <Select value={categoryId} onValueChange={setCategoryId}>
-                                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                                    <SelectContent>
-                                        {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="price">Preço (R$) *</Label>
-                                <Input id="price" type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} />
-                            </div>
-                            <div className="space-y-2 md:col-span-2">
-                                <Label htmlFor="subtitle">Subtítulo (Descrição Curta)</Label>
-                                <Input id="subtitle" value={subtitle} onChange={e => setSubtitle(e.target.value)} />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Switch id="active" checked={isActive} onCheckedChange={setIsActive} />
-                                <Label htmlFor="active">Ativo no Catálogo</Label>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Editor & Variables */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Editor Column */}
-                        <Card className="lg:h-auto h-[600px] flex flex-col">
-                            <CardHeader>
-                                <CardTitle>Editor de Contrato</CardTitle>
-                                <CardDescription>
-                                    Use <code>[Nome]</code> ou <code>{'{{nome}}'}</code> para criar variáveis.
-                                </CardDescription>
+                    {/* Top Section: Basic Info and Editor */}
+                    <div className="grid grid-cols-1 gap-8">
+                        {/* Basic Info */}
+                        <Card className="bg-slate-50/50 border-slate-200">
+                            <CardHeader className="py-4 border-b">
+                                <CardTitle className="text-lg">Informações do Contrato</CardTitle>
                             </CardHeader>
-                            <CardContent className="flex-1 p-0 relative">
+                            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="title" className="text-xs font-bold text-slate-500 uppercase">Título do Contrato *</Label>
+                                    <Input id="title" value={title} onChange={e => setTitle(e.target.value)} className="h-9 bg-white" placeholder="Ex: Contrato de Locação" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="slug" className="text-xs font-bold text-slate-500 uppercase">URL (slug) *</Label>
+                                    <Input id="slug" value={slug} onChange={e => setSlug(e.target.value)} className="h-9 bg-white" placeholder="contrato-de-locacao" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="category" className="text-xs font-bold text-slate-500 uppercase">Categoria *</Label>
+                                    <Select value={categoryId} onValueChange={setCategoryId}>
+                                        <SelectTrigger className="h-9 bg-white"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                                        <SelectContent>
+                                            {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="price" className="text-xs font-bold text-slate-500 uppercase">Preço (R$) *</Label>
+                                    <Input id="price" type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} className="h-9 bg-white" />
+                                </div>
+                                <div className="space-y-1.5 md:col-span-2 lg:col-span-3">
+                                    <Label htmlFor="subtitle" className="text-xs font-bold text-slate-500 uppercase">Chamada (Subtítulo)</Label>
+                                    <Input id="subtitle" value={subtitle} onChange={e => setSubtitle(e.target.value)} className="h-9 bg-white" placeholder="Breve descrição para o catálogo" />
+                                </div>
+                                <div className="flex items-center gap-3 pt-6 lg:pt-5">
+                                    <Switch id="active" checked={isActive} onCheckedChange={setIsActive} />
+                                    <Label htmlFor="active" className="text-sm font-medium">Contrato Ativo</Label>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Editor Card */}
+                        <Card className="h-[600px] flex flex-col border-slate-200">
+                            <CardHeader className="py-4 border-b bg-slate-50/30">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="text-lg">Conteúdo do Contrato</CardTitle>
+                                        <CardDescription>Use <code>[Nome]</code> para criar campos variáveis.</CardDescription>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="flex-1 p-0 relative flex flex-col overflow-hidden">
                                 <RichTextEditor
                                     content={content}
                                     onChange={setContent}
@@ -355,8 +387,43 @@ export default function AdminContractEditor() {
                             </CardContent>
                         </Card>
 
-                        {/* Stage Management Column - New! */}
-                        <div className="flex flex-col gap-8">
+                        {/* Variable Explorer - Now a Dedicated Card to avoid overlap */}
+                        {detectedVariables.length > 0 && (
+                            <Card className="border-primary/20 bg-primary/5">
+                                <CardHeader className="py-3 items-start">
+                                    <div className="flex items-center gap-2">
+                                        <RefreshCw className="h-4 w-4 text-primary" />
+                                        <CardTitle className="text-sm font-bold text-primary uppercase tracking-wider">Variáveis Inteligentes Detectadas</CardTitle>
+                                    </div>
+                                    <CardDescription className="text-xs">Clique no nome para copiar e usar no texto.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-4 pt-0">
+                                    <div className="flex flex-wrap gap-2">
+                                        {[...new Set(detectedVariables.map(v => v.label))].map(label => (
+                                            <button
+                                                key={label}
+                                                type="button"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(`[${label}]`);
+                                                    toast.success(`Copiado: [${label}]`);
+                                                }}
+                                                className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:border-primary hover:text-primary hover:shadow-md transition-all cursor-pointer"
+                                            >
+                                                <span className="opacity-40 mr-1">[</span>
+                                                {label}
+                                                <span className="opacity-40 ml-1">]</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+
+                    {/* Bottom Section: Side-by-Side Management */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        {/* Stage Management Column (4/12) */}
+                        <div className="lg:col-span-4 flex flex-col gap-8">
                             <Card className="flex flex-col">
                                 <CardHeader className="pb-3 border-b">
                                     <div className="flex items-center justify-between">
@@ -425,7 +492,10 @@ export default function AdminContractEditor() {
                                     </div>
                                 </CardContent>
                             </Card>
+                        </div>
 
+                        {/* Variable Management Column (8/12) */}
+                        <div className="lg:col-span-8 flex flex-col">
                             <Card className="flex flex-col">
                                 <CardHeader className="pb-3 border-b">
                                     <div className="flex items-center justify-between">
@@ -433,13 +503,49 @@ export default function AdminContractEditor() {
                                             <RefreshCw className="h-4 w-4 text-primary" />
                                             <CardTitle className="text-lg">Gerenciador de Variáveis</CardTitle>
                                         </div>
-                                        <span className="text-xs bg-slate-100 px-2 py-1 rounded-full font-mono">
-                                            {detectedVariables.length} encontradas
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs bg-slate-100 px-2 py-1 rounded-full font-mono">
+                                                {detectedVariables.length} encontradas
+                                            </span>
+                                            {detectedVariables.length > 0 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 text-[10px] uppercase font-bold"
+                                                    onClick={toggleAllSelection}
+                                                >
+                                                    {selectedVars.length === detectedVariables.length ? 'Desmarcar Tudo' : 'Selecionar Tudo'}
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                     <CardDescription>Configure os tipos e opções dos campos detectados.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-1 overflow-y-auto max-h-[600px] p-4 space-y-4">
+                                    {/* Bulk Actions Bar */}
+                                    {selectedVars.length > 0 && (
+                                        <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                                                <span className="text-sm font-bold text-blue-700">{selectedVars.length} selecionadas</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Select onValueChange={handleBulkStepChange}>
+                                                    <SelectTrigger className="h-8 w-40 bg-white border-blue-200 text-blue-700 font-medium">
+                                                        <SelectValue placeholder="Mover para Etapa..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="_default">Informações Gerais</SelectItem>
+                                                        {wizardStages.map(stage => (
+                                                            <SelectItem key={stage} value={stage}>{stage}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {detectedVariables.length === 0 ? (
                                         <div className="text-center py-10 text-muted-foreground">
                                             <p>Nenhuma variável detectada.</p>
@@ -447,12 +553,25 @@ export default function AdminContractEditor() {
                                         </div>
                                     ) : (
                                         detectedVariables.map((v, idx) => (
-                                            <div key={v.name} className="border rounded-lg p-4 bg-slate-50/50 space-y-4">
+                                            <div
+                                                key={v.name}
+                                                className={cn(
+                                                    "border rounded-lg p-4 bg-slate-50/50 space-y-4 transition-all border-l-4",
+                                                    selectedVars.includes(v.name) ? "border-blue-500 bg-blue-50/30" : "border-slate-200"
+                                                )}
+                                            >
                                                 {/* Header with Name and Required Toggle */}
                                                 <div className="flex items-center justify-between">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-mono text-slate-500">{v.name}</span>
-                                                        <span className="font-medium text-sm">Variavel #{idx + 1}</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <Switch
+                                                            checked={selectedVars.includes(v.name)}
+                                                            onCheckedChange={() => toggleVarSelection(v.name)}
+                                                            className="data-[state=checked]:bg-blue-600"
+                                                        />
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-mono text-slate-500">{v.name}</span>
+                                                            <span className="font-bold text-sm">Variavel #{idx + 1}</span>
+                                                        </div>
                                                     </div>
                                                     <div className="flex items-center gap-4">
                                                         <div className="flex items-center gap-2">
@@ -467,7 +586,7 @@ export default function AdminContractEditor() {
                                                 </div>
 
                                                 {/* Label and Group Inputs */}
-                                                <div className="grid grid-cols-2 gap-3">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                     <div className="space-y-1">
                                                         <Label className="text-xs text-muted-foreground">Nome do Campo (Label)</Label>
                                                         <Input
@@ -494,7 +613,7 @@ export default function AdminContractEditor() {
                                                 </div>
 
                                                 {/* Type and Options Row */}
-                                                <div className="grid grid-cols-2 gap-3">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                     <div className="space-y-1">
                                                         <Label className="text-xs text-muted-foreground">Tipo de Campo</Label>
                                                         <Select
@@ -538,9 +657,9 @@ export default function AdminContractEditor() {
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-4 pt-6 border-t">
+                    <div className="flex justify-end gap-4 p-8 border-t bg-slate-50/50 -mx-4 sm:-mx-6 lg:-mx-8 rounded-b-xl border-slate-200">
                         <Button type="button" variant="ghost" onClick={() => navigate('/admin/contratos')}>Cancelar</Button>
-                        <Button type="submit" size="lg" disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+                        <Button type="submit" size="lg" disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 min-w-[200px] shadow-lg shadow-blue-200">
                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             <Save className="mr-2 h-4 w-4" />
                             Salvar Alterações
