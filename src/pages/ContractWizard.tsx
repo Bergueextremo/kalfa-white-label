@@ -8,6 +8,7 @@ import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Download, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
+import { useConditionalLogic, cleanFormData } from '@/hooks/useConditionalLogic';
 // import { jsPDF } from 'jspdf';
 
 export default function ContractWizard() {
@@ -17,6 +18,9 @@ export default function ContractWizard() {
     const [variables, setVariables] = useState<ContractVariable[]>([]);
     const [formData, setFormData] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(true);
+
+    // Conditional logic hook
+    const { isVisible } = useConditionalLogic(formData);
 
     useEffect(() => {
         if (!slug) return;
@@ -65,22 +69,27 @@ export default function ContractWizard() {
     };
 
     const handleCheckout = () => {
-        // Determine if all required are filled
-        const missing = variables.filter(v => v.required && !formData[v.name]);
+        // Only check VISIBLE required fields
+        const visibleVariables = variables.filter(v => isVisible(v));
+        const missing = visibleVariables.filter(v => v.required && !formData[v.name]);
         if (missing.length > 0) {
             toast.error(`Preencha todos os campos obrigatórios: ${missing.map(v => v.label).join(', ')}`);
             return;
         }
 
+        // Clean form data (remove hidden field values)
+        const cleanedData = cleanFormData(formData, variables);
+
         // Redirect to Checkout Page
         navigate('/checkout', {
             state: {
                 contract: contract,
-                formData: formData,
+                formData: cleanedData,
                 isContractPurchase: true
             }
         });
     };
+
 
     if (isLoading) {
         return (

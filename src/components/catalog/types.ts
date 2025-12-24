@@ -30,4 +30,11 @@ export interface ContractVariable {
     required: boolean;
     group_name: string | null;
     order_index: number;
+    visibility_rule?: VisibilityRule | null;
+}
+
+export interface VisibilityRule {
+    dependsOn: string;
+    operator: 'equals' | 'not_equals' | 'contains' | 'is_empty' | 'is_not_empty';
+    value?: string | string[];
 }

@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
 import { Save, ArrowLeft, Loader2, RefreshCw, Trash2, Plus } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
-import { Category } from "@/components/catalog/types";
+import { Category, VisibilityRule } from "@/components/catalog/types";
 import { normalizeKey, cn } from "@/lib/utils";
 
 // Helper to parse comma-separated options
@@ -41,7 +41,7 @@ export default function AdminContractEditor() {
     const [isActive, setIsActive] = useState(true);
     const [wizardStages, setWizardStages] = useState<string[]>([]);
 
-    // Detected Variables State - Enhanced to include options
+    // Detected Variables State - Enhanced to include options and visibility_rule
     interface DetectedVariable {
         name: string;
         label: string;
@@ -49,6 +49,7 @@ export default function AdminContractEditor() {
         required: boolean;
         options: string; // Stored as comma-separated string for editing
         group_name: string;
+        visibility_rule: VisibilityRule | null;
     }
     const [detectedVariables, setDetectedVariables] = useState<DetectedVariable[]>([]);
     const [initialVariables, setInitialVariables] = useState<DetectedVariable[]>([]); // To store variables from DB
@@ -101,7 +102,8 @@ export default function AdminContractEditor() {
                         type: v.type,
                         required: v.required,
                         group_name: v.group_name || "",
-                        options: Array.isArray(v.options) ? v.options.join(', ') : (v.options || '')
+                        options: Array.isArray(v.options) ? v.options.join(', ') : (v.options || ''),
+                        visibility_rule: v.visibility_rule || null
                     }));
                     setDetectedVariables(mappedVars);
                     setInitialVariables(mappedVars); // Store initial variables for merging
@@ -153,7 +155,8 @@ export default function AdminContractEditor() {
                     type: 'text',
                     required: true,
                     options: '',
-                    group_name: '_default'
+                    group_name: '_default',
+                    visibility_rule: null
                 });
             }
         });
@@ -180,7 +183,8 @@ export default function AdminContractEditor() {
                     type: 'text',
                     required: true,
                     options: '',
-                    group_name: '_default'
+                    group_name: '_default',
+                    visibility_rule: null
                 });
             }
         });
@@ -204,7 +208,8 @@ export default function AdminContractEditor() {
                         required: existing.required,
                         label: existing.label,
                         group_name: existing.group_name || '_default',
-                        options: existing.options || ''
+                        options: existing.options || '',
+                        visibility_rule: existing.visibility_rule || null
                     });
                 } else {
                     merged.push(p);
@@ -296,11 +301,13 @@ export default function AdminContractEditor() {
                         required: v.required,
                         group_name: v.group_name === '_default' ? null : v.group_name,
                         order_index: idx,
-                        options: v.options ? parseOptions(v.options) : null
+                        options: v.options ? parseOptions(v.options) : null,
+                        visibility_rule: v.visibility_rule || null
                     }));
                     const { error: varsError } = await supabase.from('contract_variables').insert(varsToInsert);
                     if (varsError) throw varsError;
                 }
+
             }
 
             toast.success("Contrato salvo com sucesso!");
@@ -649,7 +656,118 @@ export default function AdminContractEditor() {
                                                         <p className="text-[10px] text-muted-foreground">O usuário poderá escolher apenas uma dessas opções.</p>
                                                     </div>
                                                 )}
+
+                                                {/* Visibility Rule Configuration */}
+                                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                                    <div className="flex items-center justify-between">
+                                                        <Label className="text-xs text-purple-600 font-semibold">Lógica Condicional (Mostrar Se...)</Label>
+                                                        {v.visibility_rule && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 text-[10px] text-red-500 hover:text-red-700"
+                                                                onClick={() => setDetectedVariables(prev => prev.map(vv =>
+                                                                    vv.name === v.name ? { ...vv, visibility_rule: null } : vv
+                                                                ))}
+                                                            >
+                                                                Remover Regra
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        <div>
+                                                            <Select
+                                                                value={v.visibility_rule?.dependsOn || '_none'}
+                                                                onValueChange={(val) => {
+                                                                    if (val === '_none') {
+                                                                        setDetectedVariables(prev => prev.map(vv =>
+                                                                            vv.name === v.name ? { ...vv, visibility_rule: null } : vv
+                                                                        ));
+                                                                    } else {
+                                                                        setDetectedVariables(prev => prev.map(vv =>
+                                                                            vv.name === v.name ? {
+                                                                                ...vv,
+                                                                                visibility_rule: {
+                                                                                    dependsOn: val,
+                                                                                    operator: vv.visibility_rule?.operator || 'equals',
+                                                                                    value: vv.visibility_rule?.value || ''
+                                                                                }
+                                                                            } : vv
+                                                                        ));
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <SelectTrigger className="h-8 bg-white text-xs">
+                                                                    <SelectValue placeholder="Depende de..." />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="_none">Sempre Visível</SelectItem>
+                                                                    {detectedVariables.filter(dv => dv.name !== v.name).map(dv => (
+                                                                        <SelectItem key={dv.name} value={dv.name}>{dv.label}</SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                        {v.visibility_rule && (
+                                                            <>
+                                                                <div>
+                                                                    <Select
+                                                                        value={v.visibility_rule.operator}
+                                                                        onValueChange={(val: 'equals' | 'not_equals' | 'contains' | 'is_empty' | 'is_not_empty') => {
+                                                                            setDetectedVariables(prev => prev.map(vv =>
+                                                                                vv.name === v.name && vv.visibility_rule ? {
+                                                                                    ...vv,
+                                                                                    visibility_rule: { ...vv.visibility_rule!, operator: val }
+                                                                                } : vv
+                                                                            ));
+                                                                        }}
+                                                                    >
+                                                                        <SelectTrigger className="h-8 bg-white text-xs">
+                                                                            <SelectValue />
+                                                                        </SelectTrigger>
+                                                                        <SelectContent>
+                                                                            <SelectItem value="equals">É igual a</SelectItem>
+                                                                            <SelectItem value="not_equals">Não é igual a</SelectItem>
+                                                                            <SelectItem value="contains">Contém</SelectItem>
+                                                                            <SelectItem value="is_not_empty">Está preenchido</SelectItem>
+                                                                            <SelectItem value="is_empty">Está vazio</SelectItem>
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                </div>
+                                                                {!['is_empty', 'is_not_empty'].includes(v.visibility_rule.operator) && (
+                                                                    <div>
+                                                                        <Input
+                                                                            value={typeof v.visibility_rule.value === 'string' ? v.visibility_rule.value : ''}
+                                                                            onChange={(e) => {
+                                                                                setDetectedVariables(prev => prev.map(vv =>
+                                                                                    vv.name === v.name && vv.visibility_rule ? {
+                                                                                        ...vv,
+                                                                                        visibility_rule: { ...vv.visibility_rule!, value: e.target.value }
+                                                                                    } : vv
+                                                                                ));
+                                                                            }}
+                                                                            placeholder="Valor"
+                                                                            className="h-8 bg-white text-xs"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    {v.visibility_rule && (
+                                                        <p className="text-[10px] text-purple-500 font-medium">
+                                                            ✨ Mostrar quando "{detectedVariables.find(dv => dv.name === v.visibility_rule?.dependsOn)?.label || v.visibility_rule.dependsOn}"
+                                                            {v.visibility_rule.operator === 'equals' && ` = "${v.visibility_rule.value}"`}
+                                                            {v.visibility_rule.operator === 'not_equals' && ` ≠ "${v.visibility_rule.value}"`}
+                                                            {v.visibility_rule.operator === 'contains' && ` contém "${v.visibility_rule.value}"`}
+                                                            {v.visibility_rule.operator === 'is_not_empty' && ` estiver preenchido`}
+                                                            {v.visibility_rule.operator === 'is_empty' && ` estiver vazio`}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
+
                                         ))
                                     )}
                                 </CardContent>

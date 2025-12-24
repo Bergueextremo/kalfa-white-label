@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ContractVariable } from "../catalog/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { CheckCircle2, ChevronRight, FileText, ChevronLeft } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { maskCPF, maskCNPJ, maskMoney } from "@/lib/masks";
 import { toast } from "sonner";
+import { useConditionalLogic } from "@/hooks/useConditionalLogic";
 
 interface DynamicWizardManagerProps {
     contractTitle: string;
@@ -26,6 +27,20 @@ export function DynamicWizardManager({
     wizardStages = [] // Should be passed from parent
 }: DynamicWizardManagerProps & { wizardStages?: string[] | null }) {
     const [currentStep, setCurrentStep] = useState(0);
+
+    // Conditional logic hook for dynamic visibility
+    const { isVisible, getHiddenFieldNames } = useConditionalLogic(formData);
+
+    // Reset values of hidden fields to prevent stale data
+    useEffect(() => {
+        const hiddenFields = getHiddenFieldNames(variables);
+        hiddenFields.forEach(fieldName => {
+            if (formData[fieldName]) {
+                onChange(fieldName, '');
+                localStorage.removeItem(`jus_var_${fieldName}`);
+            }
+        });
+    }, [formData, variables, getHiddenFieldNames, onChange]);
 
     // Memory: Load values from localStorage on mount
     useEffect(() => {
@@ -56,14 +71,17 @@ export function DynamicWizardManager({
     const currentGroup = groups[currentStep];
     const rawVariables = groupedVariables[currentGroup] || [];
 
-    // Deduplicate variables in the current group by label/name
-    // This ensures if "CPF" appears twice in the same step, it's only shown once.
-    const currentVariables = rawVariables.reduce((acc, v) => {
-        if (!acc.find(item => item.label === v.label || item.name === v.name)) {
-            acc.push(v);
-        }
-        return acc;
-    }, [] as ContractVariable[]);
+    // Deduplicate and filter by visibility rules
+    const currentVariables = useMemo(() => {
+        return rawVariables
+            .filter(v => isVisible(v)) // Apply conditional logic
+            .reduce((acc, v) => {
+                if (!acc.find(item => item.label === v.label || item.name === v.name)) {
+                    acc.push(v);
+                }
+                return acc;
+            }, [] as ContractVariable[]);
+    }, [rawVariables, isVisible]);
 
     const isLastStep = currentStep === totalSteps - 1 || totalSteps === 0;
 
@@ -255,7 +273,10 @@ export function DynamicWizardManager({
 
                 <div className="space-y-6">
                     {currentVariables.map(variable => (
-                        <div key={variable.id || variable.name} className="space-y-2">
+                        <div
+                            key={variable.id || variable.name}
+                            className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                        >
                             <Label className="flex items-center gap-1">
                                 {variable.label}
                                 {variable.required && <span className="text-red-500">*</span>}
