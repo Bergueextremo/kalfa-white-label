@@ -1,22 +1,25 @@
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Download, Printer, ShieldCheck } from 'lucide-react';
-import { Contract } from '../catalog/types';
+import { Contract, ContractVariable } from '../catalog/types';
 import { IContratoLocacao } from '@/types/contract-structure';
 import { generatePreamble } from '@/lib/preamble-generator';
 import { generateSignatures } from '@/lib/signature-generator';
 import { cn, normalizeKey } from '@/lib/utils';
+import { useConditionalLogic } from '@/hooks/useConditionalLogic';
 
 interface LivePreviewProps {
     robustTemplate: string;
     formData: Record<string, string>;
     contract?: Contract;
+    variables?: ContractVariable[]; // Added variables prop
     structuredData?: IContratoLocacao; // New prop for authority data
 }
 
-export function LivePreview({ robustTemplate, formData, contract, structuredData }: LivePreviewProps) {
+export function LivePreview({ robustTemplate, formData, contract, variables = [], structuredData }: LivePreviewProps) {
     const previewRef = useRef<HTMLDivElement>(null);
+    const { isVisible } = useConditionalLogic(formData);
 
     // Authority Injection Logic
     let finalContent = robustTemplate;
@@ -64,8 +67,31 @@ export function LivePreview({ robustTemplate, formData, contract, structuredData
 
     // Function to get replacement span
     const getReplacement = (variableName: string, originalMatch: string) => {
+        // Find if this variable exists in our definitions
+        const variable = variables.find(v => v.name === variableName || normalizeKey(v.label) === variableName);
+
+        // Check visibility
+        const isVariableVisible = variable ? isVisible(variable) : true;
+
+        // If hidden/not visible, we should not display it or display empty
+        // However, for correct contract flow, we often want to replace it with nothing 
+        // OR simply treat it as empty. 
+        // If we treat it as empty, the logic below might show "bg-yellow-50" if we don't be careful.
+
+        if (!isVariableVisible) {
+            // It is hidden by logic. Return empty string so it disappears from the text flow.
+            // But we should verify if surrounding text needs to process.
+            // For now, replacing with empty string is "removing" it.
+            return '';
+        }
+
         const displayValue = allVars[variableName];
         const isMissing = !displayValue;
+
+        // Apply Prefix/Suffix only if value is present
+        const finalDisplay = !isMissing
+            ? (variable?.prefix || '') + displayValue + (variable?.suffix || '')
+            : originalMatch;
 
         const className = cn(
             "font-bold transition-all duration-300",
@@ -74,7 +100,7 @@ export function LivePreview({ robustTemplate, formData, contract, structuredData
                 : "bg-yellow-50 text-blue-600 border-b-2 border-blue-200 px-1"
         );
 
-        return `<span class="${className}" title="${variableName}">${displayValue || originalMatch}</span>`;
+        return `<span class="${className}" title="${variableName}">${finalDisplay}</span>`;
     };
 
     // Replace {{variable}} items
@@ -87,6 +113,11 @@ export function LivePreview({ robustTemplate, formData, contract, structuredData
         const varName = normalizeKey(label);
         return getReplacement(varName, match);
     });
+
+    // Cleanup: Remove empty paragraphs that might result from hidden variables
+    // This is a naive regex approach. Ideally we'd parse DOM.
+    // Removing <p></p> or <p> </p>
+    finalContent = finalContent.replace(/<p>\s*<\/p>/g, '');
 
     return (
         <ScrollArea className="flex-grow p-4 md:p-8 bg-slate-100/50 flex justify-center">

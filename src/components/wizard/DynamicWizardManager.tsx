@@ -43,6 +43,8 @@ export function DynamicWizardManager({
     }, [formData, variables, getHiddenFieldNames, onChange]);
 
     // Memory: Load values from localStorage on mount
+    // Memory: Load values from localStorage on mount - DISABLED per user request for always empty start
+    /*
     useEffect(() => {
         variables.forEach(v => {
             const savedValue = localStorage.getItem(`jus_var_${v.name}`);
@@ -50,7 +52,8 @@ export function DynamicWizardManager({
                 onChange(v.name, savedValue);
             }
         });
-    }, [variables]); // Run once when variables are ready
+    }, [variables]); 
+    */
 
     // Group variables based on explicit stages order
     const stages = (wizardStages && wizardStages.length > 0) ? wizardStages : ["Informações Gerais"];
@@ -201,12 +204,13 @@ export function DynamicWizardManager({
                         onValueChange={val => handleChange(val)}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Selecione..." />
+                            <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
-                            {variable.options?.map(opt => (
-                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                            ))}
+                            {variable.options?.map(opt => {
+                                const [label, val] = opt.includes('|') ? opt.split('|').map(s => s.trim()) : [opt, opt];
+                                return <SelectItem key={val} value={val}>{label}</SelectItem>;
+                            })}
                         </SelectContent>
                     </Select>
                 );

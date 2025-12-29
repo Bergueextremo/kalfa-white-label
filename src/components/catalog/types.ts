@@ -30,6 +30,8 @@ export interface ContractVariable {
     required: boolean;
     group_name: string | null;
     order_index: number;
+    prefix?: string | null;
+    suffix?: string | null;
     visibility_rule?: VisibilityRule | null;
 }
 

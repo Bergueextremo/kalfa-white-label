@@ -10,10 +10,12 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
-import { Save, ArrowLeft, Loader2, RefreshCw, Trash2, Plus } from "lucide-react";
+import { Save, ArrowLeft, Loader2, RefreshCw, Trash2, Plus, Copy, Unlink } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { Category, VisibilityRule } from "@/components/catalog/types";
 import { normalizeKey, cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Helper to parse comma-separated options
 const parseOptions = (str: string | string[] | null | undefined): string[] => {
@@ -30,6 +32,7 @@ export default function AdminContractEditor() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
+    const [newStageInput, setNewStageInput] = useState("");
 
     // Form State
     const [title, setTitle] = useState("");
@@ -41,19 +44,27 @@ export default function AdminContractEditor() {
     const [isActive, setIsActive] = useState(true);
     const [wizardStages, setWizardStages] = useState<string[]>([]);
 
-    // Detected Variables State - Enhanced to include options and visibility_rule
+    // Detected Variables State
     interface DetectedVariable {
         name: string;
         label: string;
         type: string;
         required: boolean;
-        options: string; // Stored as comma-separated string for editing
+        options: string;
         group_name: string;
+        prefix: string;
+        suffix: string;
         visibility_rule: VisibilityRule | null;
     }
     const [detectedVariables, setDetectedVariables] = useState<DetectedVariable[]>([]);
-    const [initialVariables, setInitialVariables] = useState<DetectedVariable[]>([]); // To store variables from DB
-    const [selectedVars, setSelectedVars] = useState<string[]>([]); // For bulk actions
+    const [initialVariables, setInitialVariables] = useState<DetectedVariable[]>([]);
+    const [selectedVars, setSelectedVars] = useState<string[]>([]);
+
+    // Add Variable Modal State
+    const [createVarModal, setCreateVarModal] = useState<{ isOpen: boolean; parentName: string; optionValue: string } | null>(null);
+    const [newVarLabel, setNewVarLabel] = useState("");
+    const [newVarType, setNewVarType] = useState("text");
+    const [newVarOptions, setNewVarOptions] = useState("");
 
     // Fetch Categories
     useEffect(() => {
@@ -64,7 +75,7 @@ export default function AdminContractEditor() {
         fetchCategories();
     }, []);
 
-    // Fetch Data if Editing
+    // Fetch Data
     useEffect(() => {
         if (!isEditing) return;
 
@@ -88,7 +99,6 @@ export default function AdminContractEditor() {
                 setIsActive(contract.is_active || false);
                 setWizardStages(contract.wizard_stages || []);
 
-                // Fetch existing vars to preserve configuration
                 const { data: existingVars } = await supabase
                     .from('contract_variables')
                     .select('*')
@@ -103,10 +113,12 @@ export default function AdminContractEditor() {
                         required: v.required,
                         group_name: v.group_name || "",
                         options: Array.isArray(v.options) ? v.options.join(', ') : (v.options || ''),
+                        prefix: v.prefix || "",
+                        suffix: v.suffix || "",
                         visibility_rule: v.visibility_rule || null
                     }));
                     setDetectedVariables(mappedVars);
-                    setInitialVariables(mappedVars); // Store initial variables for merging
+                    setInitialVariables(mappedVars);
                 }
 
             } catch (error) {
@@ -121,7 +133,7 @@ export default function AdminContractEditor() {
         fetchData();
     }, [id, isEditing, navigate]);
 
-    // Auto-generate slug
+    // Slug gen
     useEffect(() => {
         if (!isEditing && !slug && title) {
             setSlug(title.toLowerCase()
@@ -132,87 +144,92 @@ export default function AdminContractEditor() {
         }
     }, [title, isEditing, slug]);
 
-    // Auto-detect variables logic
-    const parseVariables = useCallback((text: string) => {
-        // Remove HTML tags for variable detection to avoid issues with formatting inside placeholders
-        const plainText = text.replace(/<[^>]*>/g, ' ');
-        const uniqueVars = new Set<string>();
-        const parsed: DetectedVariable[] = [];
+    // State to track which vars are effectively in the text (vs manual/ghosts)
+    const [textKeys, setTextKeys] = useState<Set<string>>(new Set());
 
-        // 1. Match [Label]
+    // Enhanced Parse Logic (Sync with Text + Maintain Children)
+    const parseVariables = useCallback((text: string) => {
+        const plainText = text.replace(/<[^>]*>/g, ' ');
+
+        // 1. Identify Variables currently in the text
+        const textVarsMap = new Map<string, { label: string }>();
+
+        // Match [Label]
         const bracketRegex = /\[([^\]]+)\]/g;
         const bracketMatches = [...plainText.matchAll(bracketRegex)];
-
         bracketMatches.forEach(match => {
             const rawLabel = match[1];
             const key = normalizeKey(rawLabel);
-
-            if (!uniqueVars.has(key) && key.length > 0) {
-                uniqueVars.add(key);
-                parsed.push({
-                    name: key,
-                    label: rawLabel.trim(),
-                    type: 'text',
-                    required: true,
-                    options: '',
-                    group_name: '_default',
-                    visibility_rule: null
-                });
+            if (key.length > 0) {
+                textVarsMap.set(key, { label: rawLabel.trim() });
             }
         });
 
-        // 2. Match {{variable_name}} (Legacy support)
+        // Match {{variable_name}}
         const curlyRegex = /\{\{([^}]+)\}\}/g;
         const curlyMatches = [...plainText.matchAll(curlyRegex)];
-
         curlyMatches.forEach(match => {
             const rawName = match[1].trim();
-            const key = rawName;
-
-            // Beautify label: nome_parte_1 -> Nome Parte 1
-            const label = rawName
-                .split('_')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-
-            if (!uniqueVars.has(key) && key.length > 0) {
-                uniqueVars.add(key);
-                parsed.push({
-                    name: key,
-                    label: label,
-                    type: 'text',
-                    required: true,
-                    options: '',
-                    group_name: '_default',
-                    visibility_rule: null
-                });
-            }
+            const label = rawName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            textVarsMap.set(rawName, { label });
         });
 
-        // Smart Merge
+        // Update the Set of keys found in text
+        setTextKeys(new Set(textVarsMap.keys()));
+
+        // 2. Sync Merge
         setDetectedVariables(prev => {
             const merged: DetectedVariable[] = [];
+            const processedNames = new Set<string>();
 
-            parsed.forEach(p => {
-                // Try to find in initial variables (from DB) first
-                const DBExisting = initialVariables.find(v => v.name === p.name);
-                // Then try to find in current edits (from state)
-                const stateExisting = prev.find(v => v.name === p.name);
+            // A. Keep variables that are valid (In Text OR Have Visibility Rule)
+            // We iterate over the UNION of (Text Vars) and (Existing Vars with Rules)
 
-                const existing = stateExisting || DBExisting;
+            // First, process everything currently in state to preserve configs
+            prev.forEach(existingVar => {
+                const isInText = textVarsMap.has(existingVar.name);
+                const hasRule = !!existingVar.visibility_rule;
 
-                if (existing) {
-                    merged.push({
-                        ...p,
-                        type: existing.type,
-                        required: existing.required,
-                        label: existing.label,
-                        group_name: existing.group_name || '_default',
-                        options: existing.options || '',
-                        visibility_rule: existing.visibility_rule || null
-                    });
-                } else {
-                    merged.push(p);
+                // CRITICAL: Keep if it's in the text OR if it's a child variable (nested)
+                if (isInText || hasRule) {
+                    merged.push(existingVar);
+                    processedNames.add(existingVar.name);
+                }
+            });
+
+            // B. Add NEW variables found in text that weren't in state
+            textVarsMap.forEach((val, key) => {
+                if (!processedNames.has(key)) {
+                    // New detection! Check DB history first
+                    const inDB = initialVariables.find(v => v.name === key);
+                    if (inDB) {
+                        const dbOpts = (inDB as any).options;
+                        merged.push({
+                            name: key,
+                            label: inDB.label, // Prefer DB label/config
+                            type: inDB.type,
+                            required: inDB.required,
+                            options: Array.isArray(dbOpts) ? dbOpts.join(', ') : (dbOpts || ''),
+                            group_name: inDB.group_name || '_default',
+                            prefix: inDB.prefix || '',
+                            suffix: inDB.suffix || '',
+                            visibility_rule: inDB.visibility_rule || null
+                        });
+                    } else {
+                        // Brand new default
+                        merged.push({
+                            name: key,
+                            label: val.label,
+                            type: 'text',
+                            required: true,
+                            options: '',
+                            group_name: '_default',
+                            prefix: '',
+                            suffix: '',
+                            visibility_rule: null // Root by default
+                        });
+                    }
+                    processedNames.add(key);
                 }
             });
 
@@ -230,55 +247,80 @@ export default function AdminContractEditor() {
         ));
     };
 
+    // Function to Force Delete (for ghosts)
+    const deleteVariable = (name: string) => {
+        setDetectedVariables(prev => prev.filter(v => v.name !== name));
+        toast.success("Variável removida.");
+    };
+
+    const handleCreateVariable = () => {
+        if (!createVarModal || !newVarLabel) return;
+
+        const name = normalizeKey(newVarLabel);
+
+        // Avoid dupes
+        if (detectedVariables.some(v => v.name === name)) {
+            toast.error("Já existe uma variável com esse nome (ou similar).");
+            return;
+        }
+
+        const newVar: DetectedVariable = {
+            name,
+            label: newVarLabel,
+            type: newVarType,
+            required: true,
+            options: newVarOptions,
+            group_name: '_default',
+            prefix: '',
+            suffix: '',
+            visibility_rule: {
+                dependsOn: createVarModal.parentName,
+                operator: 'equals',
+                value: createVarModal.optionValue
+            }
+        };
+
+        setDetectedVariables(prev => [...prev, newVar]);
+        toast.success(`Variável "${newVarLabel}" criada com sucesso!`);
+
+        // Reset and close
+        setNewVarLabel("");
+        setNewVarType("text");
+        setNewVarOptions("");
+        setCreateVarModal(null);
+    };
+
     const handleBulkStepChange = (newStep: string) => {
         if (selectedVars.length === 0) return;
-
         setDetectedVariables(prev => prev.map(v =>
             selectedVars.includes(v.name) ? { ...v, group_name: newStep } : v
         ));
-
-        toast.success(`${selectedVars.length} variáveis movidas para: ${newStep === '_default' ? 'Informações Gerais' : newStep}`);
-        setSelectedVars([]); // Clear selection after action
+        toast.success(`${selectedVars.length} variáveis movidas per: ${newStep}`);
+        setSelectedVars([]);
     };
 
     const toggleVarSelection = (name: string) => {
-        setSelectedVars(prev =>
-            prev.includes(name)
-                ? prev.filter(n => n !== name)
-                : [...prev, name]
-        );
+        setSelectedVars(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]);
     };
 
     const toggleAllSelection = () => {
-        if (selectedVars.length === detectedVariables.length) {
-            setSelectedVars([]);
-        } else {
-            setSelectedVars(detectedVariables.map(v => v.name));
-        }
+        if (selectedVars.length === detectedVariables.length) setSelectedVars([]);
+        else setSelectedVars(detectedVariables.map(v => v.name));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-
         try {
-            if (!title || !slug || !categoryId || !price) {
-                throw new Error("Preencha os campos obrigatórios (*)");
-            }
+            if (!title || !slug || !categoryId || !price) throw new Error("Preencha campos obrigatórios");
 
             const payload = {
-                title,
-                slug,
-                description: subtitle,
-                category_id: categoryId,
-                price: parseFloat(price.replace(',', '.')),
-                template_body: content,
-                is_active: isActive,
-                wizard_stages: wizardStages
+                title, slug, description: subtitle, category_id: categoryId,
+                price: parseFloat(price.replace(',', '.')), template_body: content,
+                is_active: isActive, wizard_stages: wizardStages
             };
 
             let contractId = id;
-
             if (isEditing) {
                 const { error } = await supabase.from('contracts').update(payload).eq('id', id);
                 if (error) throw error;
@@ -288,10 +330,8 @@ export default function AdminContractEditor() {
                 contractId = data.id;
             }
 
-            // Sync Variables
             if (contractId) {
                 await supabase.from('contract_variables').delete().eq('contract_id', contractId);
-
                 if (detectedVariables.length > 0) {
                     const varsToInsert = detectedVariables.map((v, idx) => ({
                         contract_id: contractId,
@@ -302,20 +342,18 @@ export default function AdminContractEditor() {
                         group_name: v.group_name === '_default' ? null : v.group_name,
                         order_index: idx,
                         options: v.options ? parseOptions(v.options) : null,
+                        prefix: v.prefix || null,
+                        suffix: v.suffix || null,
                         visibility_rule: v.visibility_rule || null
                     }));
                     const { error: varsError } = await supabase.from('contract_variables').insert(varsToInsert);
                     if (varsError) throw varsError;
                 }
-
             }
-
-            toast.success("Contrato salvo com sucesso!");
-            navigate('/admin/contratos');
-
+            toast.success("Salvo com sucesso!");
+            // navigate('/admin/contratos');
         } catch (error: unknown) {
-            console.error(error);
-            const message = error instanceof Error ? error.message : "Erro ao salvar contrato";
+            const message = error instanceof Error ? error.message : "Erro desconhecido";
             toast.error(message);
         } finally {
             setIsSaving(false);
@@ -335,7 +373,6 @@ export default function AdminContractEditor() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
-                    {/* Top Section: Basic Info and Editor */}
                     <div className="grid grid-cols-1 gap-8">
                         {/* Basic Info */}
                         <Card className="bg-slate-50/50 border-slate-200">
@@ -344,12 +381,12 @@ export default function AdminContractEditor() {
                             </CardHeader>
                             <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="title" className="text-xs font-bold text-slate-500 uppercase">Título do Contrato *</Label>
-                                    <Input id="title" value={title} onChange={e => setTitle(e.target.value)} className="h-9 bg-white" placeholder="Ex: Contrato de Locação" />
+                                    <Label htmlFor="title" className="text-xs font-bold text-slate-500 uppercase">Título *</Label>
+                                    <Input id="title" value={title} onChange={e => setTitle(e.target.value)} className="h-9 bg-white" />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="slug" className="text-xs font-bold text-slate-500 uppercase">URL (slug) *</Label>
-                                    <Input id="slug" value={slug} onChange={e => setSlug(e.target.value)} className="h-9 bg-white" placeholder="contrato-de-locacao" />
+                                    <Label htmlFor="slug" className="text-xs font-bold text-slate-500 uppercase">Slug *</Label>
+                                    <Input id="slug" value={slug} onChange={e => setSlug(e.target.value)} className="h-9 bg-white" />
                                 </div>
                                 <div className="space-y-1.5">
                                     <Label htmlFor="category" className="text-xs font-bold text-slate-500 uppercase">Categoria *</Label>
@@ -361,12 +398,12 @@ export default function AdminContractEditor() {
                                     </Select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="price" className="text-xs font-bold text-slate-500 uppercase">Preço (R$) *</Label>
-                                    <Input id="price" type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} className="h-9 bg-white" />
+                                    <Label htmlFor="price" className="text-xs font-bold text-slate-500 uppercase">Preço *</Label>
+                                    <Input id="price" type="number" value={price} onChange={e => setPrice(e.target.value)} className="h-9 bg-white" />
                                 </div>
                                 <div className="space-y-1.5 md:col-span-2 lg:col-span-3">
-                                    <Label htmlFor="subtitle" className="text-xs font-bold text-slate-500 uppercase">Chamada (Subtítulo)</Label>
-                                    <Input id="subtitle" value={subtitle} onChange={e => setSubtitle(e.target.value)} className="h-9 bg-white" placeholder="Breve descrição para o catálogo" />
+                                    <Label htmlFor="subtitle" className="text-xs font-bold text-slate-500 uppercase">Chamada</Label>
+                                    <Input id="subtitle" value={subtitle} onChange={e => setSubtitle(e.target.value)} className="h-9 bg-white" />
                                 </div>
                                 <div className="flex items-center gap-3 pt-6 lg:pt-5">
                                     <Switch id="active" checked={isActive} onCheckedChange={setIsActive} />
@@ -378,31 +415,22 @@ export default function AdminContractEditor() {
                         {/* Editor Card */}
                         <Card className="h-[600px] flex flex-col border-slate-200">
                             <CardHeader className="py-4 border-b bg-slate-50/30">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle className="text-lg">Conteúdo do Contrato</CardTitle>
-                                        <CardDescription>Use <code>[Nome]</code> para criar campos variáveis.</CardDescription>
-                                    </div>
-                                </div>
+                                <CardTitle className="text-lg">Conteúdo</CardTitle>
                             </CardHeader>
                             <CardContent className="flex-1 p-0 relative flex flex-col overflow-hidden">
-                                <RichTextEditor
-                                    content={content}
-                                    onChange={setContent}
-                                    placeholder="Comece a digitar seu contrato..."
-                                />
+                                <RichTextEditor content={content} onChange={setContent} placeholder="Conteúdo..." />
                             </CardContent>
                         </Card>
 
-                        {/* Variable Explorer - Now a Dedicated Card to avoid overlap */}
+                        {/* Variable Explorer */}
                         {detectedVariables.length > 0 && (
                             <Card className="border-primary/20 bg-primary/5">
                                 <CardHeader className="py-3 items-start">
                                     <div className="flex items-center gap-2">
                                         <RefreshCw className="h-4 w-4 text-primary" />
-                                        <CardTitle className="text-sm font-bold text-primary uppercase tracking-wider">Variáveis Inteligentes Detectadas</CardTitle>
+                                        <CardTitle className="text-sm font-bold text-primary uppercase tracking-wider">Variáveis Detectadas</CardTitle>
                                     </div>
-                                    <CardDescription className="text-xs">Clique no nome para copiar e usar no texto.</CardDescription>
+                                    <CardDescription className="text-xs">Variáveis detectadas automaticamente.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-4 pt-0">
                                     <div className="flex flex-wrap gap-2">
@@ -416,9 +444,7 @@ export default function AdminContractEditor() {
                                                 }}
                                                 className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:border-primary hover:text-primary hover:shadow-md transition-all cursor-pointer"
                                             >
-                                                <span className="opacity-40 mr-1">[</span>
-                                                {label}
-                                                <span className="opacity-40 ml-1">]</span>
+                                                <span className="opacity-40 mr-1">[</span>{label}<span className="opacity-40 ml-1">]</span>
                                             </button>
                                         ))}
                                     </div>
@@ -427,32 +453,26 @@ export default function AdminContractEditor() {
                         )}
                     </div>
 
-                    {/* Bottom Section: Side-by-Side Management */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* Stage Management Column (4/12) */}
+                        {/* Stages */}
                         <div className="lg:col-span-4 flex flex-col gap-8">
-                            <Card className="flex flex-col">
+                            <Card>
                                 <CardHeader className="pb-3 border-b">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Plus className="h-4 w-4 text-primary" />
-                                            <CardTitle className="text-lg">Gerenciar Etapas</CardTitle>
-                                        </div>
-                                    </div>
-                                    <CardDescription>Crie e organize as etapas do preenchimento.</CardDescription>
+                                    <CardTitle className="text-lg">Etapas</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-4">
                                     <div className="flex gap-2">
                                         <Input
                                             id="new-stage"
-                                            placeholder="Nome da etapa (ex: Cláusula 1)"
+                                            placeholder="Nome da etapa"
+                                            value={newStageInput}
+                                            onChange={(e) => setNewStageInput(e.target.value)}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter') {
                                                     e.preventDefault();
-                                                    const val = (e.target as HTMLInputElement).value.trim();
-                                                    if (val && !wizardStages.includes(val)) {
-                                                        setWizardStages([...wizardStages, val]);
-                                                        (e.target as HTMLInputElement).value = '';
+                                                    if (newStageInput.trim() && !wizardStages.includes(newStageInput.trim())) {
+                                                        setWizardStages([...wizardStages, newStageInput.trim()]);
+                                                        setNewStageInput('');
                                                     }
                                                 }
                                             }}
@@ -460,322 +480,261 @@ export default function AdminContractEditor() {
                                         <Button
                                             type="button"
                                             onClick={() => {
-                                                const el = document.getElementById('new-stage') as HTMLInputElement;
-                                                const val = el.value.trim();
-                                                if (val && !wizardStages.includes(val)) {
-                                                    setWizardStages([...wizardStages, val]);
-                                                    el.value = '';
+                                                if (newStageInput.trim() && !wizardStages.includes(newStageInput.trim())) {
+                                                    setWizardStages([...wizardStages, newStageInput.trim()]);
+                                                    setNewStageInput('');
                                                 }
                                             }}
                                         >
                                             Adicionar
                                         </Button>
                                     </div>
-
                                     <div className="space-y-2">
-                                        {wizardStages.length === 0 ? (
-                                            <p className="text-xs text-muted-foreground text-center py-4 italic">
-                                                Nenhuma etapa customizada.
-                                            </p>
-                                        ) : (
-                                            wizardStages.map((stage, idx) => (
-                                                <div key={stage} className="flex items-center justify-between p-2 bg-slate-50 border rounded-md group">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-mono text-slate-400">#{idx + 1}</span>
-                                                        <span className="text-sm font-medium">{stage}</span>
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        onClick={() => setWizardStages(wizardStages.filter(s => s !== stage))}
-                                                    >
-                                                        <Trash2 className="h-3 w-3 text-red-500" />
-                                                    </Button>
-                                                </div>
-                                            ))
-                                        )}
+                                        {wizardStages.map((stage, idx) => (
+                                            <div key={stage} className="flex items-center justify-between p-2 bg-slate-50 border rounded-md group">
+                                                <span className="text-sm font-medium">{idx + 1}. {stage}</span>
+                                                <Button variant="ghost" size="icon" onClick={() => setWizardStages(wizardStages.filter(s => s !== stage))}><Trash2 className="h-3 w-3 text-red-500" /></Button>
+                                            </div>
+                                        ))}
                                     </div>
                                 </CardContent>
                             </Card>
                         </div>
 
-                        {/* Variable Management Column (8/12) */}
+                        {/* Variables Manager */}
                         <div className="lg:col-span-8 flex flex-col">
-                            <Card className="flex flex-col">
-                                <CardHeader className="pb-3 border-b">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <RefreshCw className="h-4 w-4 text-primary" />
-                                            <CardTitle className="text-lg">Gerenciador de Variáveis</CardTitle>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs bg-slate-100 px-2 py-1 rounded-full font-mono">
-                                                {detectedVariables.length} encontradas
-                                            </span>
-                                            {detectedVariables.length > 0 && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 text-[10px] uppercase font-bold"
-                                                    onClick={toggleAllSelection}
-                                                >
-                                                    {selectedVars.length === detectedVariables.length ? 'Desmarcar Tudo' : 'Selecionar Tudo'}
-                                                </Button>
-                                            )}
-                                        </div>
+                            <Card>
+                                <CardHeader className="pb-3 border-b flex flex-row items-center justify-between">
+                                    <CardTitle className="text-lg">Gerenciador de Variáveis</CardTitle>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs bg-slate-100 px-2 py-1 rounded-full font-mono">{detectedVariables.length} vars</span>
+                                        <Button type="button" variant="ghost" size="sm" onClick={toggleAllSelection}>Select All</Button>
                                     </div>
-                                    <CardDescription>Configure os tipos e opções dos campos detectados.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-1 overflow-y-auto max-h-[600px] p-4 space-y-4">
-                                    {/* Bulk Actions Bar */}
                                     {selectedVars.length > 0 && (
-                                        <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                                                <span className="text-sm font-bold text-blue-700">{selectedVars.length} selecionadas</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Select onValueChange={handleBulkStepChange}>
-                                                    <SelectTrigger className="h-8 w-40 bg-white border-blue-200 text-blue-700 font-medium">
-                                                        <SelectValue placeholder="Mover para Etapa..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="_default">Informações Gerais</SelectItem>
-                                                        {wizardStages.map(stage => (
-                                                            <SelectItem key={stage} value={stage}>{stage}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
+                                        <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center justify-between">
+                                            <span className="text-sm font-bold text-blue-700">{selectedVars.length} selecionadas</span>
+                                            <Select onValueChange={handleBulkStepChange}>
+                                                <SelectTrigger className="h-8 w-40 bg-white"><SelectValue placeholder="Mover..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="_default">Geral</SelectItem>
+                                                    {wizardStages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     )}
 
-                                    {detectedVariables.length === 0 ? (
-                                        <div className="text-center py-10 text-muted-foreground">
-                                            <p>Nenhuma variável detectada.</p>
-                                            <p className="text-xs mt-2">Adicione <code>[Exemplo]</code> no editor.</p>
-                                        </div>
-                                    ) : (
-                                        detectedVariables.map((v, idx) => (
-                                            <div
-                                                key={v.name}
-                                                className={cn(
-                                                    "border rounded-lg p-4 bg-slate-50/50 space-y-4 transition-all border-l-4",
-                                                    selectedVars.includes(v.name) ? "border-blue-500 bg-blue-50/30" : "border-slate-200"
-                                                )}
-                                            >
-                                                {/* Header with Name and Required Toggle */}
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={selectedVars.includes(v.name)}
-                                                            onCheckedChange={() => toggleVarSelection(v.name)}
-                                                            className="data-[state=checked]:bg-blue-600"
-                                                        />
-                                                        <div className="flex flex-col">
-                                                            <span className="text-xs font-mono text-slate-500">{v.name}</span>
-                                                            <span className="font-bold text-sm">Variavel #{idx + 1}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="flex items-center gap-2">
-                                                            <Label htmlFor={`req-${v.name}`} className="text-xs cursor-pointer">Obrigatório</Label>
-                                                            <Switch
-                                                                id={`req-${v.name}`}
-                                                                checked={v.required}
-                                                                onCheckedChange={(c) => handleVariableChange(v.name, 'required', c)}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                    {(() => {
+                                        const getChildrenForOption = (parentName: string, optionValue: string) => detectedVariables.filter(v => v.visibility_rule?.dependsOn === parentName && v.visibility_rule?.value === optionValue);
 
-                                                {/* Label and Group Inputs */}
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    <div className="space-y-1">
-                                                        <Label className="text-xs text-muted-foreground">Nome do Campo (Label)</Label>
-                                                        <Input
-                                                            value={v.label}
-                                                            onChange={(e) => handleVariableChange(v.name, 'label', e.target.value)}
-                                                            className="h-8 bg-white"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <Label className="text-xs text-muted-foreground">Etapa do Assistente</Label>
-                                                        <Select
-                                                            value={v.group_name}
-                                                            onValueChange={(val) => handleVariableChange(v.name, 'group_name', val)}
-                                                        >
-                                                            <SelectTrigger className="h-8 bg-white"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="_default">Informações Gerais</SelectItem>
-                                                                {wizardStages.map(stage => (
-                                                                    <SelectItem key={stage} value={stage}>{stage}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                </div>
+                                        // "Orphan" Check: A variable is root if:
+                                        // 1. It has NO visibility rule
+                                        // 2. Parent missing
+                                        // 3. Parent Option mismatch (e.g. parent changed options)
+                                        const allNames = new Set(detectedVariables.map(v => v.name));
 
-                                                {/* Type and Options Row */}
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    <div className="space-y-1">
-                                                        <Label className="text-xs text-muted-foreground">Tipo de Campo</Label>
-                                                        <Select
-                                                            value={v.type}
-                                                            onValueChange={(val) => handleVariableChange(v.name, 'type', val)}
-                                                        >
-                                                            <SelectTrigger className="h-8 bg-white"><SelectValue /></SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="text">Texto Curto</SelectItem>
-                                                                <SelectItem value="textarea">Texto Longo</SelectItem>
-                                                                <SelectItem value="number">Número</SelectItem>
-                                                                <SelectItem value="money">Moeda (R$)</SelectItem>
-                                                                <SelectItem value="date">Data</SelectItem>
-                                                                <SelectItem value="cpf">CPF</SelectItem>
-                                                                <SelectItem value="cnpj">CNPJ</SelectItem>
-                                                                <SelectItem value="email">E-mail</SelectItem>
-                                                                <SelectItem value="select">Lista de Opções</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                </div>
+                                        // Pre-calc parent options for fast lookup
+                                        const parentOptionsMap = new Map<string, Set<string>>();
+                                        detectedVariables.forEach(v => {
+                                            if (v.type === 'select') {
+                                                const rawOpts = typeof v.options === 'string' ? parseOptions(v.options) : (Array.isArray(v.options) ? v.options : []);
+                                                // Extract VALUES only for dependency check (Label|Value -> Value)
+                                                const values = rawOpts.map(o => o.includes('|') ? o.split('|')[1].trim() : o);
+                                                parentOptionsMap.set(v.name, new Set(values));
+                                            }
+                                        });
 
-                                                {/* Conditional Options Input */}
-                                                {v.type === 'select' && (
-                                                    <div className="space-y-1 pt-2 border-t border-dashed">
-                                                        <Label className="text-xs text-blue-600 font-semibold">Opções da Lista (separadas por vírgula)</Label>
-                                                        <Input
-                                                            value={v.options}
-                                                            onChange={(e) => handleVariableChange(v.name, 'options', e.target.value)}
-                                                            placeholder="Ex: Opção 1, Opção 2, Opção 3"
-                                                            className="h-8 bg-white border-blue-200 focus-visible:ring-blue-200"
-                                                        />
-                                                        <p className="text-[10px] text-muted-foreground">O usuário poderá escolher apenas uma dessas opções.</p>
-                                                    </div>
-                                                )}
+                                        const rootVariables = detectedVariables.filter(v => {
+                                            if (!v.visibility_rule) return true;
 
-                                                {/* Visibility Rule Configuration */}
-                                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                            const pName = v.visibility_rule.dependsOn;
+                                            if (!allNames.has(pName)) return true; // Parent missing
+
+                                            // Check if the specific option value is valid
+                                            const pOpts = parentOptionsMap.get(pName);
+                                            if (!pOpts || !pOpts.has(v.visibility_rule.value as string)) return true; // Value mismatch
+
+                                            return false; // It's a valid happy child
+                                        });
+
+                                        const renderVariableCard = (v: DetectedVariable) => {
+                                            const isSelected = selectedVars.includes(v.name);
+                                            const optionsList = typeof v.options === 'string' ? parseOptions(v.options) : (Array.isArray(v.options) ? v.options : []);
+
+                                            // Helper to check if this var is an orphan (has rule but parent missing) for UI indication
+                                            const isOrphan = v.visibility_rule && (!allNames.has(v.visibility_rule.dependsOn) || !parentOptionsMap.get(v.visibility_rule.dependsOn)?.has(v.visibility_rule.value as string));
+                                            const inText = textKeys.has(v.name);
+
+                                            return (
+                                                <div key={v.name} className={cn("border rounded-lg p-4 bg-slate-50/50 space-y-4 transition-all border-l-4", isSelected ? "border-blue-500 bg-blue-50/30" : "border-slate-200")}>
                                                     <div className="flex items-center justify-between">
-                                                        <Label className="text-xs text-purple-600 font-semibold">Lógica Condicional (Mostrar Se...)</Label>
-                                                        {v.visibility_rule && (
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-6 text-[10px] text-red-500 hover:text-red-700"
-                                                                onClick={() => setDetectedVariables(prev => prev.map(vv =>
-                                                                    vv.name === v.name ? { ...vv, visibility_rule: null } : vv
-                                                                ))}
-                                                            >
-                                                                Remover Regra
-                                                            </Button>
-                                                        )}
+                                                        <div className="flex items-center gap-3">
+                                                            <Switch checked={isSelected} onCheckedChange={() => toggleVarSelection(v.name)} className="data-[state=checked]:bg-blue-600" />
+                                                            <div className="flex flex-col">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-xs font-mono text-slate-500">{v.name}</span>
+                                                                    {isOrphan && <span className="text-[10px] bg-red-100 text-red-600 px-1 rounded border border-red-200">Vínculo Quebrado</span>}
+                                                                    {!inText && <span className="text-[10px] bg-amber-100 text-amber-600 px-1 rounded border border-amber-200" title="Criada Manualmente ou fantasma">Manual</span>}
+                                                                    <Button type="button" variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(`[${v.label}]`); toast.success("Tag copiada!"); }}><Copy className="h-3 w-3" /></Button>
+                                                                </div>
+                                                                <span className="font-bold text-sm">{v.label}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <Label htmlFor={`req-${v.name}`} className="text-xs cursor-pointer">Obrigatório</Label>
+                                                                <Switch id={`req-${v.name}`} checked={v.required} onCheckedChange={(c) => handleVariableChange(v.name, 'required', c)} />
+                                                            </div>
+                                                            {/* DELETE LOGIC */}
+                                                            {/* 1. If NOT in text -> Always Force Delete (Manual/Ghost) */}
+                                                            {!inText ? (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-6 w-6 text-red-600 hover:text-red-900 hover:bg-red-100"
+                                                                    title="Excluir Definitivamente"
+                                                                    onClick={() => deleteVariable(v.name)}
+                                                                >
+                                                                    <Trash2 className="h-3 w-3" />
+                                                                </Button>
+                                                            ) : (
+                                                                // 2. If IN text but has rule -> Unlink (Move to root)
+                                                                v.visibility_rule && (
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-6 w-6 text-orange-400 hover:text-orange-700 hover:bg-orange-50"
+                                                                        title="Desvincular (Mover para Raiz)"
+                                                                        onClick={() => setDetectedVariables(prev => prev.map(vv => vv.name === v.name ? { ...vv, visibility_rule: null } : vv))}
+                                                                    >
+                                                                        <Unlink className="h-3 w-3" />
+                                                                    </Button>
+                                                                )
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        <div>
-                                                            <Select
-                                                                value={v.visibility_rule?.dependsOn || '_none'}
-                                                                onValueChange={(val) => {
-                                                                    if (val === '_none') {
-                                                                        setDetectedVariables(prev => prev.map(vv =>
-                                                                            vv.name === v.name ? { ...vv, visibility_rule: null } : vv
-                                                                        ));
-                                                                    } else {
-                                                                        setDetectedVariables(prev => prev.map(vv =>
-                                                                            vv.name === v.name ? {
-                                                                                ...vv,
-                                                                                visibility_rule: {
-                                                                                    dependsOn: val,
-                                                                                    operator: vv.visibility_rule?.operator || 'equals',
-                                                                                    value: vv.visibility_rule?.value || ''
-                                                                                }
-                                                                            } : vv
-                                                                        ));
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <SelectTrigger className="h-8 bg-white text-xs">
-                                                                    <SelectValue placeholder="Depende de..." />
-                                                                </SelectTrigger>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        <div className="space-y-1">
+                                                            <Label className="text-xs text-muted-foreground">Label</Label>
+                                                            <Input value={v.label} onChange={(e) => handleVariableChange(v.name, 'label', e.target.value)} className="h-8 bg-white" />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-xs text-muted-foreground">Etapa</Label>
+                                                            <Select value={v.group_name} onValueChange={(val) => handleVariableChange(v.name, 'group_name', val)}>
+                                                                <SelectTrigger className="h-8 bg-white"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                                                                 <SelectContent>
-                                                                    <SelectItem value="_none">Sempre Visível</SelectItem>
-                                                                    {detectedVariables.filter(dv => dv.name !== v.name).map(dv => (
-                                                                        <SelectItem key={dv.name} value={dv.name}>{dv.label}</SelectItem>
-                                                                    ))}
+                                                                    <SelectItem value="_default">Informações Gerais</SelectItem>
+                                                                    {wizardStages.map(stage => <SelectItem key={stage} value={stage}>{stage}</SelectItem>)}
                                                                 </SelectContent>
                                                             </Select>
                                                         </div>
-                                                        {v.visibility_rule && (
-                                                            <>
-                                                                <div>
-                                                                    <Select
-                                                                        value={v.visibility_rule.operator}
-                                                                        onValueChange={(val: 'equals' | 'not_equals' | 'contains' | 'is_empty' | 'is_not_empty') => {
-                                                                            setDetectedVariables(prev => prev.map(vv =>
-                                                                                vv.name === v.name && vv.visibility_rule ? {
-                                                                                    ...vv,
-                                                                                    visibility_rule: { ...vv.visibility_rule!, operator: val }
-                                                                                } : vv
-                                                                            ));
-                                                                        }}
-                                                                    >
-                                                                        <SelectTrigger className="h-8 bg-white text-xs">
-                                                                            <SelectValue />
-                                                                        </SelectTrigger>
-                                                                        <SelectContent>
-                                                                            <SelectItem value="equals">É igual a</SelectItem>
-                                                                            <SelectItem value="not_equals">Não é igual a</SelectItem>
-                                                                            <SelectItem value="contains">Contém</SelectItem>
-                                                                            <SelectItem value="is_not_empty">Está preenchido</SelectItem>
-                                                                            <SelectItem value="is_empty">Está vazio</SelectItem>
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                </div>
-                                                                {!['is_empty', 'is_not_empty'].includes(v.visibility_rule.operator) && (
-                                                                    <div>
-                                                                        <Input
-                                                                            value={typeof v.visibility_rule.value === 'string' ? v.visibility_rule.value : ''}
-                                                                            onChange={(e) => {
-                                                                                setDetectedVariables(prev => prev.map(vv =>
-                                                                                    vv.name === v.name && vv.visibility_rule ? {
-                                                                                        ...vv,
-                                                                                        visibility_rule: { ...vv.visibility_rule!, value: e.target.value }
-                                                                                    } : vv
-                                                                                ));
-                                                                            }}
-                                                                            placeholder="Valor"
-                                                                            className="h-8 bg-white text-xs"
-                                                                        />
-                                                                    </div>
-                                                                )}
-                                                            </>
-                                                        )}
                                                     </div>
-                                                    {v.visibility_rule && (
-                                                        <p className="text-[10px] text-purple-500 font-medium">
-                                                            ✨ Mostrar quando "{detectedVariables.find(dv => dv.name === v.visibility_rule?.dependsOn)?.label || v.visibility_rule.dependsOn}"
-                                                            {v.visibility_rule.operator === 'equals' && ` = "${v.visibility_rule.value}"`}
-                                                            {v.visibility_rule.operator === 'not_equals' && ` ≠ "${v.visibility_rule.value}"`}
-                                                            {v.visibility_rule.operator === 'contains' && ` contém "${v.visibility_rule.value}"`}
-                                                            {v.visibility_rule.operator === 'is_not_empty' && ` estiver preenchido`}
-                                                            {v.visibility_rule.operator === 'is_empty' && ` estiver vazio`}
-                                                        </p>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        <div className="space-y-1">
+                                                            <Label className="text-xs text-muted-foreground">Tipo</Label>
+                                                            <Select value={v.type} onValueChange={(val) => handleVariableChange(v.name, 'type', val)}>
+                                                                <SelectTrigger className="h-8 bg-white"><SelectValue /></SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="text">Texto Curto</SelectItem>
+                                                                    <SelectItem value="textarea">Texto Longo</SelectItem>
+                                                                    <SelectItem value="number">Número</SelectItem>
+                                                                    <SelectItem value="money">Moeda (R$)</SelectItem>
+                                                                    <SelectItem value="date">Data</SelectItem>
+                                                                    <SelectItem value="cpf">CPF</SelectItem>
+                                                                    <SelectItem value="cnpj">CNPJ</SelectItem>
+                                                                    <SelectItem value="email">E-mail</SelectItem>
+                                                                    <SelectItem value="select">Lista de Opções</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-3 pt-2">
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] text-slate-400 font-bold uppercase">Prefixo</Label>
+                                                            <Input value={v.prefix} onChange={(e) => handleVariableChange(v.name, 'prefix', e.target.value)} className="h-8 bg-white" placeholder="Ex: R$ " />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] text-slate-400 font-bold uppercase">Sufixo</Label>
+                                                            <Input value={v.suffix} onChange={(e) => handleVariableChange(v.name, 'suffix', e.target.value)} className="h-8 bg-white" placeholder="Ex: p/ mês" />
+                                                        </div>
+                                                    </div>
+
+                                                    {v.type === 'select' && (
+                                                        <div className="space-y-1 pt-2 border-t border-dashed">
+                                                            <Label className="text-xs text-blue-600 font-semibold">Opções (separadas por vírgula). Use "Rótulo|Valor" para definir texto diferente.</Label>
+                                                            <Input value={v.options} onChange={(e) => handleVariableChange(v.name, 'options', e.target.value)} className="h-8 bg-white" placeholder="Ex: Pessoa Física, Pessoa Jurídica | Texto Jurídico Longo" />
+                                                        </div>
+                                                    )}
+
+                                                    {v.type === 'select' && optionsList.length > 0 && (
+                                                        <div className="space-y-3 pt-2">
+                                                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Vinculação de Variáveis</p>
+                                                            {optionsList.map(opt => {
+                                                                const [label, val] = opt.includes('|') ? opt.split('|').map(s => s.trim()) : [opt, opt];
+                                                                return (
+                                                                    <div key={val} className="ml-4 pl-4 border-l-2 border-slate-300 space-y-2">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-xs font-bold text-slate-700 bg-slate-200 px-2 py-1 rounded">Se escolher "{label}"</span>
+                                                                            <span className="text-[10px] text-slate-400">Mostrar:</span>
+                                                                        </div>
+
+                                                                        <div className="space-y-3 my-2">
+                                                                            {getChildrenForOption(v.name, val).map(child => renderVariableCard(child))}
+                                                                        </div>
+
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="outline"
+                                                                                size="sm"
+                                                                                className="h-7 text-xs border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:border-blue-400"
+                                                                                onClick={() => setCreateVarModal({ isOpen: true, parentName: v.name, optionValue: val })}
+                                                                            >
+                                                                                <Plus className="h-3 w-3 mr-1" />
+                                                                                Adicionar Campo
+                                                                            </Button>
+
+                                                                            {/* Dropdown for Existing - Optional/Secondary */}
+                                                                            <Select value="_placeholder" onValueChange={(val) => {
+                                                                                if (val !== '_placeholder') {
+                                                                                    setDetectedVariables(prev => prev.map(vv => vv.name === val ? { ...vv, visibility_rule: { dependsOn: v.name, operator: 'equals', value: val } } : vv));
+                                                                                    toast.success(`Movido para "${label}"`);
+                                                                                }
+                                                                            }}>
+                                                                                <SelectTrigger className="h-7 w-[20px] px-0 border-0 hover:bg-slate-100"><Plus className="h-3 w-3 text-slate-400" /></SelectTrigger>
+                                                                                <SelectContent>
+                                                                                    <SelectItem value="_placeholder" disabled>Vincular Existente...</SelectItem>
+                                                                                    {detectedVariables.filter(c => c.name !== v.name && !c.visibility_rule).map(c => <SelectItem key={c.name} value={c.name}>{c.label}</SelectItem>)}
+                                                                                </SelectContent>
+                                                                            </Select>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
                                                     )}
                                                 </div>
-                                            </div>
+                                            );
+                                        };
 
-                                        ))
-                                    )}
+                                        return (
+                                            <div className="space-y-4">
+                                                {detectedVariables.length === 0 ? <p className="text-center text-muted-foreground p-10">Nenhuma variável.</p> : rootVariables.map(renderVariableCard)}
+                                            </div>
+                                        );
+                                    })()}
                                 </CardContent>
                             </Card>
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-4 p-8 border-t bg-slate-50/50 -mx-4 sm:-mx-6 lg:-mx-8 rounded-b-xl border-slate-200">
+                    <div className="flex justify-end gap-4 p-8 border-t bg-slate-50/50 rounded-b-xl border-slate-200">
                         <Button type="button" variant="ghost" onClick={() => navigate('/admin/contratos')}>Cancelar</Button>
                         <Button type="submit" size="lg" disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 min-w-[200px] shadow-lg shadow-blue-200">
                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -784,6 +743,53 @@ export default function AdminContractEditor() {
                         </Button>
                     </div>
                 </form>
+
+                {/* CREATE VARIABLE DIALOG */}
+                <Dialog open={!!createVarModal} onOpenChange={(open) => !open && setCreateVarModal(null)}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Criar Nova Variável</DialogTitle>
+                            <DialogDescription>
+                                Adicionando campo que aparecerá quando <strong>{createVarModal?.parentName}</strong> for igual a <strong>{createVarModal?.optionValue}</strong>.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="new-label" className="text-right">Label</Label>
+                                <Input id="new-label" value={newVarLabel} onChange={(e) => setNewVarLabel(e.target.value)} className="col-span-3" placeholder="Ex: CPF do Locador" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="new-type" className="text-right">Tipo</Label>
+                                <Select value={newVarType} onValueChange={setNewVarType}>
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="text">Texto Curto</SelectItem>
+                                        <SelectItem value="textarea">Texto Longo</SelectItem>
+                                        <SelectItem value="number">Número</SelectItem>
+                                        <SelectItem value="money">Moeda</SelectItem>
+                                        <SelectItem value="date">Data</SelectItem>
+                                        <SelectItem value="cpf">CPF</SelectItem>
+                                        <SelectItem value="cnpj">CNPJ</SelectItem>
+                                        <SelectItem value="email">E-mail</SelectItem>
+                                        <SelectItem value="select">Lista de Opções</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {newVarType === 'select' && (
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="new-options" className="text-right">Opções</Label>
+                                    <Input id="new-options" value={newVarOptions} onChange={(e) => setNewVarOptions(e.target.value)} className="col-span-3" placeholder="Opção A, Opção B" />
+                                </div>
+                            )}
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="secondary" onClick={() => setCreateVarModal(null)}>Cancelar</Button>
+                            <Button type="button" onClick={handleCreateVariable}>Criar Campo</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AdminLayout>
     );

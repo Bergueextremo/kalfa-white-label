@@ -146,6 +146,7 @@ export default function ContractWizard() {
                         <LivePreview
                             robustTemplate={contract.template_body || ''}
                             formData={formData}
+                            variables={variables}
                         />
                     </div>
                 </div>

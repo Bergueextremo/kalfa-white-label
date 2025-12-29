@@ -237,6 +237,95 @@ export default function AdminContracts() {
         }
     };
 
+    const installUXModel = async () => {
+        if (!confirm("Isso irá instalar o 'CONTRATO MODELO COM LÓGICA CONDICIONAL'. Deseja continuar?")) return;
+        setIsBulkLoading(true);
+        try {
+            // 1. Create Contract
+            const contractId = '00000000-0000-0000-0000-000000000001';
+
+            // Upsert Contract
+            const { error: contractError } = await supabase.from('contracts').upsert({
+                id: contractId,
+                title: 'CONTRATO MODELO COM LÓGICA CONDICIONAL',
+                slug: 'contrato-modelo-ux-' + Date.now(), // Append timestamp to avoid slug conflict if exists
+                description: 'Modelo de contrato com todas as variáveis e lógicas condicionais configuradas',
+                category_id: categories[0]?.id, // Pick first category
+                price: 0,
+                is_active: true,
+                wizard_stages: ['Tipo de Contratante', 'Qualificação Pessoa Física', 'Qualificação Pessoa Jurídica', 'Dados do Cônjuge', 'Objeto do Contrato', 'Valores e Condições', 'Prazos', 'Foro e Assinatura'],
+                template_body: `<h1>CONTRATO MODELO</h1>... (Ver Conteúdo Completo no Editor)`
+            });
+
+            if (contractError) throw contractError;
+
+            // 2. Delete existing vars for this contract
+            await supabase.from('contract_variables').delete().eq('contract_id', contractId);
+
+            // 3. Insert Variables
+            const vars = [
+                // Etapa 1: Natureza do Locador
+                { contract_id: contractId, name: 'tipo_locador', label: 'O locador é:', type: 'select', options: '["Pessoa Física (particular)", "Pessoa Jurídica (imobiliária ou empresa)"]', required: true, group_name: 'Tipo de Contratante', order_index: 1, visibility_rule: null },
+
+                // Etapa 2: Qualificação (PF)
+                { contract_id: contractId, name: 'condicao_locador', label: 'O locador aluga o bem sob a seguinte condição:', type: 'select', options: '["Proprietário (dono) do bem", "Locatário e deseja sublocá-lo", "Fiduciário (pessoa encarregada pelo bem sob condição de testamento)", "Inventariante (representante da herança)", "Comodatário (pegou o bem emprestado)", "Usufrutuário (possui o direito de usufruir do bem)", "Outra situação"]', required: true, group_name: 'Qualificação Pessoa Física', order_index: 2, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Física' } },
+                { contract_id: contractId, name: 'nome_completo', label: 'Nome Completo', type: 'text', required: true, group_name: 'Qualificação Pessoa Física', order_index: 3, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Física' } },
+                { contract_id: contractId, name: 'nacionalidade', label: 'Nacionalidade do locador', type: 'text', required: true, group_name: 'Qualificação Pessoa Física', order_index: 4, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Física' } },
+                { contract_id: contractId, name: 'estado_civil', label: 'Estado civil do locador:', type: 'select', options: '["Solteiro(a)", "Casado(a)", "Divorciado(a)", "em União Estável", "Separado(a) judicialmente", "Viúvo(a)"]', required: true, group_name: 'Qualificação Pessoa Física', order_index: 5, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Física' } },
+                { contract_id: contractId, name: 'profissao', label: 'Profissão', type: 'text', required: true, group_name: 'Qualificação Pessoa Física', order_index: 6, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Física' } },
+
+                // Documentos PF
+                { contract_id: contractId, name: 'tipo_documento', label: 'Selecione o documento de identificação:', type: 'select', options: '["Carteira de Identidade (RG)", "Identidade Funcional", "Carteira de Trabalho e Previdência Social (CTPS)", "Carteira Nacional de Habilitação (CNH)", "Passaporte"]', required: true, group_name: 'Qualificação Pessoa Física', order_index: 7, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Física' } },
+                { contract_id: contractId, name: 'numero_documento', label: 'Número do Documento', type: 'text', required: true, group_name: 'Qualificação Pessoa Física', order_index: 8, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Física' } },
+                { contract_id: contractId, name: 'cpf', label: 'CPF', type: 'cpf', required: true, group_name: 'Qualificação Pessoa Física', order_index: 9, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Física' } },
+                { contract_id: contractId, name: 'endereco_completo', label: 'Endereço Completo', type: 'text', required: true, group_name: 'Qualificação Pessoa Física', order_index: 10, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Física' } },
+
+                // Etapa 3 (PJ)
+                { contract_id: contractId, name: 'razao_social', label: 'Razão Social', type: 'text', required: true, group_name: 'Qualificação Pessoa Jurídica', order_index: 11, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Jurídica' } },
+                { contract_id: contractId, name: 'cnpj', label: 'CNPJ', type: 'cnpj', required: true, group_name: 'Qualificação Pessoa Jurídica', order_index: 12, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Jurídica' } },
+                { contract_id: contractId, name: 'endereco_empresa', label: 'Endereço da Empresa', type: 'text', required: true, group_name: 'Qualificação Pessoa Jurídica', order_index: 13, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Jurídica' } },
+                { contract_id: contractId, name: 'representante_nome', label: 'Nome do Representante', type: 'text', required: true, group_name: 'Qualificação Pessoa Jurídica', order_index: 14, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Jurídica' } },
+                { contract_id: contractId, name: 'representante_cpf', label: 'CPF do Representante', type: 'cpf', required: true, group_name: 'Qualificação Pessoa Jurídica', order_index: 15, visibility_rule: { dependsOn: 'tipo_locador', operator: 'contains', value: 'Jurídica' } },
+
+                // Etapa 4 (Conjugê)
+                { contract_id: contractId, name: 'conjuge_nome', label: 'Nome do Cônjuge', type: 'text', required: true, group_name: 'Dados do Cônjuge', order_index: 20, visibility_rule: { dependsOn: 'estado_civil', operator: 'equals', value: 'Casado(a)' } },
+                { contract_id: contractId, name: 'conjuge_cpf', label: 'CPF do Cônjuge', type: 'cpf', required: true, group_name: 'Dados do Cônjuge', order_index: 21, visibility_rule: { dependsOn: 'estado_civil', operator: 'equals', value: 'Casado(a)' } },
+                { contract_id: contractId, name: 'regime_bens', label: 'Regime de Bens', type: 'select', options: '["Comunhão Parcial de Bens", "Comunhão Universal de Bens", "Separação Total de Bens", "Participação Final nos Aquestos"]', required: true, group_name: 'Dados do Cônjuge', order_index: 23, visibility_rule: { dependsOn: 'estado_civil', operator: 'equals', value: 'Casado(a)' } },
+
+                // Etapa 5 (Objeto)
+                { contract_id: contractId, name: 'objeto_descricao', label: 'Descrição do Objeto (Endereço do Imóvel, etc)', type: 'textarea', required: true, group_name: 'Objeto do Contrato', order_index: 30, visibility_rule: null },
+
+                // Etapa 6 (Valores)
+                { contract_id: contractId, name: 'valor_total', label: 'Valor do Aluguel', type: 'money', required: true, group_name: 'Valores e Condições', order_index: 40, visibility_rule: null },
+                { contract_id: contractId, name: 'dia_pagamento', label: 'Dia do Pagamento', type: 'number', required: true, group_name: 'Valores e Condições', order_index: 41, visibility_rule: null },
+                { contract_id: contractId, name: 'forma_pagamento', label: 'Forma de Pagamento', type: 'select', options: '["Boleto Bancário", "Transferência Bancária / PIX", "Dinheiro em Espécie", "Cheque"]', required: true, group_name: 'Valores e Condições', order_index: 42, visibility_rule: null },
+
+                // Etapa 7 (Prazos)
+                { contract_id: contractId, name: 'data_inicio', label: 'Data de Início da Locação', type: 'date', required: true, group_name: 'Prazos', order_index: 50, visibility_rule: null },
+                { contract_id: contractId, name: 'prazo_meses', label: 'Prazo em Meses', type: 'number', required: true, group_name: 'Prazos', order_index: 51, visibility_rule: null },
+
+                // Etapa 8 (Foro)
+                { contract_id: contractId, name: 'cidade_foro', label: 'Cidade do Foro', type: 'text', required: true, group_name: 'Foro e Assinatura', order_index: 60, visibility_rule: null },
+                { contract_id: contractId, name: 'estado_foro', label: 'Estado do Foro', type: 'select', options: '["SP", "RJ", "MG", "RS", "PR", "SC", "ES", "GO", "DF", "BA", "PE", "CE", "AM", "PA", "MT", "MS", "TO", "RO", "AC", "RR", "AP", "MA", "PI", "RN", "PB", "AL", "SE"]', required: true, group_name: 'Foro e Assinatura', order_index: 61, visibility_rule: null },
+                { contract_id: contractId, name: 'data_assinatura', label: 'Data de Assinatura', type: 'date', required: true, group_name: 'Foro e Assinatura', order_index: 62, visibility_rule: null },
+            ];
+
+
+            const { error: varsError } = await supabase.from('contract_variables').insert(vars);
+            if (varsError) throw varsError;
+
+            toast.success("✅ Modelo UX instalado com sucesso!");
+            fetchContracts();
+
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Erro ao instalar modelo: " + error.message);
+        } finally {
+            setIsBulkLoading(false);
+        }
+    };
+
+
     const filteredContracts = contracts.filter(c =>
         c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -250,10 +339,20 @@ export default function AdminContracts() {
                         <h1 className="text-3xl font-bold text-slate-900">Contratos</h1>
                         <p className="text-slate-500 mt-1">Gerencie os modelos de contrato disponíveis no catálogo</p>
                     </div>
-                    <Button onClick={() => navigate('/admin/contratos/novo')} className="bg-blue-600 hover:bg-blue-700">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Novo Contrato
-                    </Button>
+                    <div className="flex gap-3">
+                        <Button
+                            onClick={installUXModel}
+                            variant="outline"
+                            className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                        >
+                            <Settings2 className="mr-2 h-4 w-4" />
+                            Instalar Modelo UX
+                        </Button>
+                        <Button onClick={() => navigate('/admin/contratos/novo')} className="bg-blue-600 hover:bg-blue-700">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Novo Contrato
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-4">

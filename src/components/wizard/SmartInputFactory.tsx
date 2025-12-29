@@ -103,14 +103,17 @@ export function SmartInputFactory({ variable, value, onChange, labelOverride, fo
             <LabelWrapper>
                 <Select value={value} onValueChange={onChange}>
                     <SelectTrigger>
-                        <SelectValue placeholder="Selecione..." />
+                        <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                        {variable.options?.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                                {opt}
-                            </SelectItem>
-                        ))}
+                        {variable.options?.map((opt) => {
+                            const [label, val] = opt.includes('|') ? opt.split('|').map(s => s.trim()) : [opt, opt];
+                            return (
+                                <SelectItem key={val} value={val}>
+                                    {label}
+                                </SelectItem>
+                            );
+                        })}
                     </SelectContent>
                 </Select>
             </LabelWrapper>
