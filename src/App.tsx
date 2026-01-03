@@ -37,6 +37,8 @@ import ContratoBlindado from "./pages/ContratoBlindado";
 import Catalog from "./pages/Catalog";
 import ContractWizard from "./pages/ContractWizard";
 import SuccessPage from "./pages/SuccessPage";
+import FinanciamentoBlindado from "./pages/FinanciamentoBlindado";
+import LeilaoBlindado from "./pages/LeilaoBlindado";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +74,8 @@ const App = () => {
                   <Route path="/contratoblindado" element={<ContratoBlindado />} />
                   <Route path="/catalogo" element={<Catalog />} />
                   <Route path="/catalogo/:slug" element={<ContractWizard />} />
+                  <Route path="/financiamentoblindado" element={<FinanciamentoBlindado />} />
+                  <Route path="/leilaoblindado" element={<LeilaoBlindado />} />
                   <Route path="/sucesso" element={<SuccessPage />} />
 
                   {/* Protected routes */}

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Car, Home, Building2, Briefcase, Scale, FileText, Check, Shield, Lock, ArrowLeft, Upload, ChevronRight } from "lucide-react";
+import { Car, Home, Building2, Briefcase, Scale, FileText, Check, Shield, Lock, ArrowLeft, Upload, ChevronRight, Gavel } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -16,10 +16,17 @@ interface ContractType {
 const contractTypes: ContractType[] = [{
   id: "veiculo",
   icon: Car,
-  title: "Financiamento de Veículo & Leilão",
+  title: "Financiamento de Veículo",
   subtitle: "Juros abusivos, Busca e Apreensão, Taxas Ocultas",
   description: "Detectando taxas de juros acima do limite legal, cláusulas de busca e apreensão irregulares e cobranças ocultas.",
   keywords: ["juros abusivos financiamento veículo", "busca e apreensão", "taxas ocultas carro"]
+}, {
+  id: "leilao",
+  icon: Gavel,
+  title: "Arrematação em Leilão",
+  subtitle: "Edital, Matrícula, Dívidas Ocultas",
+  description: "Análise completa de riscos em leilões judiciais e extrajudiciais de imóveis e veículos. Blindagem contra dívidas do antigo proprietário.",
+  keywords: ["leilão", "arrematação", "edital de leilão", "dívidas leilão"]
 }, {
   id: "imovel",
   icon: Home,
@@ -60,6 +67,23 @@ const benefits = ["Varredura de Cláusulas Abusivas", "Base de dados STJ e Bacen
 const Consultas = () => {
   const navigate = useNavigate();
   const [selectedContract, setSelectedContract] = useState<ContractType | null>(null);
+  const [remainingSpots, setRemainingSpots] = useState(49);
+
+  // Decrement counter logic to simulate activity
+  useEffect(() => {
+    // Initial random drop to make it feel live if user refreshes
+    const initialDrop = Math.floor(Math.random() * 3);
+    setRemainingSpots(prev => Math.max(12, prev - initialDrop));
+
+    const interval = setInterval(() => {
+      setRemainingSpots(prev => {
+        if (prev <= 12) return prev; // Don't go below 12
+        return Math.random() > 0.5 ? prev - 1 : prev; // Randomly decrement
+      });
+    }, 15000); // Check every 15 seconds
+
+    return () => clearInterval(interval);
+  }, []);
   const handleContractClick = (contract: ContractType) => {
     setSelectedContract(contract);
   };
@@ -161,6 +185,26 @@ const Consultas = () => {
                   </div>
                   <span className="text-sm text-slate-700">{benefit}</span>
                 </div>)}
+              </div>
+
+              {/* Scarcity Trigger */}
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="bg-black rounded-full p-1">
+                      <span className="text-white font-bold text-xs px-1">!</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-bold text-[#0A192F] text-sm">ATENÇÃO:</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      Devido à alta demanda, hoje a auditoria está limitada.
+                    </p>
+                    <p className="font-bold text-red-600 text-sm">
+                      Restam apenas: {remainingSpots}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Divider */}

@@ -5,9 +5,11 @@ interface ScoreCardProps {
     score: number;
     riskLevel: string;
     contractType: string;
+    title?: string;
+    subtitle?: string;
 }
 
-export function ScoreCard({ score, riskLevel, contractType }: ScoreCardProps) {
+export function ScoreCard({ score, riskLevel, contractType, title = "Score de Conformidade", subtitle = "Análise de Conformidade" }: ScoreCardProps) {
     // Serasa Style: 4 Segments
     // Red -> Yellow -> Light Green -> Dark Green
     // Knob indicator moves along the arc.
@@ -82,8 +84,8 @@ export function ScoreCard({ score, riskLevel, contractType }: ScoreCardProps) {
                     <Scale className="w-6 h-6 text-slate-700" />
                 </div>
                 <div>
-                    <h2 className="text-xl font-bold text-slate-900">Score de Conformidade</h2>
-                    <p className="text-sm text-slate-500">Análise de Conformidade</p>
+                    <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+                    <p className="text-sm text-slate-500">{subtitle}</p>
                 </div>
             </div>
 
