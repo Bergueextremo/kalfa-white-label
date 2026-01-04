@@ -7,9 +7,10 @@ interface ScoreCardProps {
     contractType: string;
     title?: string;
     subtitle?: string;
+    hideHeader?: boolean;
 }
 
-export function ScoreCard({ score, riskLevel, contractType, title = "Score de Conformidade", subtitle = "Análise de Conformidade" }: ScoreCardProps) {
+export function ScoreCard({ score, riskLevel, contractType, title = "Score de Conformidade", subtitle = "Análise de Conformidade", hideHeader = false }: ScoreCardProps) {
     // Serasa Style: 4 Segments
     // Red -> Yellow -> Light Green -> Dark Green
     // Knob indicator moves along the arc.
@@ -79,15 +80,17 @@ export function ScoreCard({ score, riskLevel, contractType, title = "Score de Co
 
     return (
         <div className="bg-white rounded-2xl shadow-lg p-8 h-full flex flex-col relative overflow-hidden">
-            <div className="flex items-center gap-3 mb-6 z-10">
-                <div className="p-3 bg-slate-50 rounded-lg">
-                    <Scale className="w-6 h-6 text-slate-700" />
+            {!hideHeader && (
+                <div className="flex items-center gap-3 mb-6 z-10">
+                    <div className="p-3 bg-slate-50 rounded-lg">
+                        <Scale className="w-6 h-6 text-slate-700" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+                        <p className="text-sm text-slate-500">{subtitle}</p>
+                    </div>
                 </div>
-                <div>
-                    <h2 className="text-xl font-bold text-slate-900">{title}</h2>
-                    <p className="text-sm text-slate-500">{subtitle}</p>
-                </div>
-            </div>
+            )}
 
             <div className="flex-1 flex flex-col items-center justify-center py-4">
                 <div className="relative w-64 h-40 mb-2">

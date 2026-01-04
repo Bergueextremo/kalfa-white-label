@@ -143,4 +143,18 @@ All colors MUST be HSL.
   .animate-ping-slow {
     animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
   }
+
+  .animate-marquee {
+    animation: marquee 30s linear infinite;
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(-50%);
+    }
+  }
 }
