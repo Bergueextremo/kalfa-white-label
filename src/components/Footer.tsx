@@ -7,7 +7,7 @@ export const Footer = () => {
             {/* Faixa de Aviso Legal (Estilo Gov) */}
             <div className="bg-slate-900 py-3 px-4 text-center border-b border-slate-800">
                 <p className="text-[10px] md:text-xs font-medium text-slate-400 uppercase tracking-wider">
-                    Plataforma Privada de Auditoria Forense - Não associada a órgãos governamentais.
+                    Plataforma Privada de Consulta Jurídica - Não associada a órgãos governamentais.
                 </p>
             </div>
 

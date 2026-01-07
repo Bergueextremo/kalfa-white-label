@@ -33,6 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { AbusividadeGauge } from "@/components/financiamento/AbusividadeGauge";
 import { SocialProof } from "@/components/financiamento/SocialProof";
 import { FinanciamentoTicker } from "@/components/financiamento/FinanciamentoTicker";
+import { BankLogoCarousel } from "@/components/financiamento/BankLogoCarousel";
 
 const FinanciamentoBlindado = () => {
     const navigate = useNavigate();
@@ -75,7 +76,7 @@ const FinanciamentoBlindado = () => {
     const containerClass = "container mx-auto px-4";
 
     return (
-        <div className="min-h-screen bg-white font-sans text-[#1a2b4b]">
+        <div className="min-h-screen bg-white font-sans text-[#1a2b4b] overflow-x-hidden">
             {/* Header */}
             <header className="border-b border-gray-100 bg-white sticky top-0 z-50 shadow-sm">
                 <div className="container mx-auto px-4 py-4">
@@ -129,76 +130,100 @@ const FinanciamentoBlindado = () => {
                 </div>
             </header>
 
-            {/* HERO SECTION - IMPACTO E CONVERSÃO 50/50 */}
-            <section className="relative overflow-hidden bg-white pt-20 pb-24 md:pt-32 md:pb-32 border-b border-gray-100">
+            {/* HERO SECTION - RESPONSIVE LAYOUT */}
+            <section className="relative overflow-hidden bg-white pt-8 pb-12 md:pt-16 md:pb-20 border-b border-gray-100">
                 <div className={containerClass}>
                     <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-                        {/* LADO ESQUERDO: A MENSAGEM DE AUTORIDADE */}
-                        <div className="text-center lg:text-left z-10">
-                            <div className="inline-flex items-center gap-2 bg-[#FFD700] px-4 py-1.5 rounded-sm mb-6 shadow-sm">
-                                <span className="text-[10px] md:text-xs font-black text-black tracking-[0.2em] uppercase">
+                        {/* COLUNA ESQUERDA (DESKTOP: Texto / MOBILE: Parte 1) */}
+                        <div className="flex flex-col items-center lg:items-start text-center lg:text-left z-10">
+
+                            {/* 1. TAG SUPERIOR */}
+                            <div className="inline-flex items-center gap-2 bg-[#FFD700] px-3 md:px-4 py-1.5 rounded-sm mb-3 md:mb-5 shadow-sm mx-4 lg:mx-0">
+                                <span className="text-[9px] md:text-[10px] font-black text-black tracking-[0.1em] uppercase text-center">
                                     Plataforma de Auditoria Bancária Especializada
                                 </span>
                             </div>
 
-                            <h1 className="text-4xl md:text-5xl lg:text-7xl font-black text-[#1a2b4b] mb-6 leading-[1.05] tracking-tighter">
-                                Seu Contrato Bancário Pode Esconder <span className="text-[#00C851]">Dívidas Que Não São Suas.</span>
+                            {/* 2. HEADLINE */}
+                            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#1a2b4b] mb-4 md:mb-6 leading-[1.05] tracking-tighter px-4 lg:px-0">
+                                Seu Contrato Bancário Pode Esconder <br className="hidden md:block" /> <span className="text-[#00C851]">Dívidas Que Não São Suas.</span>
                             </h1>
 
-                            <p className="text-lg md:text-xl text-gray-600 mb-10 leading-relaxed max-w-xl mx-auto lg:mx-0 font-medium">
+                            {/* 3. SUBHEADLINE */}
+                            <p className="text-sm md:text-base text-gray-400 mb-2 md:mb-8 leading-relaxed max-w-xl font-medium px-4 lg:px-0">
                                 Auditoria pericial para Imóveis, Veículos e Contratos de Crédito. Identificamos taxas ilegais e juros abusivos baseados estritamente nas normas do STJ e Bacen.
                             </p>
 
-                            <div className="flex flex-col items-center lg:items-start gap-4">
+                            {/* [DESKTOP ONLY] BOTÃO E FOOTER */}
+                            <div className="hidden lg:flex flex-col items-start gap-6 w-full">
                                 <Button
                                     size="lg"
-                                    className="w-full sm:w-auto bg-[#00C851] hover:bg-[#009624] text-white font-black text-xl h-16 px-12 rounded-md shadow-xl transition-all uppercase tracking-widest hover:-translate-y-1"
+                                    className="bg-[#00C851] hover:bg-[#009624] text-white font-black text-xl h-20 px-12 rounded-lg shadow-2xl transition-all uppercase tracking-widest hover:-translate-y-1"
                                     onClick={() => document.getElementById('calculadora')?.scrollIntoView({ behavior: 'smooth' })}
                                 >
                                     Simular Minha Economia Agora
                                 </Button>
-                                <div className="flex items-center gap-3 py-2">
+                                <div className="flex items-center gap-8 opacity-60">
                                     <div className="flex items-center gap-2 text-gray-400 font-bold text-[10px] uppercase tracking-wider">
                                         <ShieldCheck className="w-4 h-4 text-[#1a2b4b]" />
-                                        Ambiente Seguro e Criptografado
+                                        Ambiente Seguro
                                     </div>
                                     <span className="text-gray-200">|</span>
                                     <div className="flex items-center gap-2 text-gray-400 font-bold text-[10px] uppercase tracking-wider">
                                         <FileCheck className="w-4 h-4 text-[#00C851]" />
-                                        Laudo Técnico em PDF
+                                        Laudo em PDF
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* LADO DIREITO: O ELEMENTO DE PROVA TÉCNICA (SCORE) */}
-                        <div className="relative flex flex-col items-center justify-center p-10 group overflow-hidden">
-                            {/* Elemento visual de fundo para reforçar tecnologia */}
-                            <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
+                        {/* COLUNA DIREITA (DESKTOP: Gauge / MOBILE: Parte 2 e CTAs) */}
+                        <div className="flex flex-col items-center z-10">
 
-                            <h3 className="relative z-10 text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-12 text-center">
-                                Índice de Abusividade Contratual
-                            </h3>
-
-                            <div className="relative z-10 transform scale-110 md:scale-125 mb-12">
-                                <AbusividadeGauge targetScore={87} />
+                            {/* 4. ELEMENTO TÉCNICO (GAUGE) */}
+                            <div className="relative w-full flex flex-col items-center mb-2 lg:mb-4 pt-8 lg:pt-12">
+                                <div className="transform scale-[0.8] sm:scale-100 md:scale-125 lg:scale-150">
+                                    <AbusividadeGauge targetScore={87} />
+                                </div>
                             </div>
 
-                            <div className="relative z-10 w-full mt-4 text-center space-y-8">
-                                <div className="inline-block px-6 py-2 bg-white border border-red-100 rounded-full shadow-sm">
-                                    <p className="text-red-600 font-black text-sm uppercase tracking-tight">
+                            {/* 5. ALERTA DE RISCO */}
+                            <div className="mt-2 md:mt-10 lg:mt-16 mb-4 w-full max-w-md px-4 flex justify-center">
+                                <div className="py-2 px-4 md:px-6 bg-white border border-red-100 rounded-full shadow-sm text-center">
+                                    <p className="text-red-600 font-black text-[9px] md:text-xs uppercase tracking-tight flex items-center justify-center gap-2">
                                         ⚠️ 87% dos contratos analisados possuem taxas indevidas.
                                     </p>
                                 </div>
+                            </div>
 
-                                <div className="flex flex-col items-center border-t border-gray-200 pt-8">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
-                                        Auditorias Realizadas
-                                    </span>
-                                    <SocialProof /> {/* +18.400 Auditorias Realizadas */}
+                            {/* 6. PROVA SOCIAL */}
+                            <div className="mb-6 lg:mb-0 flex flex-col items-center">
+                                <SocialProof />
+                            </div>
+
+                            {/* [MOBILE ONLY] BOTÃO E FOOTER */}
+                            <div className="lg:hidden flex flex-col items-center gap-6 w-full px-4">
+                                <Button
+                                    size="lg"
+                                    className="w-full bg-[#00C851] hover:bg-[#009624] text-white font-black text-base md:text-xl h-16 md:h-20 px-4 md:px-12 rounded-lg shadow-2xl transition-all uppercase tracking-normal md:tracking-widest hover:-translate-y-1 whitespace-normal text-center leading-tight"
+                                    onClick={() => document.getElementById('calculadora')?.scrollIntoView({ behavior: 'smooth' })}
+                                >
+                                    Simular Minha Economia Agora
+                                </Button>
+                                <div className="flex flex-row items-center gap-4 opacity-60">
+                                    <div className="flex items-center gap-2 text-gray-400 font-bold text-[10px] uppercase tracking-wider">
+                                        <ShieldCheck className="w-4 h-4 text-[#1a2b4b]" />
+                                        Seguro
+                                    </div>
+                                    <span className="text-gray-200">|</span>
+                                    <div className="flex items-center gap-2 text-gray-400 font-bold text-[10px] uppercase tracking-wider">
+                                        <FileCheck className="w-4 h-4 text-[#00C851]" />
+                                        Laudo PDF
+                                    </div>
                                 </div>
                             </div>
+
                         </div>
 
                     </div>
@@ -307,7 +332,7 @@ const FinanciamentoBlindado = () => {
                                                 </div>
 
                                                 <Button
-                                                    className="w-full h-14 bg-[#00C853] hover:bg-[#009624] text-white font-bold text-lg shadow-[0_4px_14px_0_rgba(0,200,83,0.39)] hover:shadow-[0_6px_20px_rgba(0,200,83,0.23)] hover:-translate-y-0.5 transition-all uppercase tracking-wider"
+                                                    className="w-full h-14 bg-[#00C853] hover:bg-[#009624] text-white font-bold text-base md:text-lg shadow-[0_4px_14px_0_rgba(0,200,83,0.39)] hover:shadow-[0_6px_20px_rgba(0,200,83,0.23)] hover:-translate-y-0.5 transition-all uppercase tracking-wider"
                                                     onClick={() => navigate("/consultas")}
                                                 >
                                                     Quero o Laudo Para Recuperar
@@ -356,14 +381,8 @@ const FinanciamentoBlindado = () => {
                         <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">
                             Auditamos contratos de todas as principais instituições financeiras
                         </p>
-                        <div className="flex flex-wrap justify-center gap-8 opacity-40 grayscale hover:grayscale-0 transition-all duration-500 mb-12">
-                            {/* Placeholder Logos - Text for now as specific SVG paths would be huge */}
-                            <span className="text-2xl font-bold font-serif text-slate-600">Santander</span>
-                            <span className="text-2xl font-bold font-sans tracking-tight text-[#fecb00] drop-shadow-sm text-slate-600">Banco do Brasil</span>
-                            <span className="text-2xl font-bold font-sans italic text-slate-600">Bradesco</span>
-                            <span className="text-2xl font-bold font-sans text-slate-600">Itaú</span>
-                            <span className="text-2xl font-bold font-sans text-slate-600 tracking-tighter">CAIXA</span>
-                            <span className="text-2xl font-bold font-sans text-slate-600">BV Financeira</span>
+                        <div className="mb-12 w-full max-w-5xl mx-auto">
+                            <BankLogoCarousel />
                         </div>
                     </div>
 
@@ -549,10 +568,10 @@ const FinanciamentoBlindado = () => {
                         <span className="text-base font-normal text-gray-600 block mt-4">Continuar pagando juros abusivos ou investir R$ 147,00 para economizar milhares.</span>
                     </h2>
 
-                    <div className="flex flex-col items-center gap-6 mt-10">
+                    <div className="flex flex-col items-center gap-6 mt-10 w-full">
                         <Button
                             size="lg"
-                            className="bg-[#00C853] hover:bg-[#009624] text-white font-bold text-xl px-12 py-8 h-auto rounded-lg shadow-[0_4px_14px_0_rgba(0,200,83,0.39)] hover:shadow-[0_6px_20px_rgba(0,200,83,0.23)] hover:-translate-y-0.5 transition-all uppercase tracking-wider"
+                            className="w-full md:w-auto bg-[#00C853] hover:bg-[#009624] text-white font-bold text-base md:text-xl px-4 md:px-12 py-5 md:py-8 h-auto rounded-lg shadow-[0_4px_14px_0_rgba(0,200,83,0.39)] hover:shadow-[0_6px_20px_rgba(0,200,83,0.23)] hover:-translate-y-0.5 transition-all uppercase tracking-normal md:tracking-wider whitespace-normal text-center leading-tight"
                             onClick={() => navigate("/consultas")}
                         >
                             Quero Parar de Perder Dinheiro

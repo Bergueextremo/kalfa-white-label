@@ -187,7 +187,7 @@ const AuthPage = () => {
           <div className="space-y-6 max-w-lg">
             {/* Fonte alterada para sans-serif bold */}
             <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-              Segurança Jurídica com Precisão Forense.
+              Segurança Jurídica com Precisão Técnica.
             </h1>
             <p className="text-slate-300 text-lg leading-relaxed font-medium">
               Junte-se a escritórios de advocacia e departamentos jurídicos que utilizam nosso Autenticador Jurídico para blindar contratos e recuperar ativos financeiros.

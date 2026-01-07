@@ -32,7 +32,7 @@ const PoliticaPrivacidade = () => {
                                     As informações coletadas são utilizadas exclusivamente para:
                                 </p>
                                 <ul className="list-disc pl-6 mt-2 space-y-2">
-                                    <li>Processar e realizar a análise forense dos contratos enviados.</li>
+                                    <li>Processar e realizar a Consulta Jurídica dos contratos enviados.</li>
                                     <li>Gerar pareceres técnicos personalizados e fundamentados.</li>
                                     <li>Aprimorar nossas bases de dados de jurisprudências e regulamentações.</li>
                                     <li>Comunicar atualizações importantes sobre sua conta e serviços.</li>

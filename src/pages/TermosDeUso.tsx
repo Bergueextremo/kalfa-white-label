@@ -30,10 +30,10 @@ const TermosDeUso = () => {
                             <section>
                                 <h2 className="text-xl font-semibold text-slate-100 mb-3">2. Descrição dos Serviços</h2>
                                 <p>
-                                    O JusAudit Pro é um <strong>Autenticador Jurídico Digital</strong> que utiliza tecnologia de auditoria forense baseada nas diretrizes do <strong>Banco Central (BACEN)</strong>, <strong>Código de Defesa do Consumidor (CDC)</strong> e jurisprudências consolidadas do <strong>STJ</strong> e <strong>STF</strong> para analisar contratos bancários, imobiliários e de serviços. Nossos serviços incluem:
+                                    O JusAudit Pro é um <strong>Autenticador Jurídico Digital</strong> que utiliza tecnologia de Consulta Jurídica baseada nas diretrizes do <strong>Banco Central (BACEN)</strong>, <strong>Código de Defesa do Consumidor (CDC)</strong> e jurisprudências consolidadas do <strong>STJ</strong> e <strong>STF</strong> para analisar contratos bancários, imobiliários e de serviços. Nossos serviços incluem:
                                 </p>
                                 <ul className="list-disc pl-6 mt-2 space-y-2">
-                                    <li>Análise forense de cláusulas contratuais.</li>
+                                    <li>Consulta Jurídica de cláusulas contratuais.</li>
                                     <li>Identificação de irregularidades e abusividades baseada na legislação vigente.</li>
                                     <li>Cálculo pericial de valores a serem restituídos ou economizados.</li>
                                     <li>Geração de pareceres técnicos preliminares.</li>

@@ -168,7 +168,7 @@ const FreeScan = () => {
                         <div className="inline-flex items-center gap-2 bg-[#0A192F]/5 px-4 py-2 rounded-full mb-4">
                             <ShieldCheck className="h-4 w-4 text-[#0A192F]" />
                             <span className="text-xs font-semibold text-[#0A192F] uppercase tracking-wider">
-                                Auditoria Forense Especializada
+                                Consulta Jurídica Especializada
                             </span>
                         </div>
                         <h1 className="text-3xl md:text-4xl font-bold text-[#0A192F] mb-4">

@@ -50,7 +50,7 @@ export const SimulatorSection = ({ onCtaClick }: SimulatorSectionProps) => {
         }
         return {
             status: "🔍 NECESSITA VALIDAÇÃO JURÍDICA",
-            message: "A confiança é o primeiro passo para o erro. Nossa auditoria forense valida se o que você leu é o que realmente está nos tribunais.",
+            message: "A confiança é o primeiro passo para o erro. Nossa Consulta Jurídica valida se o que você leu é o que realmente está nos tribunais.",
             color: "text-blue-700",
             bg: "bg-blue-50",
             border: "border-blue-200"

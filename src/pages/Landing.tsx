@@ -20,7 +20,7 @@ const Landing = () => {
 
   const features = [{
     icon: Shield,
-    title: "Análise Forense Completa",
+    title: "Consulta Jurídica Completa",
     description: "Varredura técnica baseada em jurisprudência do STF e dados do Banco Central"
   }, {
     icon: TrendingDown,
@@ -340,7 +340,7 @@ const Landing = () => {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Tecnologia Forense de Ponta
+            Tecnologia de Consulta Jurídica de Ponta
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Utilizamos nosso Autenticador Jurídico e bases de dados jurídicas para garantir análises precisas

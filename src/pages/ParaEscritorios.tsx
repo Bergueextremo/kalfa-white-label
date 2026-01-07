@@ -24,7 +24,7 @@ const ParaEscritorios = () => {
                             <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">Auditoria Automatizada</span>
                         </h1>
                         <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                            Integre nossa tecnologia de auditoria forense diretamente ao seu fluxo de trabalho. Aumente a produtividade da sua equipe e ofereça resultados mais rápidos aos seus clientes.
+                            Integre nossa tecnologia de Consulta Jurídica diretamente ao seu fluxo de trabalho. Aumente a produtividade da sua equipe e ofereça resultados mais rápidos aos seus clientes.
                         </p>
                         <div className="flex justify-center gap-4">
                             <Button onClick={handleContact} size="lg" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg shadow-blue-900/20">

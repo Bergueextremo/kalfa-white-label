@@ -75,7 +75,7 @@ export default function Catalog() {
                         Vitrine de Contratos
                     </h1>
                     <p className="text-muted-foreground max-w-2xl mx-auto">
-                        Escolha o modelo ideal para o seu negócio. Todos os documentos são revisados por nossa inteligência forense.
+                        Escolha o modelo ideal para o seu negócio. Todos os documentos são revisados por nossa tecnologia de Consulta Jurídica.
                     </p>
                 </div>
 

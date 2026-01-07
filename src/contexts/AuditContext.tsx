@@ -63,12 +63,12 @@ const initialSteps: Step[] = [
     },
     {
         id: 'analysis',
-        title: 'Análise Forense e Criptografia',
+        title: 'Consulta Jurídica e Criptografia',
         icon: Shield,
         status: 'pending',
         duration: '8s',
         substeps: [
-            'Executando Varredura Forense contra Precedentes Superiores (STJ/STF)...',
+            'Executando Varredura de Consulta Jurídica contra Precedentes Superiores (STJ/STF)...',
             'Auditando valores financeiros e capitalização de juros...',
             'Cálculo Preditivo de Economia Financeira e Vantagem Competitiva...'
         ]

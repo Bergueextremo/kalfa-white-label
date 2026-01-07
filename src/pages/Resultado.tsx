@@ -37,11 +37,13 @@ const Resultado = () => {
   const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([
     { id: 'upload', title: 'Recebendo Arquivo Seguro', icon: Upload, status: 'completed', duration: '2s' },
     { id: 'reading', title: 'Identificando Tipo de Contrato', icon: FileText, status: 'completed', duration: '5s' },
-    { id: 'analysis', title: 'Escaneando Cláusulas Abusivas', icon: Shield, status: 'current', duration: '8s', substeps: [
-      'Executando Varredura Forense contra Precedentes Superiores (STJ/STF)...',
-      'Auditando valores financeiros e capitalização de juros...',
-      'Cálculo Preditivo de Economia Financeira e Vantagem Competitiva...'
-    ]},
+    {
+      id: 'analysis', title: 'Escaneando Cláusulas Abusivas', icon: Shield, status: 'current', duration: '8s', substeps: [
+        'Executando Varredura de Consulta Jurídica contra Precedentes Superiores (STJ/STF)...',
+        'Auditando valores financeiros e capitalização de juros...',
+        'Cálculo Preditivo de Economia Financeira e Vantagem Competitiva...'
+      ]
+    },
     { id: 'score', title: 'Gerando Laudo Preliminar', icon: TrendingUp, status: 'pending', duration: '3s' },
     { id: 'correction', title: 'Finalizando Análise Premium', icon: Edit3, status: 'pending', duration: '4s' }
   ]);
@@ -77,23 +79,23 @@ const Resultado = () => {
 
   // Auto-trigger process-audit if audit is in PROCESSING state but hasn't been processed yet
   const [processingTriggered, setProcessingTriggered] = useState(false);
-  
+
   useEffect(() => {
     const triggerProcessing = async () => {
       if (
-        audit && 
+        audit &&
         !processingTriggered &&
-        !audit.ai_result_json && 
+        !audit.ai_result_json &&
         (audit.status === 'PROCESSING' || audit.status === 'processing')
       ) {
         setProcessingTriggered(true);
         console.log("Auditoria em PROCESSING sem resultado. Disparando process-audit...");
-        
+
         try {
           const { data, error } = await supabase.functions.invoke('process-audit', {
             body: { audit_id: audit.id, file_path: audit.file_path }
           });
-          
+
           if (error) {
             console.error("Erro ao iniciar process-audit:", error);
           } else {
@@ -104,7 +106,7 @@ const Resultado = () => {
         }
       }
     };
-    
+
     triggerProcessing();
   }, [audit, processingTriggered]);
 
@@ -217,12 +219,12 @@ const Resultado = () => {
               <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150 animate-pulse" />
               <Loader2 className="h-20 w-20 text-primary animate-spin relative z-10" />
             </div>
-            
+
             <h2 className="text-3xl font-bold text-slate-900 mb-4">
               Processando seu Contrato...
             </h2>
             <p className="text-slate-600 mb-8 leading-relaxed">
-              Nosso Autenticador Jurídico está analisando cada cláusula em busca de irregularidades. 
+              Nosso Autenticador Jurídico está analisando cada cláusula em busca de irregularidades.
               Isso pode levar alguns segundos.
             </p>
 
@@ -243,7 +245,7 @@ const Resultado = () => {
         <div className="flex-1 bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center p-8">
           <div className="max-w-lg w-full">
             <h3 className="text-2xl font-bold text-white mb-2">
-              Auditoria Forense em Tempo Real
+              Consulta Jurídica em Tempo Real
             </h3>
             <p className="text-slate-400 mb-8">
               Acompanhe o processamento do seu documento pelo nosso Autenticador Jurídico.
@@ -264,7 +266,7 @@ const Resultado = () => {
                         relative z-10 flex items-center justify-center w-10 h-10 rounded-full transition-all duration-500
                         ${isCompleted ? 'bg-green-500/20 border-2 border-green-500' :
                           isActive ? 'bg-blue-500/20 border-2 border-blue-500 animate-pulse' :
-                          'bg-slate-700/50 border-2 border-slate-600'}
+                            'bg-slate-700/50 border-2 border-slate-600'}
                       `}>
                         {isCompleted ? (
                           <CheckCircle className="w-5 h-5 text-green-400" />
@@ -280,7 +282,7 @@ const Resultado = () => {
                             font-medium transition-colors duration-300
                             ${isCompleted ? 'text-green-400' :
                               isActive ? 'text-blue-400' :
-                              'text-slate-500'}
+                                'text-slate-500'}
                           `}>
                             {step.title}
                             {isActive && '...'}
@@ -339,7 +341,7 @@ const Resultado = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar para Início
             </Button>
-            <h1 className="text-3xl font-bold text-foreground">Laudo Forense Premium</h1>
+            <h1 className="text-3xl font-bold text-foreground">Laudo de Consulta Jurídica Premium</h1>
             <p className="text-muted-foreground mt-1">
               {contractType} • Analisado em {new Date(audit.created_at).toLocaleDateString('pt-BR', {
                 day: '2-digit',

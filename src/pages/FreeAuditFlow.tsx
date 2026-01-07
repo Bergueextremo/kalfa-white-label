@@ -186,7 +186,7 @@ export default function FreeAuditFlow() {
                                     Inicie sua Auditoria <span className="text-primary">Gratuita</span>
                                 </h1>
                                 <p className="text-muted-foreground">
-                                    Preencha seus dados para liberar a análise forense preliminar do seu contrato.
+                                    Preencha seus dados para liberar a Consulta Jurídica preliminar do seu contrato.
                                 </p>
                             </div>
 
@@ -381,7 +381,7 @@ export default function FreeAuditFlow() {
                         // Roadmap
                         <div className="space-y-8">
                             <div className="space-y-2">
-                                <h2 className="text-3xl font-bold tracking-tight">Auditoria Forense em Tempo Real</h2>
+                                <h2 className="text-3xl font-bold tracking-tight">Consulta Jurídica em Tempo Real</h2>
                                 <p className="text-slate-400">Acompanhe o processamento do seu documento pelo nosso Autenticador Jurídico.</p>
                             </div>
 

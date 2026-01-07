@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
         const prompt = `
       🎯 Instrução de Função e Persona: Auditoria Jurídica de Alta Precisão (B2B/Enterprise)
       
-      "Atue como um Auditor Jurídico Sênior e Especialista em Análise Forense de Contratos. Sua missão é realizar uma auditoria técnica, imparcial e rigorosa.
+      "Atue como um Auditor Jurídico Sênior e Especialista em Consulta Jurídica de Contratos. Sua missão é realizar uma auditoria técnica, imparcial e rigorosa."
 
       O tom de voz deve ser: PROFISSIONAL, SÓBRIO, ANALÍTICO e DIRETO.
       O objetivo é transmitir segurança jurídica absoluta. Evite gírias, metáforas de guerra ('batalha', 'comandante') ou linguagem motivacional."
@@ -244,11 +244,11 @@ Deno.serve(async (req) => {
                         role: 'user',
                         content: [
                             { type: 'text', text: prompt },
-                            { 
-                                type: 'image_url', 
-                                image_url: { 
+                            {
+                                type: 'image_url',
+                                image_url: {
                                     url: base64DataUrl
-                                } 
+                                }
                             }
                         ]
                     }
@@ -260,7 +260,7 @@ Deno.serve(async (req) => {
             const errorText = await response.text();
             console.error('Lovable AI Gateway Error Status:', response.status);
             console.error('Lovable AI Gateway Error Body:', errorText);
-            
+
             if (response.status === 429) {
                 throw new Error('Rate limit exceeded. Please try again in a few moments.');
             }
@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
 
         const result = await response.json();
         const responseText = result.choices?.[0]?.message?.content;
-        
+
         if (!responseText) {
             console.error('No response content from AI:', result);
             throw new Error('No response content from AI');

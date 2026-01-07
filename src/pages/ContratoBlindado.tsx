@@ -13,6 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { AiAssistant } from "@/components/AiAssistant";
 const ContratoBlindado = () => {
   const navigate = useNavigate();
   const {
@@ -971,6 +972,7 @@ const ContratoBlindado = () => {
     </section>
 
     <Footer />
+    <AiAssistant />
   </div>;
 };
 export default ContratoBlindado;

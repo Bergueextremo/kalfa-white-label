@@ -59,7 +59,7 @@ const contractTypes: ContractType[] = [{
   id: "outros",
   icon: FileText,
   title: "Outros Contratos",
-  subtitle: "Análise Forense Genérica",
+  subtitle: "Consulta Jurídica Genérica",
   description: "Varredura completa para identificação de cláusulas abusivas em qualquer tipo de contrato.",
   keywords: ["análise contrato", "cláusulas abusivas", "revisão contratual"]
 }];

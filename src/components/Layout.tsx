@@ -114,10 +114,10 @@ export function Layout({ children }: LayoutProps) {
           </main>
         </div>
       </div>
-      
+
       {/* Menu inferior mobile */}
       <MobileBottomNav />
-      
+
       <GlobalAuditModal />
       <AuditProgressWidget />
     </SidebarProvider>
