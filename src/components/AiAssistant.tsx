@@ -142,7 +142,7 @@ export function AiAssistant() {
 
                     const ai = new GoogleGenAI({ apiKey });
                     const chat = ai.chats.create({
-                        model: 'gemini-2.0-flash',
+                        model: 'gemini-flash-latest',
                         config: { systemInstruction: SYSTEM_INSTRUCTION },
                         history: []
                     });
@@ -237,7 +237,7 @@ export function AiAssistant() {
             }));
 
             const chat = ai.chats.create({
-                model: 'gemini-2.0-flash',
+                model: 'gemini-flash-latest',
                 config: {
                     systemInstruction: SYSTEM_INSTRUCTION + `\n\nContexto: Usuário ${leadName || user?.name || "Visitante"}. WhatsApp: ${leadWhatsapp || "Não informado"}.`,
                 },
