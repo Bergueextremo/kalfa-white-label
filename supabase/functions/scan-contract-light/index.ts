@@ -1,157 +1,127 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-Deno.serve(async (req) => {
-    if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
-    }
+// List of verified models from models_list.json and process-audit
+const MODELS = [
+    'gemini-2.0-flash',       // Tested in process-audit
+    'gemini-flash-latest',    // Fallback
+    'gemini-2.5-pro',         // Premium Tested
+    'gemini-2.5-flash',       // New
+    'gemini-pro-latest'       // Backup
+]
 
+async function fetchWithSmartFailover(baseUrl: string, GEMINI_KEY: string, bodyObj: any) {
+    let lastError;
+    for (const model of MODELS) {
+        const aiUrl = `${baseUrl}/${model}:generateContent?key=${GEMINI_KEY}`
+        console.log(`Checking motor: ${model}...`)
+
+        for (let i = 0; i < 2; i++) { // 2 quick attempts per model
+            try {
+                const aiRes = await fetch(aiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyObj)
+                })
+
+                if (aiRes.status === 429 || aiRes.status === 503) {
+                    const delay = 3000 * Math.pow(1.5, i);
+                    console.log(`Motor ${model} overloaded. Retrying in ${delay}ms...`)
+                    await new Promise(r => setTimeout(r, delay));
+                    continue;
+                }
+
+                if (aiRes.status === 404) {
+                    const errText = await aiRes.text();
+                    console.error(`Motor ${model} not found (404):`, errText);
+                    lastError = new Error(`Motor ${model} não disponível (404)`);
+                    break;
+                }
+
+                if (!aiRes.ok) {
+                    const err = await aiRes.text();
+                    const errMsg = `AI Error (${model}): ${aiRes.status} - ${err}`;
+                    console.error(errMsg);
+                    throw new Error(errMsg);
+                }
+
+                return aiRes;
+            } catch (err: any) {
+                console.error(`Attempt for ${model} failed:`, err.message);
+                lastError = err;
+                if (err.message.includes('404')) break;
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+    }
+    throw lastError || new Error('Todos os motores de IA estão indisponíveis no momento.');
+}
+
+Deno.serve(async (req) => {
+    if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
     try {
         const { file_path, contract_type } = await req.json()
-        console.log(`Starting scan for: ${file_path}, type: ${contract_type}`);
+        const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
+        const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+        const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY')
 
-        if (!file_path) {
-            throw new Error('file_path is required')
+        if (!GEMINI_KEY) {
+            throw new Error('Configuração ausente: GEMINI_API_KEY não encontrada no Supabase')
         }
 
-        // 1. Init Supabase Client
-        const supabase = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        )
+        // 1. Download file via REST (Zero-Dependency for stability)
+        const storageUrl = `${SUPABASE_URL}/storage/v1/object/contracts/${file_path}`
+        const storageRes = await fetch(storageUrl, { headers: { 'Authorization': `Bearer ${SERVICE_ROLE}` } })
+        if (!storageRes.ok) throw new Error(`Download Error: ${storageRes.status}`)
+        const blob = await storageRes.blob()
+        const buffer = await blob.arrayBuffer()
+        const base64 = btoa(new Uint8Array(buffer).reduce((d, b) => d + String.fromCharCode(b), ''))
 
-        // 2. Download File
-        console.log('Downloading file...');
-        const { data: fileData, error: downloadError } = await supabase.storage
-            .from('contracts')
-            .download(file_path);
-
-        if (downloadError) {
-            console.error('Download error:', downloadError);
-            throw new Error(`Failed to download file: ${downloadError.message}`);
-        }
-        console.log('File downloaded successfully, size:', fileData.size);
-
-        // 3. Prepare Lovable AI Gateway
-        const apiKey = Deno.env.get('LOVABLE_API_KEY');
-        if (!apiKey) {
-            throw new Error('LOVABLE_API_KEY not found in environment variables');
-        }
-        console.log('Using Lovable AI Gateway for light scan...');
-
-        // 4. Generate Content via Lovable AI Gateway
-        console.log('Generating content...');
-        const prompt = `
-        Analise este contrato de ${contract_type || 'geral'} e identifique APENAS os nomes das cláusulas ou termos que parecem perigosos ou abusivos.
-        
-        Foque em detectar:
-        - IGP-M ou índices de reajuste abusivos
-        - Multas acima de 2 salários mínimos ou 10%
-        - Taxas de abertura, administração ou seguros obrigatórios
-        - Capitalização de juros (anatocismo)
-        - Venda casada
-        - Cláusulas de rescisão unilateral
-        - Foro de eleição abusivo
-        
-        NÃO explique, NÃO cite leis, NÃO forneça detalhes. Apenas liste os riscos detectados.
-        
-        Retorne um JSON no seguinte formato:
+        // 2. AI Analysis with Smart Failover & 404 Protection
+        const prompt = `Analise este contrato e retorne UM JSON CURTO com este formato exato:
         {
-          "detected_risks": ["Risco 1", "Risco 2", "Risco 3"],
-          "risk_count": Number,
-          "estimated_savings_hint": Number // Estimativa conservadora em R$ (pode ser 0 se não houver dados)
+          "detected_risks": ["Risco 1 (string)", "Risco 2 (string)"],
+          "risk_count": 2,
+          "estimated_savings_hint": 500
         }
-        `;
+        IMPORTANTE: O campo 'detected_risks' deve ser OBRIGATORIAMENTE um array de strings curtas.`
 
-        console.log('Sending to Lovable AI Gateway for light scan...')
-
-        // Convert Blob to base64
-        const arrayBuffer = await fileData.arrayBuffer();
-        const base64 = btoa(
-            new Uint8Array(arrayBuffer)
-                .reduce((data, byte) => data + String.fromCharCode(byte), '')
-        );
-
-        // Determine mime type
-        const mimeType = fileData.type || 'application/pdf';
-        const base64DataUrl = `data:${mimeType};base64,${base64}`;
-
-        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'google/gemini-2.5-flash',
-                messages: [
-                    {
-                        role: 'user',
-                        content: [
-                            { type: 'text', text: prompt },
-                            { 
-                                type: 'image_url', 
-                                image_url: { 
-                                    url: base64DataUrl
-                                } 
-                            }
-                        ]
-                    }
-                ]
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Lovable AI Gateway Error:', errorText);
-            
-            if (response.status === 429) {
-                throw new Error('Rate limit exceeded. Please try again in a few moments.');
-            }
-            if (response.status === 402) {
-                throw new Error('AI credits exhausted. Please add credits to continue.');
-            }
-            throw new Error(`AI Gateway Error: ${response.status} - ${errorText}`);
+        const bodyObj = {
+            contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: blob.type || 'application/pdf', data: base64 } }] }],
+            generationConfig: { response_mime_type: "application/json" }
         }
 
-        const result = await response.json();
-        const responseText = result.choices?.[0]?.message?.content;
+        const aiRes = await fetchWithSmartFailover('https://generativelanguage.googleapis.com/v1beta/models', GEMINI_KEY, bodyObj)
+        const aiData = await aiRes.json()
+        const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text
 
-        if (!responseText) {
-            console.error('No response content from AI:', result);
-            throw new Error('No response content from AI');
+        if (!text) throw new Error('AI retornou resposta vazia')
+
+        // 4. Normalize Result for Frontend Safety
+        let parsedResult = JSON.parse(text)
+
+        // Ensure detected_risks is an array of strings
+        if (parsedResult.detected_risks && Array.isArray(parsedResult.detected_risks)) {
+            parsedResult.detected_risks = parsedResult.detected_risks.map((risk: any) => {
+                if (typeof risk === 'string') return risk;
+                if (typeof risk === 'object') {
+                    return risk.description || risk.clause || JSON.stringify(risk);
+                }
+                return String(risk);
+            });
+        } else {
+            parsedResult.detected_risks = ["Análise concluída com sucesso (verifique o laudo completo)."];
         }
 
-        let scanResult;
-        try {
-            scanResult = JSON.parse(responseText);
-        } catch (e) {
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/)
-            if (!jsonMatch) throw new Error('Invalid JSON response from AI')
-            scanResult = JSON.parse(jsonMatch[0])
-        }
-
-        console.log('Light scan completed:', scanResult)
-
-        return new Response(
-            JSON.stringify({ success: true, data: scanResult }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-
-    } catch (error) {
-        console.error('Error in light scan:', error)
-        // Log specific details if available
-        if (error instanceof Error) {
-            console.error('Stack trace:', error.stack);
-        }
-        // Return 200 with error details to bypass generic client errors
-        return new Response(
-            JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
+        return new Response(JSON.stringify({ success: true, data: parsedResult }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+    } catch (err: any) {
+        console.error('Scan failed:', err.message)
+        return new Response(JSON.stringify({ success: false, error: err.message }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
     }
 })

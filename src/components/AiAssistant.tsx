@@ -142,7 +142,7 @@ export function AiAssistant() {
 
                     const ai = new GoogleGenAI({ apiKey });
                     const chat = ai.chats.create({
-                        model: 'gemini-flash-latest',
+                        model: 'gemini-2.0-flash',
                         config: { systemInstruction: SYSTEM_INSTRUCTION },
                         history: []
                     });
@@ -237,15 +237,34 @@ export function AiAssistant() {
             }));
 
             const chat = ai.chats.create({
-                model: 'gemini-flash-latest',
+                model: 'gemini-2.0-flash',
                 config: {
                     systemInstruction: SYSTEM_INSTRUCTION + `\n\nContexto: Usuário ${leadName || user?.name || "Visitante"}. WhatsApp: ${leadWhatsapp || "Não informado"}.`,
                 },
                 history: history
             });
 
-            const result = await chat.sendMessage({ message: userMessage });
-            const responseText = result.text;
+            let responseText = "";
+            let maxRetries = 3;
+            let retryCount = 0;
+
+            while (retryCount < maxRetries) {
+                try {
+                    const result = await chat.sendMessage({ message: userMessage });
+                    responseText = result.text;
+                    break;
+                } catch (err: any) {
+                    if ((err?.status === 429 || err?.message?.includes("503") || err?.message?.includes("overloaded")) && retryCount < maxRetries - 1) {
+                        retryCount++;
+                        const delay = 2000 * retryCount;
+                        console.log(`AiAssistant rate limit hit. Retrying in ${delay}ms...`);
+                        toast.info(`O Auditor está um pouco ocupado. Retentativa ${retryCount}...`);
+                        await new Promise(res => setTimeout(res, delay));
+                        continue;
+                    }
+                    throw err;
+                }
+            }
 
             if (responseText) {
                 setMessages((prev) => [...prev, { role: "model", content: responseText }]);

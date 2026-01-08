@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import {
     Loader2,
     UploadCloud,
@@ -32,6 +33,7 @@ export default function FreeAuditFlow() {
     const navigate = useNavigate();
     const location = useLocation();
     const { toast } = useToast();
+    const { user } = useAuth();
     const [step, setStep] = useState<Step>('input');
 
     // Form State
@@ -129,7 +131,31 @@ export default function FreeAuditFlow() {
             const fullPath = `temp-scans/${fileName}`;
             setUploadedFilePath(fullPath);
 
-            // 2. Call Edge Function
+            // 2. Save Lead
+            console.log('Saving lead...');
+            const { error: leadError } = await supabase
+                .from('chat_leads')
+                .insert({
+                    name,
+                    email,
+                    whatsapp,
+                });
+            if (leadError) console.error('Error saving lead:', leadError);
+
+            // 2.1 Associate with User if logged in
+            if (user) {
+                console.log('Associating scan with user dashboard...');
+                await supabase
+                    .from('auditorias_contratos')
+                    .insert({
+                        user_id: user.id,
+                        contract_type: contractType,
+                        file_path: fullPath,
+                        status: 'PROCESSING'
+                    });
+            }
+
+            // 3. Call Edge Function
             const { data, error } = await supabase.functions.invoke('scan-contract-light', {
                 body: {
                     file_path: `temp-scans/${fileName}`,
@@ -314,7 +340,9 @@ export default function FreeAuditFlow() {
                                     {scanResult.detected_risks.map((risk, i) => (
                                         <li key={i} className="flex items-start gap-3 p-3 bg-card border rounded-md">
                                             <CheckCircle2 className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                                            <span className="text-sm font-medium">{risk}</span>
+                                            <span className="text-sm font-medium">
+                                                {typeof risk === 'string' ? risk : (risk as any).description || (risk as any).clause || "Risco detectado"}
+                                            </span>
                                         </li>
                                     ))}
                                 </ul>

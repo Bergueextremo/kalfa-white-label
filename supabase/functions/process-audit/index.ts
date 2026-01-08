@@ -5,6 +5,29 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+async function fetchWithRetry(url: string, options: any, maxRetries = 5, initialDelay = 1500) {
+    let lastError;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const response = await fetch(url, options);
+            if (response.status === 429 || response.status === 503) {
+                const delay = initialDelay * Math.pow(1.5, i);
+                const errorBody = await response.text();
+                console.log(`AI Gateway hit ${response.status}. Retrying in ${Math.round(delay)}ms... (Attempt ${i + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+            return response;
+        } catch (error) {
+            lastError = error;
+            const delay = initialDelay * Math.pow(1.5, i);
+            console.log(`Fetch error. Retrying in ${Math.round(delay)}ms... (Attempt ${i + 1}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+    throw lastError || new Error(`Failed after ${maxRetries} retries`);
+}
+
 // Credentials retrieved from Supabase Secrets
 const SERVICE_EMAIL = Deno.env.get('SERVICE_EMAIL');
 const SERVICE_PASSWORD = Deno.env.get('SERVICE_PASSWORD');
@@ -142,7 +165,7 @@ Deno.serve(async (req) => {
 
 
         console.log(`Audit type: ${isPremium ? 'PREMIUM' : 'FREE'}`);
-        const modelName = isPremium ? 'google/gemini-2.5-pro' : 'google/gemini-2.5-flash';
+        const modelName = isPremium ? 'gemini-2.5-pro' : 'gemini-2.0-flash';
 
         // 5. Download File
         const { data: fileData, error: fileError } = await dbAdmin
@@ -155,12 +178,12 @@ Deno.serve(async (req) => {
             throw new Error('Failed to download file')
         }
 
-        // 6. Prepare Lovable AI Gateway
-        const apiKey = Deno.env.get('LOVABLE_API_KEY');
+        // 6. Prepare Google Gemini API
+        const apiKey = Deno.env.get('GEMINI_API_KEY');
         if (!apiKey) {
-            throw new Error('LOVABLE_API_KEY not configured');
+            throw new Error('GEMINI_API_KEY not configured');
         }
-        console.log(`Using Lovable AI Gateway with model: ${modelName}`);
+        console.log(`Using direct Google Gemini API with model: ${modelName}`);
 
         const arrayBuffer = await fileData.arrayBuffer()
         const base64 = btoa(
@@ -225,56 +248,52 @@ Deno.serve(async (req) => {
       }
     `
 
-        console.log(`Sending to Lovable AI Gateway with model: ${modelName}`)
+        console.log(`Sending to Google Gemini API with model: ${modelName}`)
 
-        // Determine mime type
-        const mimeType = fileData.type || 'application/pdf';
-        const base64DataUrl = `data:${mimeType};base64,${base64}`;
-
-        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: modelName,
-                messages: [
-                    {
-                        role: 'user',
-                        content: [
-                            { type: 'text', text: prompt },
-                            {
-                                type: 'image_url',
-                                image_url: {
-                                    url: base64DataUrl
+        const response = await fetchWithRetry(
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inline_data: {
+                                        mime_type: fileData.type || 'application/pdf',
+                                        data: base64
+                                    }
                                 }
-                            }
-                        ]
+                            ]
+                        }
+                    ],
+                    generationConfig: {
+                        response_mime_type: "application/json"
                     }
-                ]
-            })
-        });
+                })
+            }
+        );
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Lovable AI Gateway Error Status:', response.status);
-            console.error('Lovable AI Gateway Error Body:', errorText);
+            console.error('Gemini API Error Status:', response.status);
+            console.error('Gemini API Error Body:', errorText);
 
             if (response.status === 429) {
                 throw new Error('Rate limit exceeded. Please try again in a few moments.');
             }
-            if (response.status === 402) {
-                throw new Error('AI credits exhausted. Please add credits to continue.');
-            }
-            throw new Error(`AI Gateway Error: ${response.status} - ${errorText}`);
+            throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
         }
 
-        const result = await response.json();
-        const responseText = result.choices?.[0]?.message?.content;
+        const data = await response.json();
+        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!responseText) {
-            console.error('No response content from AI:', result);
+            console.error('No response content from AI:', data);
             throw new Error('No response content from AI');
         }
 
