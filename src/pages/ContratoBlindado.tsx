@@ -25,22 +25,21 @@ const ContratoBlindado = () => {
     <header className="border-b border-border bg-white sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/home")}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/contratoblindado")}>
             <img src={logoAlfaConsultoria} alt="Alfa Consultoria" className="h-12 md:h-14" />
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <a href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-              Início
-            </a>
-            <a href="#funcionalidades" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-              Funcionalidades
-            </a>
-
-            <a href="#faq" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-              FAQ
-            </a>
+            <button onClick={() => navigate("/contratoblindado")} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+              Consultas Blindadas
+            </button>
+            <button onClick={() => navigate("/financiamentoblindado")} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+              Financiamento
+            </button>
+            <button onClick={() => navigate("/leilaoblindado")} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+              Leilão
+            </button>
             {isAuthenticated && (
               <Button variant="outline" onClick={() => navigate("/dashboard")}>
                 Dashboard
@@ -60,16 +59,15 @@ const ContratoBlindado = () => {
             </SheetTrigger>
             <SheetContent side="right">
               <nav className="flex flex-col gap-6 mt-8">
-                <a href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setMobileMenuOpen(false)}>
-                  Início
-                </a>
-                <a href="#funcionalidades" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setMobileMenuOpen(false)}>
-                  Funcionalidades
-                </a>
-
-                <a href="#faq" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setMobileMenuOpen(false)}>
-                  FAQ
-                </a>
+                <button className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors text-left" onClick={() => { navigate("/contratoblindado"); setMobileMenuOpen(false); }}>
+                  Consultas Blindadas
+                </button>
+                <button className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors text-left" onClick={() => { navigate("/financiamentoblindado"); setMobileMenuOpen(false); }}>
+                  Financiamento
+                </button>
+                <button className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors text-left" onClick={() => { navigate("/leilaoblindado"); setMobileMenuOpen(false); }}>
+                  Leilão
+                </button>
                 {isAuthenticated ? (
                   <Button variant="outline" onClick={() => navigate("/dashboard")}>
                     Dashboard
@@ -437,7 +435,7 @@ const ContratoBlindado = () => {
               className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold text-lg px-12 py-8 rounded-2xl shadow-lg hover:shadow-xl transition-all w-full md:w-auto mb-4"
               onClick={() => navigate("/consultas")}
             >
-              Consultar contrato agora por R$ 197,00
+              Consultar Contrato
             </Button>
             <p className="text-gray-500 font-medium italic">
               Rápido. Claro. Sem dor de cabeça.

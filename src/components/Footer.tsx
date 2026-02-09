@@ -114,7 +114,7 @@ export const Footer = () => {
                 {/* Bottom Footer: Pagamento e Copyright */}
                 <div className="mt-16 pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-xs text-slate-500">
-                        © 2024 Alfa Consultoria Tecnologia Ltda. CNPJ 43.293.726/0001-72. <br className="hidden md:block" />
+                        © 2026 Alfa Consultoria Tecnologia Ltda. CNPJ 43.293.726/0001-72. <br className="hidden md:block" />
                         Todos os direitos reservados.
                         <br />
                         <span className="opacity-75">

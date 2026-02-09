@@ -81,25 +81,21 @@ const FinanciamentoBlindado = () => {
             <header className="border-b border-gray-100 bg-white sticky top-0 z-50 shadow-sm">
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/home")}>
+                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/contratoblindado")}>
                             <img src={logoAlfaConsultoria} alt="Alfa Consultoria" className="h-10 md:h-12" />
                         </div>
 
                         {/* Desktop Navigation */}
                         <nav className="hidden md:flex items-center gap-8">
+                            <button onClick={() => navigate("/contratoblindado")} className="text-sm font-semibold text-gray-600 hover:text-[#1a2b4b] transition-colors uppercase tracking-wide">
+                                Consultas Blindadas
+                            </button>
+                            <button onClick={() => navigate("/leilaoblindado")} className="text-sm font-semibold text-gray-600 hover:text-[#1a2b4b] transition-colors uppercase tracking-wide">
+                                Leilão Blindado
+                            </button>
                             <a href="#calculadora" className="text-sm font-semibold text-gray-600 hover:text-[#1a2b4b] transition-colors uppercase tracking-wide">
                                 Simular Economia
                             </a>
-                            <a href="#o-inimigo" className="text-sm font-semibold text-gray-600 hover:text-[#1a2b4b] transition-colors uppercase tracking-wide">
-                                O Que o Banco Esconde
-                            </a>
-                            <Button
-                                variant="default"
-                                className="bg-[#002B5C] hover:bg-[#001f42] text-white font-bold"
-                                onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}
-                            >
-                                {isAuthenticated ? "Dashboard" : "Entrar"}
-                            </Button>
                         </nav>
 
                         {/* Mobile Menu */}
@@ -111,18 +107,15 @@ const FinanciamentoBlindado = () => {
                             </SheetTrigger>
                             <SheetContent side="right">
                                 <nav className="flex flex-col gap-6 mt-8">
+                                    <button onClick={() => { navigate("/contratoblindado"); setMobileMenuOpen(false); }} className="text-lg font-medium text-gray-800 text-left">
+                                        Consultas Blindadas
+                                    </button>
+                                    <button onClick={() => { navigate("/leilaoblindado"); setMobileMenuOpen(false); }} className="text-lg font-medium text-gray-800 text-left">
+                                        Leilão Blindado
+                                    </button>
                                     <a href="#calculadora" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-gray-800">
                                         Simular Economia
                                     </a>
-                                    <a href="#o-inimigo" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-gray-800">
-                                        O Que o Banco Esconde
-                                    </a>
-                                    <Button
-                                        className="w-full bg-[#002B5C] hover:bg-[#001f42]"
-                                        onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}
-                                    >
-                                        {isAuthenticated ? "Dashboard" : "Entrar"}
-                                    </Button>
                                 </nav>
                             </SheetContent>
                         </Sheet>

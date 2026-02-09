@@ -45,11 +45,11 @@ const LeilaoBlindado = () => {
                     <div className="flex items-center justify-between">
                         <div
                             className="flex items-center gap-2 cursor-pointer"
-                            onClick={() => navigate("/home")}
+                            onClick={() => navigate("/contratoblindado")}
                             role="link"
                             tabIndex={0}
-                            aria-label="Voltar para a página inicial"
-                            onKeyDown={(e) => e.key === 'Enter' && navigate("/home")}
+                            aria-label="Voltar para a página de consultas"
+                            onKeyDown={(e) => e.key === 'Enter' && navigate("/contratoblindado")}
                         >
                             <img
                                 src={logoAlfaConsultoria}
@@ -63,20 +63,15 @@ const LeilaoBlindado = () => {
 
                         {/* Desktop Navigation */}
                         <nav className="hidden md:flex items-center gap-8" aria-label="Navegação principal">
+                            <button onClick={() => navigate("/contratoblindado")} className="text-sm font-bold text-gray-500 hover:text-[#1a2b4b] transition-colors uppercase tracking-wide">
+                                Consultas Blindadas
+                            </button>
+                            <button onClick={() => navigate("/financiamentoblindado")} className="text-sm font-bold text-gray-500 hover:text-[#1a2b4b] transition-colors uppercase tracking-wide">
+                                Financiamento
+                            </button>
                             <a href="#como-funciona" className="text-sm font-bold text-gray-500 hover:text-[#1a2b4b] transition-colors uppercase tracking-wide">
                                 Como Funciona
                             </a>
-                            <a href="#protecao" className="text-sm font-bold text-gray-500 hover:text-[#1a2b4b] transition-colors uppercase tracking-wide">
-                                Garantia
-                            </a>
-                            <Button
-                                variant="default"
-                                className="bg-[#002B5C] hover:bg-[#001f42] text-white font-bold"
-                                onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}
-                                aria-label={isAuthenticated ? "Acessar Dashboard" : "Fazer Login"}
-                            >
-                                {isAuthenticated ? "Dashboard" : "Entrar"}
-                            </Button>
                         </nav>
 
                         {/* Mobile Menu */}
@@ -88,19 +83,15 @@ const LeilaoBlindado = () => {
                             </SheetTrigger>
                             <SheetContent side="right">
                                 <nav className="flex flex-col gap-6 mt-8" aria-label="Navegação mobile">
+                                    <button onClick={() => { navigate("/contratoblindado"); setMobileMenuOpen(false); }} className="text-lg font-bold text-gray-800 text-left">
+                                        Consultas Blindadas
+                                    </button>
+                                    <button onClick={() => { navigate("/financiamentoblindado"); setMobileMenuOpen(false); }} className="text-lg font-bold text-gray-800 text-left">
+                                        Financiamento
+                                    </button>
                                     <a href="#como-funciona" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold text-gray-800">
                                         Como Funciona
                                     </a>
-                                    <a href="#protecao" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold text-gray-800">
-                                        Garantia
-                                    </a>
-                                    <Button
-                                        className="w-full bg-[#002B5C] hover:bg-[#001f42] font-bold"
-                                        onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}
-                                        aria-label={isAuthenticated ? "Acessar Dashboard" : "Fazer Login"}
-                                    >
-                                        {isAuthenticated ? "Dashboard" : "Entrar"}
-                                    </Button>
                                 </nav>
                             </SheetContent>
                         </Sheet>
