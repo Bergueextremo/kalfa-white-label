@@ -651,7 +651,7 @@ export default function CheckoutPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <Label>Telefone (WhatsApp)</Label>
-                                            <Input value={phone} onChange={handlePhoneChange} placeholder="(00) 00000-0000" maxLength={15} />
+                                            <Input value={phone} onChange={handlePhoneChange} placeholder="(61) 99999-9999" maxLength={15} />
                                         </div>
                                     </div>
                                 </CardContent>

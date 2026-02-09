@@ -6,7 +6,7 @@ import { Code, Building2, LayoutTemplate, Headset } from "lucide-react";
 
 const ParaEscritorios = () => {
     const handleContact = () => {
-        window.open('https://wa.me/5511999999999?text=Olá, tenho interesse na API para escritórios.', '_blank');
+        window.open('https://wa.me/5561998684615?text=Olá, tenho interesse na API para escritórios.', '_blank');
     };
 
     return (

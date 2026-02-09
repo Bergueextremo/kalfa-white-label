@@ -727,7 +727,7 @@ const ContratoBlindado = () => {
               </div>
             </div>
 
-            <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => window.open("https://wa.me/5511999999999", "_blank")}>
+            <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => window.open("https://wa.me/5561998684615", "_blank")}>
               Fale com um especialista
             </Button>
           </div>
@@ -753,7 +753,7 @@ const ContratoBlindado = () => {
             <p className="text-gray-600 mb-8 text-lg leading-relaxed">
               Confira nossas perguntas mais frequentes para entender como protegemos seus contratos.
             </p>
-            <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => window.open("https://wa.me/5511999999999", "_blank")}>
+            <Button className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold rounded-full px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all" onClick={() => window.open("https://wa.me/5561998684615", "_blank")}>
               Fale com um especialista
             </Button>
           </div>

@@ -231,7 +231,7 @@ export default function FreeAuditFlow() {
                                     <Label htmlFor="whatsapp">WhatsApp</Label>
                                     <Input
                                         id="whatsapp"
-                                        placeholder="(11) 99999-9999"
+                                        placeholder="(61) 99999-9999"
                                         value={whatsapp}
                                         onChange={handleWhatsappChange}
                                     />

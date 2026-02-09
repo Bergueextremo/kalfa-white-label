@@ -391,7 +391,7 @@ export function CheckoutModal({ open, onOpenChange, initialPlan }: CheckoutModal
                                                 <Input
                                                     value={customerData.phone}
                                                     onChange={e => setCustomerData(prev => ({ ...prev, phone: formatPhone(e.target.value) }))}
-                                                    placeholder="(00) 00000-0000"
+                                                    placeholder="(61) 99999-9999"
                                                     className="bg-white"
                                                     maxLength={15}
                                                 />

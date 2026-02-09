@@ -31,7 +31,7 @@ const Suporte = () => {
                 <Phone className="h-6 w-6 text-primary" />
               </div>
               <h3 className="font-semibold mb-2">Telefone</h3>
-              <p className="text-sm text-muted-foreground">0800 123 4567</p>
+              <a href="tel:61998684615" className="text-sm text-muted-foreground hover:text-primary transition-colors">(61) 99868-4615</a>
             </CardContent>
           </Card>
 
@@ -51,7 +51,7 @@ const Suporte = () => {
                 <MessageSquare className="h-6 w-6 text-primary" />
               </div>
               <h3 className="font-semibold mb-2">Chat Online</h3>
-              <p className="text-sm text-muted-foreground">Seg-Sex: 8h às 18h</p>
+              <a href="https://wa.me/5561998684615" target="_blank" rel="noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-colors">WhatsApp: (61) 99868-4615</a>
             </CardContent>
           </Card>
         </div>
