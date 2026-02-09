@@ -22,7 +22,7 @@ import {
     Users,
     Landmark
 } from "lucide-react";
-import logoJusContratos from "@/assets/logo-juscontratos.png";
+import logoAlfaConsultoria from "@/assets/logo-alfa-consultoria.png";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,7 +82,7 @@ const FinanciamentoBlindado = () => {
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/home")}>
-                            <img src={logoJusContratos} alt="JusContratos" className="h-10 md:h-12" />
+                            <img src={logoAlfaConsultoria} alt="Alfa Consultoria" className="h-10 md:h-12" />
                         </div>
 
                         {/* Desktop Navigation */}
@@ -238,7 +238,7 @@ const FinanciamentoBlindado = () => {
                     <div className="max-w-4xl mx-auto">
                         <div className="text-center mb-10">
                             <h2 className="text-3xl font-extrabold text-[#1a2b4b] mb-4">
-                                Calculadora de Previsibilidade JusContratos
+                                Calculadora de Previsibilidade Alfa Consultoria
                             </h2>
                             <p className="text-gray-600">
                                 Insira os dados do seu contrato atual e veja a discrepância.
@@ -565,7 +565,7 @@ const FinanciamentoBlindado = () => {
                 <div className="container mx-auto px-4 max-w-4xl text-center">
                     <h2 className="text-3xl md:text-5xl font-extrabold text-[#1a2b4b] mb-8 leading-tight">
                         Você tem duas opções: <br />
-                        <span className="text-base font-normal text-gray-600 block mt-4">Continuar pagando juros abusivos ou investir R$ 147,00 para economizar milhares.</span>
+                        <span className="text-base font-normal text-gray-600 block mt-4">Continuar pagando juros abusivos ou investir R$ 197,00 para economizar milhares.</span>
                     </h2>
 
                     <div className="flex flex-col items-center gap-6 mt-10 w-full">

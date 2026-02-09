@@ -29,7 +29,7 @@ export const ProtocoloSection = () => {
             <div className="container mx-auto px-4">
                 <div className="text-center mb-16">
                     <h2 id="protocolo-title" className="text-2xl md:text-3xl font-bold text-[#1a2b4b]">
-                        Protocolo de Auditoria JusContratos
+                        Protocolo de Auditoria Alfa Consultoria
                     </h2>
                 </div>
 

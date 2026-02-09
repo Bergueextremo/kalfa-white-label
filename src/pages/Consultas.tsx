@@ -4,7 +4,7 @@ import { Car, Home, Building2, Briefcase, Scale, FileText, Check, Shield, Lock, 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import logoJusContratos from "@/assets/logo-juscontratos.png";
+import logoAlfaConsultoria from "@/assets/logo-alfa-consultoria.png";
 interface ContractType {
   id: string;
   icon: React.ElementType;
@@ -98,7 +98,7 @@ const Consultas = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/home")}>
-            <img src={logoJusContratos} alt="JusContratos" className="h-12 md:h-14" />
+            <img src={logoAlfaConsultoria} alt="Alfa Consultoria" className="h-12 md:h-14" />
           </div>
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors">
             <ArrowLeft className="h-4 w-4" />
@@ -214,7 +214,7 @@ const Consultas = () => {
               <div className="text-center space-y-1">
                 <span className="text-xs text-slate-500 uppercase tracking-wider">Sessão Única</span>
                 <div className="text-4xl font-extrabold text-[#0A192F]">
-                  R$ 147<span className="text-2xl">,00</span>
+                  R$ 197<span className="text-2xl">,00</span>
                 </div>
               </div>
 
@@ -251,7 +251,7 @@ const Consultas = () => {
       <div className="flex items-center justify-between gap-4">
         <div>
           <span className="text-xs text-slate-500 block">Sessão Única</span>
-          <span className="text-2xl font-extrabold text-[#0A192F]">R$ 147,00</span>
+          <span className="text-2xl font-extrabold text-[#0A192F]">R$ 197,00</span>
         </div>
         <Button size="lg" className={cn("flex-1 py-5 font-bold", selectedContract ? "bg-[#10B981] hover:bg-[#059669] text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed")} disabled={!selectedContract} onClick={handleProceed}>
           BLINDAR CONTRATO

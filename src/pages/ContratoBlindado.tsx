@@ -7,7 +7,7 @@ import socialProofImage from "@/assets/social-proof-illustration.png";
 import solutionImage from "@/assets/solution-illustration.png";
 import managementImage from "@/assets/management-illustration.png";
 import apiImage from "@/assets/api-illustration.png";
-import logoJusContratos from "@/assets/logo-juscontratos.png";
+import logoAlfaConsultoria from "@/assets/logo-alfa-consultoria.png";
 import { Menu, Scale, ShieldCheck, FileText, BadgeDollarSign, CheckCircle, Activity, Database, Check, RefreshCw, Mail, Settings, Briefcase, Layers, Shield, Lock, XCircle, AlertCircle, X } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -26,7 +26,7 @@ const ContratoBlindado = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/home")}>
-            <img src={logoJusContratos} alt="JusContratos" className="h-12 md:h-14" />
+            <img src={logoAlfaConsultoria} alt="Alfa Consultoria" className="h-12 md:h-14" />
           </div>
 
           {/* Desktop Navigation */}
@@ -37,15 +37,18 @@ const ContratoBlindado = () => {
             <a href="#funcionalidades" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
               Funcionalidades
             </a>
-            <a href="#planos" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-              Planos
-            </a>
+
             <a href="#faq" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
               FAQ
             </a>
-            <Button variant="outline" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}>
-              {isAuthenticated ? "Dashboard" : "Entrar"}
-            </Button>
+            {isAuthenticated && (
+              <Button variant="outline" onClick={() => navigate("/dashboard")}>
+                Dashboard
+              </Button>
+            )}
+            {!isAuthenticated && <Button variant="outline" onClick={() => navigate("/consultas")}>
+              Solicitar Consulta
+            </Button>}
           </nav>
 
           {/* Mobile Menu */}
@@ -63,15 +66,19 @@ const ContratoBlindado = () => {
                 <a href="#funcionalidades" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setMobileMenuOpen(false)}>
                   Funcionalidades
                 </a>
-                <a href="#planos" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setMobileMenuOpen(false)}>
-                  Planos
-                </a>
+
                 <a href="#faq" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setMobileMenuOpen(false)}>
                   FAQ
                 </a>
-                <Button variant="outline" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/auth")}>
-                  {isAuthenticated ? "Dashboard" : "Entrar"}
-                </Button>
+                {isAuthenticated ? (
+                  <Button variant="outline" onClick={() => navigate("/dashboard")}>
+                    Dashboard
+                  </Button>
+                ) : (
+                  <Button variant="outline" onClick={() => navigate("/consultas")}>
+                    Entrar
+                  </Button>
+                )}
               </nav>
             </SheetContent>
           </Sheet>
@@ -294,7 +301,7 @@ const ContratoBlindado = () => {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#1a2b4b] mb-4">
-            Advogado VS Juscontratos
+            Advogado VS Alfa Consultoria
           </h2>
           <p className="text-gray-600 text-lg md:text-xl font-medium">
             Compare antes de decidir. Segurança jurídica não precisa ser cara.
@@ -348,7 +355,7 @@ const ContratoBlindado = () => {
             </div>
           </div>
 
-          {/* Juscontratos */}
+          {/* Alfa Consultoria */}
           <div className="bg-white rounded-3xl p-8 shadow-xl border-2 border-[#00C853] relative overflow-hidden transform md:scale-105 z-10">
             <div className="absolute top-0 right-0">
               <span className="bg-[#00C853] text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
@@ -357,12 +364,12 @@ const ContratoBlindado = () => {
             </div>
             <div className="flex items-center gap-3 mb-6 font-bold text-[#00C853] text-xl">
               <CheckCircle className="w-6 h-6" />
-              Juscontratos | Contratos Blindados
+              Alfa Consultoria | Contratos Blindados
             </div>
 
             <div className="mb-6">
               <span className="text-gray-400 text-sm block mb-1">Consulta jurídica online</span>
-              <span className="text-2xl font-bold text-[#00C853]">R$ 147,00</span>
+              <span className="text-2xl font-bold text-[#00C853]">R$ 197,00</span>
             </div>
 
             <ul className="space-y-4 mb-8">
@@ -430,7 +437,7 @@ const ContratoBlindado = () => {
               className="bg-[#00C853] hover:bg-[#00a846] text-white font-bold text-lg px-12 py-8 rounded-2xl shadow-lg hover:shadow-xl transition-all w-full md:w-auto mb-4"
               onClick={() => navigate("/consultas")}
             >
-              Consultar contrato agora por R$ 147,00
+              Consultar contrato agora por R$ 197,00
             </Button>
             <p className="text-gray-500 font-medium italic">
               Rápido. Claro. Sem dor de cabeça.
@@ -580,9 +587,9 @@ const ContratoBlindado = () => {
 
             {/* Price */}
             <div className="flex flex-col items-center justify-center mb-4">
-              <span className="text-gray-400 text-xl font-medium line-through">R$ 197,00</span>
+              <span className="text-gray-400 text-xl font-medium line-through">R$ 297,00</span>
               <div className="flex items-baseline gap-2 text-[#00C853]">
-                <span className="text-6xl md:text-7xl font-extrabold">R$ 147,00</span>
+                <span className="text-6xl md:text-7xl font-extrabold">R$ 197,00</span>
               </div>
             </div>
 
@@ -666,156 +673,6 @@ const ContratoBlindado = () => {
     </section>
 
 
-    {/* Plans Section */}
-    <section id="planos" className="bg-white pb-20 pt-10">
-      <div className="container mx-auto px-4">
-        <div className="text-center max-w-4xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-5xl font-extrabold text-[#1a2b4b] mb-4 leading-tight">
-            Maximize Sua Economia:<br />Planos para Escalar
-          </h2>
-          <p className="text-gray-600 text-lg md:text-xl leading-relaxed">
-            Após a primeira auditoria, use nossos planos para escritórios, imobiliárias e empresas que precisam de volume e suporte prioritário.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-end">
-
-          {/* Plan 1: Start */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg hover:shadow-xl transition-all h-full flex flex-col">
-            <h3 className="text-gray-500 font-bold text-sm uppercase mb-4">Plano Start</h3>
-            <div className="mb-2">
-              <span className="text-4xl font-extrabold text-[#1a2b4b]">R$ 197,00</span>
-            </div>
-            <p className="text-gray-400 text-sm mb-8">10 análises · R$ 19,70 cada</p>
-
-            <ul className="space-y-5 mb-8 flex-grow">
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-gray-800 text-sm font-bold">Laudos em PDF</span>
-                </div>
-                <p className="text-gray-500 text-xs ml-7">Explicações claras e prontas para enviar ao cliente ou arquivar.</p>
-              </li>
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-gray-800 text-sm font-bold">Suporte por e-mail</span>
-                </div>
-                <p className="text-gray-500 text-xs ml-7">Ajuda rápida sempre que precisar, sem filas.</p>
-              </li>
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-gray-800 text-sm font-bold">Acesso 24/7</span>
-                </div>
-                <p className="text-gray-500 text-xs ml-7">Use a plataforma quando quiser, sem limites de horário.</p>
-              </li>
-            </ul>
-
-            <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:border-[#00C853] hover:text-[#00C853] font-bold" onClick={() => navigate("/checkout?plan=start")}>
-              ESCOLHER PLANO
-            </Button>
-          </div>
-
-          {/* Plan 2: Blindagem Essencial (Featured) */}
-          <div className="bg-[#0f4c3a] rounded-2xl border-2 border-[#00C853] p-8 shadow-2xl hover:shadow-xl transition-all relative transform md:-translate-y-4 flex flex-col">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-[#FBC02D] text-[#1a2b4b] text-xs font-bold px-4 py-1 rounded-full uppercase">
-                Mais Popular
-              </span>
-            </div>
-
-            <h3 className="text-[#00C853] font-bold text-sm uppercase mb-4 mt-2">Blindagem Essencial</h3>
-            <div className="mb-2">
-              <span className="text-5xl font-extrabold text-white">R$ 497,00</span>
-            </div>
-            <p className="text-gray-300 text-sm mb-2">30 análises · Apenas R$ 16,56 cada</p>
-            <p className="text-gray-400 text-xs mb-8 italic">(O mais escolhido por escritórios e imobiliárias)</p>
-
-            <ul className="space-y-5 mb-8 flex-grow">
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-white text-sm font-bold">Laudos personalizados com sua marca</span>
-                </div>
-                <p className="text-gray-300 text-xs ml-7">Apresente relatórios profissionais com identidade visual da sua empresa.</p>
-              </li>
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-white text-sm font-bold">Suporte prioritário (SLA)</span>
-                </div>
-                <p className="text-gray-300 text-xs ml-7">Chamados respondidos mais rápido, com prioridade na fila.</p>
-              </li>
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-white text-sm font-bold">Acesso multi-dispositivo</span>
-                </div>
-                <p className="text-gray-300 text-xs ml-7">Use no computador, tablet ou celular sem restrições.</p>
-              </li>
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-white text-sm font-bold">Consultoria jurídica básica</span>
-                </div>
-                <p className="text-gray-300 text-xs ml-7">Orientações estratégicas em casos de dúvida sobre análises realizadas.</p>
-              </li>
-            </ul>
-
-            <Button className="w-full bg-white text-[#1a2b4b] hover:bg-gray-100 font-bold" onClick={() => navigate("/checkout?plan=essencial")}>
-              ESCOLHER PLANO
-            </Button>
-          </div>
-
-          {/* Plan 3: Corporativo */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg hover:shadow-xl transition-all h-full flex flex-col">
-            <h3 className="text-gray-500 font-bold text-sm uppercase mb-4">Plano Enterprise</h3>
-            <div className="mb-2">
-              <span className="text-4xl font-extrabold text-[#1a2b4b]">R$ 1.497,00</span>
-            </div>
-            <p className="text-gray-400 text-sm mb-8">100 análises · R$ 14,97 cada</p>
-
-            <ul className="space-y-5 mb-8 flex-grow">
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-gray-800 text-sm font-bold">Gerente de Sucesso dedicado</span>
-                </div>
-                <p className="text-gray-500 text-xs ml-7">Acompanhamento personalizado para melhorar seus resultados.</p>
-              </li>
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-gray-800 text-sm font-bold">Integrações personalizadas (API)</span>
-                </div>
-                <p className="text-gray-500 text-xs ml-7">Conecte seu sistema à plataforma e automatize operações.</p>
-              </li>
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-gray-800 text-sm font-bold">SLA garantido de 24h</span>
-                </div>
-                <p className="text-gray-500 text-xs ml-7">Atendimento rápido e previsível para operações de alto volume.</p>
-              </li>
-              <li className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#00C853] flex-shrink-0" />
-                  <span className="text-gray-800 text-sm font-bold">Treinamento completo incluso</span>
-                </div>
-                <p className="text-gray-500 text-xs ml-7">Time capacitado para usar todas as funcionalidades sem curva de aprendizado.</p>
-              </li>
-            </ul>
-
-            <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:border-[#00C853] hover:text-[#00C853] font-bold" onClick={() => navigate("/checkout?plan=corporativo")}>
-              ESCOLHER PLANO
-            </Button>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
     {/* API Section */}
     <section className="bg-white pb-20 md:pb-32">
       <div className="container mx-auto px-4">
@@ -883,8 +740,6 @@ const ContratoBlindado = () => {
       </div>
     </section>
 
-
-
     {/* FAQ Section */}
     <section id="faq" className="bg-[#f8f9fa] py-20 md:py-32">
       <div className="container mx-auto px-4">
@@ -928,7 +783,7 @@ const ContratoBlindado = () => {
 
               <AccordionItem value="item-3" className="bg-white rounded-xl border border-gray-100 px-6 data-[state=open]:shadow-md transition-all">
                 <AccordionTrigger className="text-[#1a2b4b] font-bold text-lg hover:no-underline py-6">
-                  Como funciona o Jus Audit Pro?
+                  Como funciona o Alfa Audit Pro?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 text-base pb-6 leading-relaxed">
                   Você envia seu contrato (PDF, Word ou imagem), nossa IA processa o documento em segundos, cruza com

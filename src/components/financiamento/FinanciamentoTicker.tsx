@@ -5,7 +5,7 @@ export const FinanciamentoTicker = () => {
         "RECUPERE SEU DINHEIRO",
         "PROTEÇÃO PATRIMONIAL",
         "PARE DE PAGAR O BANCO",
-        "JUSCONTRATOS",
+        "ALFA CONSULTORIA",
         "ECONOMIA REAL"
     ];
 

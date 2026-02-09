@@ -41,7 +41,7 @@ const Suporte = () => {
                 <Mail className="h-6 w-6 text-primary" />
               </div>
               <h3 className="font-semibold mb-2">E-mail</h3>
-              <p className="text-sm text-muted-foreground">suporte@juscontratos.com.br</p>
+              <p className="text-sm text-muted-foreground">suporte@alfaconsultoria.com.br</p>
             </CardContent>
           </Card>
 

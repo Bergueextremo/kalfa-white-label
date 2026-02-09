@@ -363,7 +363,7 @@ export default function FreeAuditFlow() {
                                     Desbloquear Laudo Completo
                                 </Button>
                                 <p className="text-center text-xs text-muted-foreground">
-                                    Apenas R$ 147,00 - Acesso Imediato
+                                    Apenas R$ 197,00 - Acesso Imediato
                                 </p>
                             </div>
                         </div>

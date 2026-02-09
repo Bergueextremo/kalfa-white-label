@@ -29,7 +29,7 @@ export const FluxoSection = () => {
                         </div>
                         <h3 className="font-bold text-[#1a2b4b] text-lg mb-2">Processamento</h3>
                         <p className="text-sm text-gray-600 max-w-[200px] mx-auto font-medium">
-                            Cruzamento de dados na Blockchain da JusContratos.
+                            Cruzamento de dados na Blockchain da Alfa Consultoria.
                         </p>
                     </div>
 

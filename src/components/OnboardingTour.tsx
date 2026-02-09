@@ -63,7 +63,7 @@ export function OnboardingTour() {
 
     const steps = [
         {
-            title: "Bem-vindo ao JusContratos!",
+            title: "Bem-vindo à Alfa Consultoria!",
             description: "Sua plataforma de auditoria contratual com Tecnologia Avançada. Vamos te mostrar como blindar seus contratos.",
             icon: <ShieldCheck className="h-16 w-16 text-primary mx-auto mb-4" />
         },

@@ -22,7 +22,7 @@ const DiretrizesLgpd = () => {
                             <section>
                                 <h2 className="text-xl font-semibold text-slate-100 mb-3">1. Compromisso Institucional</h2>
                                 <p>
-                                    A JusContratos Tecnologia Ltda. está em total conformidade com a LGPD. Entendemos a importância da privacidade e proteção de dados no cenário digital atual e adotamos uma postura proativa para garantir que seus direitos sejam respeitados e seus dados, protegidos.
+                                    A Alfa Consultoria Tecnologia Ltda. está em total conformidade com a LGPD. Entendemos a importância da privacidade e proteção de dados no cenário digital atual e adotamos uma postura proativa para garantir que seus direitos sejam respeitados e seus dados, protegidos.
                                 </p>
                             </section>
 

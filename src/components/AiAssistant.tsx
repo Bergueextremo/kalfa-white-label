@@ -19,8 +19,8 @@ interface Message {
 
 const SYSTEM_INSTRUCTION = `
 [PERSONA/IDENTIDADE]
-Você é Juliana Vieira, Auditora-Chefe da Jus Contratos. Atue como uma atendente técnica, firme e extremamente direta.
-Sempre se identifique como Juliana Vieira da Jus Contratos.
+Você é Juliana Vieira, Auditora-Chefe da Alfa Consultoria. Atue como uma atendente técnica, firme e extremamente direta.
+Sempre se identifique como Juliana Vieira da Alfa Consultoria.
 
 [REGRA DE OURO - CAPTURA DE LEAD]
 Sua missão principal é converter o visitante em lead. 
@@ -152,11 +152,15 @@ export function AiAssistant() {
                     if (response.text) {
                         setMessages([{ role: "model", content: response.text }]);
                     }
-                } catch (error) {
+                } catch (error: any) {
                     console.error("Initialization error:", error);
+                    let fallbackMsg = "Olá. Sistema de auditoria conectado. Como posso proteger seu patrimônio hoje?";
+                    if (error?.message?.includes("leaked") || error?.message?.includes("403")) {
+                        fallbackMsg = "Atenção: A Chave de API foi detectada como vazada ou inválida. Por favor, atualize o arquivo .env para restaurar o chat.";
+                    }
                     setMessages([{
                         role: "model",
-                        content: "Olá. Sistema de auditoria conectado. Como posso proteger seu patrimônio hoje?"
+                        content: fallbackMsg
                     }]);
                 } finally {
                     setIsLoading(false);
@@ -199,7 +203,7 @@ export function AiAssistant() {
             setHasSubmittedLead(true);
 
             // Definir boas-vindas personalizadas diretamente para economizar API (evita erro 429)
-            const personalizedGreeting = `Olá ${leadName.trim()}, eu sou a Juliana Vieira da Jus Contratos. Em que podemos te ajudar hoje? Através das nossas consultas você economiza e protege seu patrimônio contra abusos bancários. Qual o documento que precisa de uma análise imediata?`;
+            const personalizedGreeting = `Olá ${leadName.trim()}, eu sou a Juliana Vieira da Alfa Consultoria. Em que podemos te ajudar hoje? Através das nossas consultas você economiza e protege seu patrimônio contra abusos bancários. Qual o documento que precisa de uma análise imediata?`;
 
             setMessages([{
                 role: "model",
@@ -273,8 +277,8 @@ export function AiAssistant() {
             console.error("Error sending message:", error);
 
             let errorMessage = "Erro de conexão com o Auditor.";
-            if (error?.message?.includes("API Key")) {
-                errorMessage = "Erro de configuração: Chave de API inválida ou ausente.";
+            if (error?.message?.includes("API Key") || error?.message?.includes("leaked") || error?.message?.includes("403")) {
+                errorMessage = "Erro de configuração: Chave de API inválida, expirada ou vazada. Por favor, atualize o arquivo .env.";
             } else if (error?.status === 429) {
                 errorMessage = "Sistema sobrecarregado. Tente novamente em instantes.";
             }
@@ -314,12 +318,12 @@ export function AiAssistant() {
 
                         <div className="flex items-start space-x-3 relative z-10">
                             <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 shadow-lg border border-white/20 bg-[#002B5C] flex items-center justify-center">
-                                <img src="/auditora.png" alt="Auditora Jus Contratos" className="w-full h-full object-cover" />
+                                <img src="/auditora.png" alt="Auditora Alfa Consultoria" className="w-full h-full object-cover" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="mb-1 flex items-center justify-between">
                                     <h4 className="font-bold text-[#002B5C] text-sm truncate">
-                                        Juliana Vieira | Jus Contratos
+                                        Juliana Vieira | Alfa Consultoria
                                     </h4>
                                     <span className="flex h-2 w-2 rounded-full bg-[#00C851] animate-pulse"></span>
                                 </div>
@@ -370,7 +374,7 @@ export function AiAssistant() {
                         <div className="flex items-center justify-between relative z-10">
                             <div className="flex items-center space-x-3">
                                 <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-inner group transition-transform hover:scale-105 duration-300">
-                                    <img src="/auditora.png" alt="Auditora Jus Contratos" className="w-full h-full object-cover" />
+                                    <img src="/auditora.png" alt="Auditora Alfa Consultoria" className="w-full h-full object-cover" />
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-base text-white tracking-tight">

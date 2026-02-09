@@ -4,7 +4,7 @@ import { Upload, ShieldCheck, Lock, Trash2, ArrowLeft, Scale } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import logoJusContratos from "@/assets/logo-juscontratos.png";
+import logoAlfaConsultoria from "@/assets/logo-alfa-consultoria.png";
 
 // Contract type configurations for dynamic titles
 const contractTypeConfig: Record<string, { title: string; subtitle: string }> = {
@@ -147,7 +147,7 @@ const FreeScan = () => {
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/home")}>
-                            <img src={logoJusContratos} alt="JusContratos" className="h-12 md:h-14" />
+                            <img src={logoAlfaConsultoria} alt="Alfa Consultoria" className="h-12 md:h-14" />
                         </div>
                         <button
                             onClick={() => navigate('/consultas')}

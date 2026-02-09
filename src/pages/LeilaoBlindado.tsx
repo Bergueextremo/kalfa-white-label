@@ -9,7 +9,7 @@ import {
     Menu,
     Database
 } from "lucide-react";
-import logoJusContratos from "@/assets/logo-juscontratos.png";
+import logoAlfaConsultoria from "@/assets/logo-alfa-consultoria.png";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,8 +52,8 @@ const LeilaoBlindado = () => {
                             onKeyDown={(e) => e.key === 'Enter' && navigate("/home")}
                         >
                             <img
-                                src={logoJusContratos}
-                                alt="Logotipo JusContratos"
+                                src={logoAlfaConsultoria}
+                                alt="Logotipo Alfa Consultoria"
                                 className="h-10 md:h-12 w-auto"
                                 width="160"
                                 height="48"

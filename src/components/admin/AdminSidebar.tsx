@@ -1,5 +1,6 @@
 import { LayoutDashboard, Users, ShoppingCart, LogOut, Shield, FileText, MessageSquare } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import logoAlfaConsultoria from "@/assets/logo-alfa-consultoria.png";
 import { useAuth } from "@/contexts/AuthContext";
 import {
     Sidebar,
@@ -32,13 +33,12 @@ export function AdminSidebar() {
         <Sidebar className={isCollapsed ? "w-14" : "w-64"} variant="sidebar">
             <SidebarContent className="bg-slate-900 text-slate-100">
                 {/* Logo */}
-                <div className="flex items-center gap-2 px-4 py-6">
-                    <Shield className="h-7 w-7 text-blue-500" />
-                    {!isCollapsed && (
-                        <span className="text-xl font-bold text-white">
-                            JusAdmin
-                        </span>
-                    )}
+                <div className="flex items-center justify-center px-4 py-6">
+                    <img
+                        src={logoAlfaConsultoria}
+                        alt="Alfa Admin"
+                        className={`transition-all duration-300 ${isCollapsed ? "h-8 w-auto" : "h-10 w-auto"} brightness-0 invert`}
+                    />
                 </div>
 
                 <Separator className="bg-slate-800" />
@@ -54,7 +54,7 @@ export function AdminSidebar() {
                                             to={item.url}
                                             end={item.url === "/admin"}
                                             className="flex items-center w-full p-2 rounded-md transition-colors"
-                                            activeClassName="bg-blue-600 text-white font-medium"
+                                            activeClassName="bg-emerald-600 text-white font-medium"
                                         >
                                             <item.icon className={isCollapsed ? "mx-auto" : "mr-3 h-5 w-5"} />
                                             {!isCollapsed && <span>{item.title}</span>}

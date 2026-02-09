@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer";
 import { ServiceGrid } from "@/components/ServiceGrid";
 import heroPadlockV2 from "@/assets/hero-padlock-v2.png";
-import logoJusContratos from "@/assets/logo-juscontratos.png";
+import logoAlfaConsultoria from "@/assets/logo-alfa-consultoria.png";
 import { InfiniteScrollBanner } from '@/components/InfiniteScrollBanner';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
@@ -80,7 +80,7 @@ const Landing = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={logoJusContratos} alt="JusContratos" className="h-12 md:h-14" />
+            <img src={logoAlfaConsultoria} alt="Alfa Consultoria" className="h-12 md:h-14" />
           </div>
 
           {/* Desktop Navigation */}
@@ -91,9 +91,7 @@ const Landing = () => {
             <a href="/consultas" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Consultas
             </a>
-            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Preços
-            </a>
+
             <a href="/contratoblindado" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Consultas Blindadas
             </a>
@@ -128,13 +126,7 @@ const Landing = () => {
                 >
                   Consultas
                 </a>
-                <a
-                  href="#pricing"
-                  className="text-lg font-medium text-foreground hover:text-primary transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Preços
-                </a>
+
                 <a
                   href="/contratoblindado"
                   className="text-lg font-medium text-foreground hover:text-primary transition-colors"
@@ -360,63 +352,7 @@ const Landing = () => {
       </div>
     </section>
 
-    {/* Pricing Section */}
-    <section id="pricing" className="bg-muted/30 py-20">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Planos Transparentes
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Escolha o plano ideal para seu volume de análises
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {plans.map((plan, index) => <Card key={index} className={`shadow - lg hover: shadow - xl transition - all ${plan.highlighted ? "border-2 border-primary scale-105" : ""} `}>
-              {plan.highlighted && <div className="bg-primary text-primary-foreground text-center py-2 text-sm font-medium rounded-t-lg">
-                Mais Popular
-              </div>}
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-foreground mb-2">{plan.name}</h3>
-                <div className="mb-6">
-                  <div className="text-4xl font-bold text-primary">{plan.price}</div>
-                  <div className="text-sm text-muted-foreground mt-1">{plan.credits}</div>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => <li key={i} className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-muted-foreground">{feature}</span>
-                  </li>)}
-                </ul>
-                <Button className="w-full" variant={plan.highlighted ? "default" : "outline"} onClick={() => {
-                  if (isAuthenticated) {
-                    // Usuário autenticado: vai para dashboard (pode comprar créditos lá)
-                    navigate("/dashboard");
-                  } else {
-                    // Novo usuário: vai direto para checkout com dados do plano
-                    navigate("/checkout", {
-                      state: {
-                        plan: {
-                          id: plan.id,
-                          name: plan.name,
-                          price: plan.priceNumeric,
-                          priceFormatted: plan.price,
-                          credits: plan.creditsNumeric
-                        },
-                        isNewUser: true
-                      }
-                    });
-                  }
-                }}>
-                  Começar Agora
-                </Button>
-              </CardContent>
-            </Card>)}
-          </div>
-        </div>
-      </div>
-    </section>
+
 
     {/* CTA Section */}
     <section className="container mx-auto px-4 py-20">

@@ -67,7 +67,7 @@ const PoliticaPrivacidade = () => {
 
                             <section className="pt-6 border-t border-slate-800">
                                 <p className="text-sm text-slate-500">
-                                    Para exercer seus direitos de privacidade, contate nosso Encarregado de Proteção de Dados (DPO) pelo e-mail: <a href="mailto:dpo@juscontratos.com.br" className="text-emerald-400 hover:underline">dpo@juscontratos.com.br</a>
+                                    Para exercer seus direitos de privacidade, contate nosso Encarregado de Proteção de Dados (DPO) pelo e-mail: <a href="mailto:dpo@alfaconsultoria.com.br" className="text-emerald-400 hover:underline">dpo@alfaconsultoria.com.br</a>
                                 </p>
                             </section>
 

@@ -32,7 +32,7 @@ export const ProtectionSection = ({ onCtaClick }: ProtectionSectionProps) => {
                                     <Shield className="w-5 h-5 text-white" aria-hidden="true" />
                                     <span className="text-white font-medium">Valor da Segurança</span>
                                 </div>
-                                <span className="font-bold text-white text-xl">R$ 147,00</span>
+                                <span className="font-bold text-white text-xl">R$ 197,00</span>
                             </div>
                         </div>
 

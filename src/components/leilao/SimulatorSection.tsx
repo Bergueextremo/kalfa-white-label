@@ -148,7 +148,7 @@ export const SimulatorSection = ({ onCtaClick }: SimulatorSectionProps) => {
                                 onClick={onCtaClick}
                                 aria-label="Auditar este lote agora"
                             >
-                                AUDITAR ESTE LOTE AGORA POR R$ 147
+                                AUDITAR ESTE LOTE AGORA POR R$ 197
                             </Button>
 
                             <div>

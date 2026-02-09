@@ -17,7 +17,7 @@ const ParaEscritorios = () => {
                     {/* Hero Section */}
                     <div className="text-center space-y-6">
                         <div className="inline-block p-2 px-4 rounded-full bg-blue-900/30 border border-blue-800 text-blue-400 text-sm font-medium">
-                            JusAudit Pro Enterprise
+                            Alfa Consultoria Audit Pro
                         </div>
                         <h1 className="text-4xl md:text-5xl font-bold text-white">
                             Potencialize seu Escritório com <br />
@@ -107,7 +107,7 @@ const ParaEscritorios = () => {
                         </div>
                         <div className="p-6 overflow-x-auto">
                             <pre className="font-mono text-sm text-blue-300">
-                                {`curl -X POST https://api.jusaudit.pro/v1/audits \\
+                                {`curl -X POST https://api.alfaconsultoria.com.br/v1/audits \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -F "file=@contrato_financiamento.pdf" \\
   -F "type=financiamento_veiculo"`}

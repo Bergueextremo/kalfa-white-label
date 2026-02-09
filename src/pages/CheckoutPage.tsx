@@ -613,7 +613,7 @@ export default function CheckoutPage() {
                                             <span className="text-primary">
                                                 {planFromLanding ? planFromLanding.priceFormatted :
                                                     isContractPurchase && contractFromWizard ? `R$ ${contractFromWizard.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` :
-                                                        'R$ 147,00'}
+                                                        'R$ 197,00'}
                                             </span>
                                         </div>
                                     </div>
@@ -756,7 +756,7 @@ export default function CheckoutPage() {
                                         ) : (
                                             `Pagar ${planFromLanding ? planFromLanding.priceFormatted :
                                                 isContractPurchase && contractFromWizard ? `R$ ${contractFromWizard.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` :
-                                                    'R$ 147,00'}`
+                                                    'R$ 197,00'}`
                                         )}
                                     </Button>
 

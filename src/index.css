@@ -8,8 +8,8 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Navy Blue - Cor primária profissional */
-    --primary: 220 60% 15%;
+    /* Alfa Green - Cor primária da marca */
+    --primary: 144 100% 39%; /* #00C851 */
     --primary-foreground: 0 0% 100%;
 
     /* Backgrounds */

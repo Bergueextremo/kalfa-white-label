@@ -4,7 +4,7 @@ export const TickerBar = () => {
         "BLINDE SEU LANCE",
         "AUDITORIA DE EDITAL",
         "NÃO CORRA RISCOS",
-        "JUSCONTRATOS",
+        "ALFA CONSULTORIA",
         "EVITE PREJUÍZOS"
     ];
 

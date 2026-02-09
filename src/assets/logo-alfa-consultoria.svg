@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" fill="none">
+  <!-- Symbol CA -->
+  <g transform="translate(10, 10) scale(0.6)">
+    <!-- C Shape -->
+    <path d="M50 0 C22.3858 0 0 22.3858 0 50 C0 77.6142 22.3858 100 50 100 C65 100 78 93 87 82 L75 70 C68 78 59 82 50 82 C32.3269 82 18 67.6731 18 50 C18 32.3269 32.3269 18 50 18 C59 18 68 22 75 30 L87 18 C78 7 65 0 50 0 Z" fill="black"/>
+    <!-- A Shape (Intertwined) -->
+    <path d="M50 20 L25 80 H40 L45 68 H65 L70 80 H85 L60 20 H50 Z M55 42 L60 55 H50 L55 42 Z" fill="black"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="80" y="45" font-family="Montserrat, sans-serif" font-weight="700" font-size="28">
+    <tspan fill="#00C851">ALFA</tspan> <tspan fill="black">CONSULTORIA</tspan>
+  </text>
+  
+  <text x="80" y="65" font-family="Montserrat, sans-serif" font-weight="600" font-size="10" fill="black" letter-spacing="1">
+    SEU CONTRATO BLINDADO
+  </text>
+</svg>

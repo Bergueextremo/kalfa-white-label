@@ -23,14 +23,14 @@ const TermosDeUso = () => {
                             <section>
                                 <h2 className="text-xl font-semibold text-slate-100 mb-3">1. Aceitação dos Termos</h2>
                                 <p>
-                                    Ao acessar e utilizar a plataforma JusAudit Pro ("Plataforma"), desenvolvida pela ARCA BERGUE SOFTWARE HOUSE, você concorda expressamente com estes Termos de Uso. Se você não concordar com qualquer parte destes termos, não deverá utilizar nossos serviços.
+                                    Ao acessar e utilizar a plataforma Alfa Audit Pro ("Plataforma"), desenvolvida pela ARCA BERGUE SOFTWARE HOUSE, você concorda expressamente com estes Termos de Uso. Se você não concordar com qualquer parte destes termos, não deverá utilizar nossos serviços.
                                 </p>
                             </section>
 
                             <section>
                                 <h2 className="text-xl font-semibold text-slate-100 mb-3">2. Descrição dos Serviços</h2>
                                 <p>
-                                    O JusAudit Pro é um <strong>Autenticador Jurídico Digital</strong> que utiliza tecnologia de Consulta Jurídica baseada nas diretrizes do <strong>Banco Central (BACEN)</strong>, <strong>Código de Defesa do Consumidor (CDC)</strong> e jurisprudências consolidadas do <strong>STJ</strong> e <strong>STF</strong> para analisar contratos bancários, imobiliários e de serviços. Nossos serviços incluem:
+                                    O Alfa Audit Pro é um <strong>Autenticador Jurídico Digital</strong> que utiliza tecnologia de Consulta Jurídica baseada nas diretrizes do <strong>Banco Central (BACEN)</strong>, <strong>Código de Defesa do Consumidor (CDC)</strong> e jurisprudências consolidadas do <strong>STJ</strong> e <strong>STF</strong> para analisar contratos bancários, imobiliários e de serviços. Nossos serviços incluem:
                                 </p>
                                 <ul className="list-disc pl-6 mt-2 space-y-2">
                                     <li>Consulta Jurídica de cláusulas contratuais.</li>
@@ -43,7 +43,7 @@ const TermosDeUso = () => {
                             <section>
                                 <h2 className="text-xl font-semibold text-slate-100 mb-3">3. Cadastro e Segurança</h2>
                                 <p>
-                                    Para utilizar os serviços, é necessário realizar um cadastro. Você é responsável por manter a confidencialidade de suas credenciais de acesso. O JusAudit Pro utiliza criptografia de ponta a ponta para proteger seus dados e os documentos enviados para análise.
+                                    Para utilizar os serviços, é necessário realizar um cadastro. Você é responsável por manter a confidencialidade de suas credenciais de acesso. O Alfa Audit Pro utiliza criptografia de ponta a ponta para proteger seus dados e os documentos enviados para análise.
                                 </p>
                             </section>
 
@@ -57,14 +57,14 @@ const TermosDeUso = () => {
                             <section>
                                 <h2 className="text-xl font-semibold text-slate-100 mb-3">5. Propriedade Intelectual</h2>
                                 <p>
-                                    Toda a tecnologia, design, logotipos e conteúdo da Plataforma são propriedade exclusiva da JusContratos Tecnologia Ltda. e seus licenciadores. É proibida a reprodução, cópia ou engenharia reversa de qualquer parte do sistema.
+                                    Toda a tecnologia, design, logotipos e conteúdo da Plataforma são propriedade exclusiva da Alfa Consultoria Tecnologia Ltda. e seus licenciadores. É proibida a reprodução, cópia ou engenharia reversa de qualquer parte do sistema.
                                 </p>
                             </section>
 
                             <section>
                                 <h2 className="text-xl font-semibold text-slate-100 mb-3">6. Limitação de Responsabilidade</h2>
                                 <p>
-                                    Os relatórios gerados pelo JusAudit Pro são ferramentas de auxílio e não substituem o parecer jurídico de um advogado qualificado. A Plataforma não se responsabiliza por decisões tomadas exclusivamente com base nas análises automatizadas.
+                                    Os relatórios gerados pelo Alfa Audit Pro são ferramentas de auxílio e não substituem o parecer jurídico de um advogado qualificado. A Plataforma não se responsabiliza por decisões tomadas exclusivamente com base nas análises automatizadas.
                                 </p>
                             </section>
 
@@ -77,7 +77,7 @@ const TermosDeUso = () => {
 
                             <section className="pt-6 border-t border-slate-800">
                                 <p className="text-sm text-slate-500">
-                                    Dúvidas? Entre em contato através do e-mail: <a href="mailto:juridico@juscontratos.com.br" className="text-blue-400 hover:underline">juridico@juscontratos.com.br</a>
+                                    Dúvidas? Entre em contato através do e-mail: <a href="mailto:juridico@alfaconsultoria.com.br" className="text-blue-400 hover:underline">juridico@alfaconsultoria.com.br</a>
                                 </p>
                             </section>
 
