@@ -16,7 +16,9 @@ import {
     Copy,
     ArrowLeft,
     Lock,
-    BadgeCheck
+    BadgeCheck,
+    MapPin,
+    Search
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -81,15 +83,15 @@ export default function CheckoutPage() {
     const [phone, setPhone] = useState(leadData?.phone || '');
     const [cpf, setCpf] = useState('');
 
-    // --- DADOS DE ENDEREÇO (Necessário para Antifraude Appmax) ---
-    // --- DADOS DE ENDEREÇO (Padronizado para Digital) ---
-    const [cep, setCep] = useState('00000-000');
-    const [street, setStreet] = useState('Produto Digital');
-    const [number, setNumber] = useState('0');
+    // --- DADOS DE ENDEREÇO (Padrão para evitar erros de validação Asaas) ---
+    const [cep, setCep] = useState('01311-000');
+    const [street, setStreet] = useState('Avenida Paulista');
+    const [number, setNumber] = useState('1000');
     const [complement, setComplement] = useState('');
-    const [neighborhood, setNeighborhood] = useState('Digital');
-    const [city, setCity] = useState('Digital');
+    const [neighborhood, setNeighborhood] = useState('Bela Vista');
+    const [city, setCity] = useState('São Paulo');
     const [state, setState] = useState('SP');
+    const [isCepLoading, setIsCepLoading] = useState(false);
 
     // --- DADOS DO CARTÃO ---
     const [cardNumber, setCardNumber] = useState('');
@@ -140,19 +142,35 @@ export default function CheckoutPage() {
 
     const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 4) value = value.slice(0, 4);
-        if (value.length > 2) value = `${value.slice(0, 2)}/${value.slice(2)}`;
+
+        // Se o usuário digitar o mês e começar o ano, e o ano não começar com 20, tenta ajudar
+        if (value.length === 3 && value[2] !== '2') {
+            value = value.slice(0, 2) + '20' + value.slice(2);
+        } else if (value.length === 4 && value.slice(2, 4) !== '20' && !value.startsWith('20', 2)) {
+            // Caso especial para quando cola ou digita rápido
+        }
+
+        if (value.length > 6) value = value.slice(0, 6);
+
+        if (value.length > 2) {
+            value = `${value.slice(0, 2)}/${value.slice(2)}`;
+        }
+
         setCardExpiry(value);
     };
 
     // --- VALIDAÇÃO ---
-    const isAddressValid = cep.length >= 9 && street.length > 2 && number.length > 0 && city.length > 2 && state.length === 2;
+    const isAddressValid = cep.replace(/\D/g, '').length === 8 &&
+        street.length > 2 &&
+        number.length > 0 &&
+        city.length > 2 &&
+        state.length === 2;
     const isPersonalValid = name.length > 3 && email.includes('@') && phone.length >= 14 && cpf.length === 14;
 
     // Validação do cartão
     const isCardDataValid = cardNumber.replace(/\s/g, '').length === 16 &&
         cardName.length > 3 &&
-        cardExpiry.length === 5 &&
+        cardExpiry.length === 7 &&
         cardCvv.length >= 3;
 
     const isFormValid = isPersonalValid && isAddressValid && (paymentMethod === 'pix' || isCardDataValid);
@@ -164,9 +182,8 @@ export default function CheckoutPage() {
         console.log('Verificando status do pagamento...', { auditId: currentAuditId, orderId: currentOrderId });
 
         try {
-            const { data, error } = await supabase.functions.invoke('check-payment-status', {
+            const { data, error } = await supabase.functions.invoke('check-asaas-payment-status', {
                 body: {
-                    audit_id: currentAuditId,
                     order_id: currentOrderId
                 }
             });
@@ -407,14 +424,14 @@ export default function CheckoutPage() {
 
             // 4. Chamada ao Supabase Edge Function
             console.log('========================================');
-            console.log('ENVIANDO PAGAMENTO PARA APPMAX');
+            console.log('ENVIANDO PAGAMENTO PARA ASAAS');
             console.log('========================================');
             console.log('Método de Pagamento:', paymentMethod);
             console.log('Payload enviado:', JSON.stringify(payload, null, 2));
 
-            console.log('Enviando payload para create-appmax-order:', payload);
+            console.log('Enviando payload para create-asaas-order:', payload);
 
-            const { data, error } = await supabase.functions.invoke('create-appmax-order', {
+            const { data, error } = await supabase.functions.invoke('create-asaas-order', {
                 body: payload
             });
 
@@ -422,10 +439,11 @@ export default function CheckoutPage() {
 
             if (error) {
                 console.error('Erro na chamada da Edge Function:', error);
+                console.error('Erro detalhado:', JSON.stringify(error, null, 2));
                 throw error;
             }
             if (!data || !data.success) {
-                console.error('Erro no processamento:', data);
+                console.error('Erro no processamento da API:', data);
                 throw new Error(data?.error || 'Erro desconhecido ao processar pagamento');
             }
 
@@ -684,8 +702,8 @@ export default function CheckoutPage() {
                                             </div>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-2">
-                                                    <Label>Validade (MM/AA)</Label>
-                                                    <Input value={cardExpiry} onChange={handleExpiryChange} placeholder="MM/AA" maxLength={5} />
+                                                    <Label>Validade (MM/AAAA)</Label>
+                                                    <Input value={cardExpiry} onChange={handleExpiryChange} placeholder="MM/20YY" maxLength={7} />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label>CVV</Label>

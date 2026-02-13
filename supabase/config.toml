@@ -1,4 +1,4 @@
-project_id = "yiacsonjcfhzmpkjkqqv"
+project_id = "ryrakhjjqexjlfarlbkd"
 
 [functions.get-public-audit]
 verify_jwt = true
@@ -9,4 +9,16 @@ verify_jwt = false
 
 # Permite webhook da Appmax sem autenticação
 [functions.appmax-webhook]
+verify_jwt = false
+
+# Permite acesso sem autenticação para pedidos Asaas
+[functions.create-asaas-order]
+verify_jwt = false
+
+# Permite polling de status sem autenticação
+[functions.check-asaas-payment-status]
+verify_jwt = false
+
+# Permite webhook da Asaas sem autenticação
+[functions.asaas-webhook]
 verify_jwt = false

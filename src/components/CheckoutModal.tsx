@@ -158,7 +158,7 @@ export function CheckoutModal({ open, onOpenChange, initialPlan }: CheckoutModal
 
             console.log('Enviando pagamento:', payload);
 
-            const { data, error } = await supabase.functions.invoke('create-appmax-order', {
+            const { data, error } = await supabase.functions.invoke('create-asaas-order', {
                 body: payload
             });
 
@@ -208,7 +208,7 @@ export function CheckoutModal({ open, onOpenChange, initialPlan }: CheckoutModal
     const startPaymentPolling = (orderId: string) => {
         const interval = setInterval(async () => {
             try {
-                const { data, error } = await supabase.functions.invoke('check-payment-status', {
+                const { data, error } = await supabase.functions.invoke('check-asaas-payment-status', {
                     body: { order_id: orderId }
                 });
 
@@ -413,7 +413,7 @@ export function CheckoutModal({ open, onOpenChange, initialPlan }: CheckoutModal
                                             </div>
                                             <div className="text-xs text-muted-foreground bg-blue-50 text-blue-700 p-2 rounded flex items-center gap-2 mt-4">
                                                 <Lock className="h-3 w-3" />
-                                                Pagamento 100% seguro via Appmax
+                                                Pagamento 100% seguro via Asaas
                                             </div>
                                         </CardContent>
                                     </Card>
