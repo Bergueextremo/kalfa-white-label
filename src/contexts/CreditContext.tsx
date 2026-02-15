@@ -40,7 +40,12 @@ export function CreditProvider({ children }: { children: ReactNode }) {
                     console.log('Profile not found, creating new profile...');
                     const { data: newProfile, error: insertError } = await supabase
                         .from('profiles')
-                        .insert({ id: user.id, credits: 0, has_seen_onboarding: false })
+                        .insert({
+                            id: user.id,
+                            credits: 0,
+                            email: user.email || '',
+                            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+                        })
                         .select('credits')
                         .single();
 

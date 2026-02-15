@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
 
         const token = authHeader.replace('Bearer ', '')
         const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
-        
+
         if (authError || !user) {
             console.error('Invalid token or user not found:', authError)
             return new Response(
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
             // Fetch audits that are approved (sales)
             const { data: sales, error: salesError } = await supabaseAdmin
                 .from('auditorias_contratos')
-                .select('id, created_at, user_id, contract_type, payment_status')
+                .select('id, created_at, user_id, contract_type, payment_status, file_path, coupon_code')
                 .eq('payment_status', 'approved')
                 .order('created_at', { ascending: false })
                 .range((page - 1) * limit, page * limit - 1)
@@ -112,8 +112,10 @@ Deno.serve(async (req) => {
                 date: s.created_at,
                 user: usersMap.get(s.user_id) || 'Usuário Desconhecido',
                 item: s.contract_type || 'Auditoria Avulsa',
-                amount: 49.90, // Fixed price for now
-                status: 'Approved'
+                amount: 197.00, // Updated common price
+                status: 'Approved',
+                file_path: s.file_path,
+                coupon_code: s.coupon_code
             }))
 
             return new Response(
@@ -167,6 +169,57 @@ Deno.serve(async (req) => {
                 JSON.stringify({ user: userDetails }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
             )
+        }
+
+        if (action === 'list_partners') {
+            const { data: partners, error: partnersError } = await supabaseAdmin
+                .from('partners')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (partnersError) throw partnersError;
+
+            return new Response(
+                JSON.stringify({ partners }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+            );
+        }
+
+        if (action === 'get_financial_metrics') {
+            // Get last 30 days of sales
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const { data: sales, error: salesError } = await supabaseAdmin
+                .from('auditorias_contratos')
+                .select('created_at, payment_status, partner_id, coupon_code')
+                .eq('payment_status', 'approved')
+                .gte('created_at', thirtyDaysAgo.toISOString());
+
+            if (salesError) throw salesError;
+
+            // Get total leads
+            const { count: leadCount, error: leadError } = await supabaseAdmin
+                .from('chat_leads')
+                .select('*', { count: 'exact', head: true });
+
+            if (leadError) throw leadError;
+
+            // Simple aggregation for now
+            const metrics = {
+                total_sales: sales.length,
+                total_leads: leadCount || 0,
+                sales_by_coupon: sales.reduce((acc: any, s: any) => {
+                    const code = s.coupon_code || 'Direct';
+                    acc[code] = (acc[code] || 0) + 1;
+                    return acc;
+                }, {})
+            };
+
+            return new Response(
+                JSON.stringify({ metrics }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+            );
         }
 
         throw new Error('Invalid action')

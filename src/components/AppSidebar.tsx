@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { Scale, LayoutDashboard, Upload, FileText, Wallet, HeadphonesIcon, Settings, LogOut, User as UserIcon, Shield } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import logoAlfaConsultoria from "@/assets/logo-alfa-consultoria.png";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { CreditUsage } from "@/components/CreditUsage";
 import {
   Sidebar,
@@ -34,14 +36,29 @@ const menuItems = [
   { title: "Suporte Jurídico", url: "/suporte", icon: HeadphonesIcon },
 ];
 
-const ADMIN_EMAIL = "jussistemas@gmail.com";
-
 export function AppSidebar() {
   const { state } = useSidebar();
   const { user, logout } = useAuth();
   const location = useLocation();
   const currentPath = location.pathname;
   const isCollapsed = state === "collapsed";
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!user) return;
+      try {
+        const { data } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'admin'
+        });
+        setIsAdmin(data === true);
+      } catch (error) {
+        console.error("Error checking sidebar role:", error);
+      }
+    };
+    checkRole();
+  }, [user]);
 
   const isActive = (path: string) => {
     return currentPath === path || currentPath.startsWith(path);
@@ -91,7 +108,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Admin Menu - Only visible to admin */}
-        {user?.email === ADMIN_EMAIL && (
+        {isAdmin && (
           <SidebarGroup>
             {!isCollapsed && (
               <SidebarGroupLabel className="text-sidebar-foreground/70 text-xs uppercase tracking-wider">

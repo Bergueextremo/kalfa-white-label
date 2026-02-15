@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ShoppingCart, LogOut, Shield, FileText, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Users, ShoppingCart, LogOut, Shield, FileText, MessageSquare, BarChart3, Handshake, Sparkles, ClipboardList } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import logoAlfaConsultoria from "@/assets/logo-alfa-consultoria.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,10 +18,15 @@ import { Separator } from "@/components/ui/separator";
 
 const adminMenuItems = [
     { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-    { title: "Usuários", url: "/admin/users", icon: Users },
+    { title: "Nova Auditoria", url: "/admin/auditoria", icon: Sparkles },
+    { title: "Meus Relatórios", url: "/admin/relatorios", icon: ClipboardList },
     { title: "Vendas", url: "/admin/sales", icon: ShoppingCart },
-    { title: "Contratos", url: "/admin/contratos", icon: FileText },
+    { title: "Parceiros", url: "/admin/parceiros", icon: Handshake },
+    { title: "Usuários", url: "/admin/users", icon: Users },
+    { title: "Gerenciar Contratos", url: "/admin/contratos", icon: FileText },
     { title: "Leads", url: "/admin/leads", icon: MessageSquare },
+    { title: "Financeiro", url: "/admin/financeiro", icon: BarChart3 },
+    { title: "Voltar ao Site", url: "/", icon: Shield },
 ];
 
 export function AdminSidebar() {

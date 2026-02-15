@@ -305,7 +305,7 @@ export function AiAssistant() {
     };
 
     return (
-        <>
+        <div className="print:hidden">
             {/* Notification Bubble */}
             {showNotification && !isOpen && (
                 <div
@@ -587,6 +587,6 @@ export function AiAssistant() {
                     )}
                 </div>
             )}
-        </>
+        </div>
     );
 }

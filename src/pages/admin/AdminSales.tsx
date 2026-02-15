@@ -2,7 +2,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, DollarSign, TrendingUp, Loader2 } from "lucide-react";
+import { Download, DollarSign, TrendingUp, Loader2, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -14,6 +14,8 @@ interface Transaction {
     item: string;
     amount: number;
     status: string;
+    file_path?: string;
+    coupon_code?: string;
 }
 
 const AdminSales = () => {
@@ -38,6 +40,22 @@ const AdminSales = () => {
             toast.error('Erro ao carregar vendas');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleViewContract = async (filePath: string) => {
+        try {
+            // Remove the user ID prefix if it's already there in the path logic of storage
+            // In our migration it was bucket/user_id/filename
+            const { data, error } = await supabase.storage
+                .from('contracts')
+                .createSignedUrl(filePath, 3600);
+
+            if (error) throw error;
+            window.open(data.signedUrl, '_blank');
+        } catch (error) {
+            console.error('Error opening contract:', error);
+            toast.error('Erro ao abrir contrato');
         }
     };
 
@@ -68,7 +86,7 @@ const AdminSales = () => {
     const averageTicket = approvedCount > 0 ? totalRevenue / approvedCount : 0;
 
     const handleExport = () => {
-        const headers = ["Data", "Usuário", "Item", "Valor", "Status"];
+        const headers = ["Data", "Usuário", "Item", "Cupom", "Valor", "Status"];
         const csvContent = [
             headers.join(","),
             ...transactions.map(t =>
@@ -76,6 +94,7 @@ const AdminSales = () => {
                     new Date(t.date).toLocaleDateString(),
                     t.user,
                     t.item,
+                    t.coupon_code || "",
                     t.amount.toFixed(2),
                     getStatusLabel(t.status)
                 ].join(",")
@@ -151,8 +170,10 @@ const AdminSales = () => {
                                         <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Data</th>
                                         <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Usuário</th>
                                         <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Item</th>
+                                        <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Cupom</th>
                                         <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Status</th>
                                         <th className="text-right py-4 px-6 font-semibold text-slate-600 text-sm">Valor</th>
+                                        <th className="text-right py-4 px-6 font-semibold text-slate-600 text-sm">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -167,6 +188,9 @@ const AdminSales = () => {
                                             <td className="py-4 px-6 text-slate-600">
                                                 {t.item}
                                             </td>
+                                            <td className="py-4 px-6 text-slate-600">
+                                                {t.coupon_code || '-'}
+                                            </td>
                                             <td className="py-4 px-6">
                                                 <Badge className={getStatusColor(t.status)} variant="outline">
                                                     {getStatusLabel(t.status)}
@@ -174,6 +198,18 @@ const AdminSales = () => {
                                             </td>
                                             <td className="py-4 px-6 text-right font-medium text-slate-900">
                                                 R$ {t.amount.toFixed(2)}
+                                            </td>
+                                            <td className="py-4 px-6 text-right">
+                                                {t.file_path && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleViewContract(t.file_path!)}
+                                                        title="Ver Contrato"
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

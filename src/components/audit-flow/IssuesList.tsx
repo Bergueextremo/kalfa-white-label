@@ -65,7 +65,7 @@ export function IssuesList({ issues }: IssuesListProps) {
                     Mapa de Vulnerabilidades
                 </h2>
 
-                <Accordion type="single" collapsible className="w-full space-y-4">
+                <Accordion type="multiple" defaultValue={issues.map((_, idx) => `item-${idx}`)} className="w-full space-y-4">
                     {issues.map((issue, idx) => (
                         <AccordionItem key={idx} value={`item-${idx}`} className="border border-slate-200 rounded-xl px-4 data-[state=open]:bg-slate-50 transition-colors">
                             <AccordionTrigger className="hover:no-underline py-4">
@@ -91,7 +91,7 @@ export function IssuesList({ issues }: IssuesListProps) {
                                 </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2 pb-6">
-                                <div className="grid md:grid-cols-2 gap-6">
+                                <div className="grid md:grid-cols-2 print:grid-cols-1 gap-6">
                                     {/* Left: Original Risk */}
                                     <div className="space-y-2">
                                         <h4 className="text-sm font-bold text-red-700 uppercase flex items-center gap-2">

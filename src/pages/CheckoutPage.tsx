@@ -98,6 +98,57 @@ export default function CheckoutPage() {
     const [cardName, setCardName] = useState('');
     const [cardExpiry, setCardExpiry] = useState('');
     const [cardCvv, setCardCvv] = useState('');
+    const [couponCode, setCouponCode] = useState('');
+    const [discount, setDiscount] = useState(0); // Porcentagem de desconto
+    const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
+    // NOVO: Validar cupom ao digitar
+    useEffect(() => {
+        const validateCoupon = async () => {
+            if (couponCode.length < 3) {
+                setDiscount(0);
+                return;
+            }
+
+            setIsValidatingCoupon(true);
+            try {
+                const { data: partner, error } = await supabase
+                    .from('partners')
+                    .select('discount_rate')
+                    .eq('code', couponCode.toUpperCase())
+                    .maybeSingle();
+
+                if (partner) {
+                    setDiscount(partner.discount_rate || 0);
+                    if (partner.discount_rate > 0) {
+                        toast({
+                            title: "Cupom aplicado!",
+                            description: `${partner.discount_rate}% de desconto aplicado com sucesso.`,
+                        });
+                    }
+                } else {
+                    setDiscount(0);
+                }
+            } catch (error) {
+                console.error('Erro ao validar cupom:', error);
+            } finally {
+                setIsValidatingCoupon(false);
+            }
+        };
+
+        const timer = setTimeout(validateCoupon, 500);
+        return () => clearTimeout(timer);
+    }, [couponCode]);
+
+    // Função para calcular valor com desconto
+    const calculateDiscountedPrice = (price: number) => {
+        if (discount <= 0) return price;
+        return price * (1 - discount / 100);
+    };
+
+    const formatPrice = (price: number) => {
+        return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
 
     // --- DADOS DO PIX (Retorno da API) ---
     const [pixQrCode, setPixQrCode] = useState('');
@@ -369,6 +420,7 @@ export default function CheckoutPage() {
 
             // 2. Preparar Payload Base
             const payload: any = {
+                coupon_code: couponCode,
                 customer: {
                     name,
                     email,
@@ -393,7 +445,7 @@ export default function CheckoutPage() {
                 // NOVO: Adicionar dados do plano se for compra de créditos
                 ...(planFromLanding && {
                     plan_id: planFromLanding.id,
-                    amount: planFromLanding.price,
+                    amount: calculateDiscountedPrice(planFromLanding.price),
                     credits: planFromLanding.credits,
                     plan_name: planFromLanding.name
                 }),
@@ -401,10 +453,15 @@ export default function CheckoutPage() {
                 // NOVO: Adicionar dados do contrato se for compra individual
                 ...(isContractPurchase && contractFromWizard && {
                     contract_id: contractFromWizard.id,
-                    amount: contractFromWizard.price,
+                    amount: calculateDiscountedPrice(contractFromWizard.price),
                     contract_name: contractFromWizard.title,
                     type: 'contract_purchase',
                     form_data: formData
+                }),
+
+                // Auditoria avulsa (se for o caso)
+                ...(!planFromLanding && !isContractPurchase && {
+                    amount: calculateDiscountedPrice(197)
                 })
             };
 
@@ -625,14 +682,36 @@ export default function CheckoutPage() {
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="border-t pt-4 space-y-2">
-                                        <div className="flex justify-between font-bold text-lg">
+                                    <div className="border-t pt-4 space-y-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Cupom de Desconto</Label>
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    placeholder="CÓDIGO"
+                                                    value={couponCode}
+                                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                    className="h-9 uppercase font-bold text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between font-bold text-lg border-t pt-4">
                                             <span>Total</span>
-                                            <span className="text-primary">
-                                                {planFromLanding ? planFromLanding.priceFormatted :
-                                                    isContractPurchase && contractFromWizard ? `R$ ${contractFromWizard.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` :
-                                                        'R$ 197,00'}
-                                            </span>
+                                            <div className="text-right">
+                                                {discount > 0 && (
+                                                    <p className="text-xs text-slate-400 line-through font-normal">
+                                                        {planFromLanding ? planFromLanding.priceFormatted :
+                                                            isContractPurchase && contractFromWizard ? formatPrice(contractFromWizard.price) :
+                                                                'R$ 197,00'}
+                                                    </p>
+                                                )}
+                                                <span className="text-primary">
+                                                    {formatPrice(calculateDiscountedPrice(
+                                                        planFromLanding ? planFromLanding.price :
+                                                            isContractPurchase && contractFromWizard ? contractFromWizard.price :
+                                                                197
+                                                    ))}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2 text-emerald-700 font-semibold text-xs">

@@ -35,7 +35,8 @@ Deno.serve(async (req) => {
             is_audit_purchase,
             type,
             contract_id,
-            form_data
+            form_data,
+            coupon_code
         } = payloadJson
 
         const supabaseAdmin = createClient(
@@ -82,6 +83,23 @@ Deno.serve(async (req) => {
         } else {
             console.error('Invalid purchase config:', { plan_id, is_audit_purchase, type, contract_id });
             throw new Error('Configuração de compra inválida.');
+        }
+
+        let partner_id = null;
+        if (coupon_code) {
+            console.log('Validating coupon:', coupon_code);
+            const { data: partnerData } = await supabaseAdmin
+                .from('partners')
+                .select('id')
+                .eq('code', coupon_code.trim().toUpperCase())
+                .maybeSingle();
+
+            if (partnerData) {
+                partner_id = partnerData.id;
+                console.log('Partner found:', partner_id);
+            } else {
+                console.log('Partner not found for coupon:', coupon_code);
+            }
         }
 
         console.log('Final Order Details:', { finalAmount, finalCredits, finalPlanName });
@@ -246,6 +264,8 @@ Deno.serve(async (req) => {
                     appmax_order_id: createPayData.id, // Reused field for consistency
                     payment_status: responsePayload.payment_status,
                     payment_metadata: { ...responsePayload, plan_id: plan_id },
+                    partner_id: partner_id,
+                    coupon_code: coupon_code,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 }).select().single();
@@ -258,6 +278,8 @@ Deno.serve(async (req) => {
                     amount: finalAmount,
                     appmax_order_id: createPayData.id,
                     payment_status: responsePayload.payment_status === 'approved' ? 'approved' : 'pending',
+                    partner_id: partner_id,
+                    coupon_code: coupon_code,
                     activated: false
                 });
             }
@@ -271,6 +293,8 @@ Deno.serve(async (req) => {
                 payment_status: responsePayload.payment_status,
                 form_data: form_data,
                 payment_metadata: responsePayload,
+                partner_id: partner_id,
+                coupon_code: coupon_code,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             });
@@ -282,6 +306,8 @@ Deno.serve(async (req) => {
                 appmax_order_id: createPayData.id,
                 payment_metadata: responsePayload,
                 file_path: file_path,
+                partner_id: partner_id,
+                coupon_code: coupon_code,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             }).select().single();

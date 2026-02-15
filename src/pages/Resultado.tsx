@@ -330,8 +330,18 @@ const Resultado = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto space-y-8 py-8 px-4">
+        {/* Print-only Document Header */}
+        <div className="hidden print:block text-center mb-8 pb-4 border-b-2 border-slate-300">
+          <h1 className="text-2xl font-bold text-slate-900">Alfa Consultoria | Seu Contrato Blindado</h1>
+          <h2 className="text-xl font-semibold text-slate-700 mt-2">Laudo de Consulta Jurídica Premium</h2>
+          <p className="text-sm text-slate-500 mt-1">
+            {contractType} • Analisado em {new Date(audit.created_at).toLocaleDateString('pt-BR', {
+              day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            })}
+          </p>
+        </div>
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 print:hidden">
           <div>
             <Button
               variant="ghost"

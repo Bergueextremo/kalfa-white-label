@@ -29,6 +29,8 @@ import AdminSales from "./pages/admin/AdminSales";
 import AdminContracts from "./pages/admin/AdminContracts";
 import AdminContractEditor from "./pages/admin/AdminContractEditor";
 import AdminLeads from "./pages/admin/AdminLeads";
+import AdminPartners from "./pages/admin/AdminPartners";
+import AdminFinancialDashboard from "./pages/admin/AdminFinancialDashboard";
 import Consultas from "./pages/Consultas";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
@@ -143,6 +145,22 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path="/admin/auditoria"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/relatorios"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        />
+        <Route
           path="/admin/users/:id"
           element={
             <AdminRoute>
@@ -155,6 +173,22 @@ const AppRoutes = () => {
           element={
             <AdminRoute>
               <AdminSales />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/parceiros"
+          element={
+            <AdminRoute>
+              <AdminPartners />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/financeiro"
+          element={
+            <AdminRoute>
+              <AdminFinancialDashboard />
             </AdminRoute>
           }
         />

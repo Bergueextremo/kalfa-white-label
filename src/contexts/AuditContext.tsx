@@ -106,15 +106,29 @@ export const AuditProvider = ({ children }: { children: ReactNode }) => {
     const [resultData, setResultData] = useState<any>(null);
     const [corrections, setCorrections] = useState<any[]>([]);
 
-    const openModal = useCallback(() => {
-        if (credits <= 0) {
+    const openModal = useCallback(async () => {
+        // NOVO: Verificar se o usuário é admin
+        let isAdmin = false;
+        if (user) {
+            try {
+                const { data, error } = await supabase.rpc('has_role', {
+                    _user_id: user.id,
+                    _role: 'admin'
+                });
+                if (!error && data === true) isAdmin = true;
+            } catch (e) {
+                console.error("Erro ao verificar papel de admin:", e);
+            }
+        }
+
+        if (!isAdmin && credits <= 0) {
             toast.error("Você precisa de créditos para iniciar uma nova auditoria.");
             navigate('/creditos');
             return;
         }
         setIsModalOpen(true);
         setIsMinimized(false);
-    }, [credits, navigate]);
+    }, [credits, navigate, user]);
 
     const closeModal = useCallback(() => {
         // Only close if not processing, or if user explicitly wants to close (maybe add confirmation?)
@@ -151,8 +165,23 @@ export const AuditProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
 
-        // Check and use credit
-        if (!(await useCredit())) {
+        // NOVO: Verificar se o usuário é admin para liberar consulta grátis
+        let isAdmin = false;
+        try {
+            const { data, error } = await supabase.rpc('has_role', {
+                _user_id: user.id,
+                _role: 'admin'
+            });
+            if (!error && data === true) {
+                isAdmin = true;
+                console.log("Admin detectado: Consulta liberada sem cobrança de créditos.");
+            }
+        } catch (e) {
+            console.error("Erro ao verificar papel de admin:", e);
+        }
+
+        // Check and use credit (pula se for admin)
+        if (!isAdmin && !(await useCredit())) {
             setShowCheckout(true);
             return;
         }

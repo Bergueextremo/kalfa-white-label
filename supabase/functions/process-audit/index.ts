@@ -5,7 +5,7 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function fetchWithRetry(url: string, options: any, maxRetries = 5, initialDelay = 1500) {
+async function fetchWithRetry(url: string, options: any, maxRetries = 3, initialDelay = 5000) {
     let lastError;
     for (let i = 0; i < maxRetries; i++) {
         try {
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
 
 
         console.log(`Audit type: ${isPremium ? 'PREMIUM' : 'FREE'}`);
-        const modelName = isPremium ? 'gemini-2.5-pro' : 'gemini-2.0-flash';
+        const modelName = 'gemini-2.5-flash';
 
         // 5. Download File
         const { data: fileData, error: fileError } = await dbAdmin

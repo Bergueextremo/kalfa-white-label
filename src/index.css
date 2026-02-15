@@ -9,7 +9,8 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Alfa Green - Cor primária da marca */
-    --primary: 144 100% 39%; /* #00C851 */
+    --primary: 144 100% 39%;
+    /* #00C851 */
     --primary-foreground: 0 0% 100%;
 
     /* Backgrounds */
@@ -156,5 +157,101 @@ All colors MUST be HSL.
     100% {
       transform: translateX(-50%);
     }
+  }
+}
+
+/* ===== PRINT STYLES - Para exportação PDF limpa ===== */
+@media print {
+
+  /* Esconde sidebar, header admin, chat widget, e botões de ação */
+  [data-sidebar],
+  .print\:hidden,
+  nav,
+  header,
+  footer {
+    display: none !important;
+  }
+
+  /* Remove backgrounds e shadows para impressão limpa */
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 11pt !important;
+  }
+
+  /* Conteúdo principal ocupa 100% */
+  main,
+  .flex-1 {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Garante que todo o conteúdo seja visível (sem scroll) */
+  * {
+    overflow: visible !important;
+  }
+
+  /* Remove margens externas */
+  .min-h-screen {
+    min-height: auto !important;
+  }
+
+  /* CRÍTICO: Força layout de coluna única nas cláusulas */
+  .grid {
+    display: block !important;
+  }
+
+  .grid>* {
+    width: 100% !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* Previne quebra de página dentro de uma cláusula */
+  [data-state="open"] {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Garante que o texto quebre corretamente */
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  span,
+  div {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Remove truncamento de texto */
+  .line-clamp-1 {
+    -webkit-line-clamp: unset !important;
+    display: block !important;
+  }
+
+  /* Força cores nos elementos de risco */
+  .bg-red-50,
+  .bg-red-100,
+  .bg-green-50,
+  .bg-green-100,
+  .bg-blue-50,
+  .bg-blue-100,
+  .bg-yellow-50,
+  .bg-yellow-100 {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Shadow removal para limpeza visual */
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl {
+    box-shadow: none !important;
   }
 }

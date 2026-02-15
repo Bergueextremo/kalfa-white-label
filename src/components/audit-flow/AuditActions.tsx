@@ -2,27 +2,12 @@ import React, { useState } from 'react';
 import { Download, FileText, Scale, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter,
-    DialogDescription
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
 
 interface AuditActionsProps {
     auditData?: any; // Pass the full audit data here
 }
 
 export function AuditActions({ auditData }: AuditActionsProps) {
-    const [isConsultationOpen, setIsConsultationOpen] = useState(false);
-    const [consultationReason, setConsultationReason] = useState("duvidas");
-    const [consultationNotes, setConsultationNotes] = useState("");
 
     const handleDownloadReport = () => {
         // Simulating PDF download - in a real app this would generate a PDF
@@ -103,10 +88,37 @@ export function AuditActions({ auditData }: AuditActionsProps) {
     };
 
     const handleRequestConsultation = () => {
-        // Here you would send the data to your backend
-        console.log("Consultation requested:", { reason: consultationReason, notes: consultationNotes });
-        setIsConsultationOpen(false);
-        toast.success("Solicitação enviada! Nossa equipe entrará em contato.");
+        if (!auditData) {
+            toast.error("Dados da análise não disponíveis.");
+            return;
+        }
+
+        const phoneNumber = "5561998684615";
+        const contractType = auditData.contractType || "Geral";
+        const issues = auditData.issues || [];
+
+        let message = `Olá! Gostaria de agendar uma consultoria jurídica.\n\n`;
+        message += `Acabei de realizar uma auditoria no meu contrato de *${contractType}*.\n\n`;
+
+        if (issues.length > 0) {
+            message += `*Pontos Identificados na Análise:*\n`;
+            issues.slice(0, 5).forEach((issue: any, index: number) => {
+                const desc = issue.description || issue.problem || "Risco identificado";
+                message += `${index + 1}. ${desc}\n`;
+            });
+
+            if (issues.length > 5) {
+                message += `...e mais ${issues.length - 5} pontos.\n`;
+            }
+        }
+
+        message += `\nAguardo seu retorno para prosseguirmos com o atendimento.`;
+
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+
+        window.open(whatsappUrl, '_blank');
+        toast.success("Redirecionando para o WhatsApp do atendimento...");
     };
 
     return (
@@ -130,64 +142,14 @@ export function AuditActions({ auditData }: AuditActionsProps) {
                     BAIXAR CONTRATO BLINDADO
                 </Button>
 
-                <Dialog open={isConsultationOpen} onOpenChange={setIsConsultationOpen}>
-                    <DialogTrigger asChild>
-                        <Button
-                            size="lg"
-                            className="flex-1 bg-slate-700 hover:bg-slate-800 text-white h-auto py-4 text-lg shadow-md"
-                        >
-                            <Scale className="mr-2 h-5 w-5" />
-                            Agendar Consultoria Jurídica
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
-                        <DialogHeader>
-                            <DialogTitle>Agendar Consultoria Especializada</DialogTitle>
-                            <DialogDescription>
-                                Nossa equipe de advogados especialistas analisará seu caso.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-6 py-4">
-                            <div className="space-y-4">
-                                <Label className="text-base">Qual o motivo do atendimento?</Label>
-                                <RadioGroup value={consultationReason} onValueChange={setConsultationReason}>
-                                    <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
-                                        <RadioGroupItem value="duvidas" id="r1" />
-                                        <Label htmlFor="r1" className="cursor-pointer flex-1">Dúvidas sobre o Laudo</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
-                                        <RadioGroupItem value="negociacao" id="r2" />
-                                        <Label htmlFor="r2" className="cursor-pointer flex-1">Negociação Assistida (Extrajudicial)</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
-                                        <RadioGroupItem value="judicial" id="r3" />
-                                        <Label htmlFor="r3" className="cursor-pointer flex-1">Ação Judicial (Processo)</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-slate-50 cursor-pointer">
-                                        <RadioGroupItem value="outros" id="r4" />
-                                        <Label htmlFor="r4" className="cursor-pointer flex-1">Outros Assuntos</Label>
-                                    </div>
-                                </RadioGroup>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="notes">Observações Adicionais (Opcional)</Label>
-                                <Textarea
-                                    id="notes"
-                                    placeholder="Descreva brevemente sua necessidade..."
-                                    value={consultationNotes}
-                                    onChange={(e) => setConsultationNotes(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsConsultationOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleRequestConsultation} className="bg-blue-600 hover:bg-blue-700">
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Confirmar Solicitação
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                <Button
+                    size="lg"
+                    className="flex-1 bg-slate-700 hover:bg-slate-800 text-white h-auto py-4 text-lg shadow-md"
+                    onClick={handleRequestConsultation}
+                >
+                    <Scale className="mr-2 h-5 w-5" />
+                    Agendar Consultoria Jurídica
+                </Button>
             </div>
         </>
     );
